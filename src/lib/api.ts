@@ -12,6 +12,9 @@ import type {
   LoginResponse,
   SignupRequest,
   RefreshResponse,
+  SummaryStats,
+  SystemStatus,
+  StorageInfo,
 } from '@/types';
 
 // Auth API
@@ -50,22 +53,12 @@ export const camerasApi = {
     const response = await api.get<Camera[]>('/api/cameras');
     return response.data;
   },
-
-  getById: async (id: string): Promise<Camera> => {
-    const response = await api.get<Camera>(`/api/cameras/${id}`);
-    return response.data;
-  },
 };
 
 // Events API
 export const eventsApi = {
   getAll: async (): Promise<Event[]> => {
     const response = await api.get<Event[]>('/api/events');
-    return response.data;
-  },
-
-  getById: async (id: string): Promise<Event> => {
-    const response = await api.get<Event>(`/api/events/${id}`);
     return response.data;
   },
 };
@@ -80,10 +73,6 @@ export const notificationsApi = {
   markAsRead: async (id: string): Promise<void> => {
     await api.patch(`/api/notifications/${id}/read`);
   },
-
-  markAllAsRead: async (): Promise<void> => {
-    await api.patch('/api/notifications/read-all');
-  },
 };
 
 // AI Responses API
@@ -92,27 +81,37 @@ export const aiResponsesApi = {
     const response = await api.get<AIResponse[]>('/api/ai-responses');
     return response.data;
   },
-
-  getByEventId: async (eventId: string): Promise<AIResponse[]> => {
-    const response = await api.get<AIResponse[]>(`/api/ai-responses?eventId=${eventId}`);
-    return response.data;
-  },
 };
 
 // Stats API
 export const statsApi = {
   getDaily: async (): Promise<DailyStat[]> => {
-    const response = await api.get<DailyStat[]>('/api/stats/daily');
+    const response = await api.get<DailyStat[]>('/api/stats?type=daily');
     return response.data;
   },
 
   getEventTypes: async (): Promise<EventTypeStat[]> => {
-    const response = await api.get<EventTypeStat[]>('/api/stats/event-types');
+    const response = await api.get<EventTypeStat[]>('/api/stats?type=event-types');
     return response.data;
   },
 
   getMonthly: async (): Promise<MonthlyEventData> => {
-    const response = await api.get<MonthlyEventData>('/api/stats/monthly');
+    const response = await api.get<MonthlyEventData>('/api/stats?type=monthly');
+    return response.data;
+  },
+
+  getSummary: async (): Promise<SummaryStats> => {
+    const response = await api.get<SummaryStats>('/api/stats?type=summary');
+    return response.data;
+  },
+
+  getSystemStatus: async (): Promise<SystemStatus> => {
+    const response = await api.get<SystemStatus>('/api/stats?type=system');
+    return response.data;
+  },
+
+  getStorageInfo: async (): Promise<StorageInfo> => {
+    const response = await api.get<StorageInfo>('/api/stats?type=storage');
     return response.data;
   },
 };

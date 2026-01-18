@@ -20,7 +20,7 @@ export interface Event {
   cameraName: string;
   type: 'assault' | 'theft' | 'suspicious' | 'normal';
   timestamp: Date;
-  status: 'pending' | 'processing' | 'resolved';
+  status: 'processing' | 'resolved';
   description: string;
   aiAction?: string;
   clipUrl?: string;
@@ -100,4 +100,26 @@ export interface SignupRequest {
 
 export interface RefreshResponse {
   accessToken: string;
+}
+
+// Summary Stats types
+export interface SummaryStats {
+  todayEvents: number;
+  aiResponseRate: number;
+  avgResponseTime: number;
+  activeAlerts: number;
+  todayEventsChange: number;
+  aiResponseRateChange: number;
+}
+
+// System Status types
+export interface SystemStatus {
+  status: 'normal' | 'warning' | 'error';
+  message: string;
+}
+
+// Storage Info types
+export interface StorageInfo {
+  usedStorage: number;
+  totalStorage: number;
 }

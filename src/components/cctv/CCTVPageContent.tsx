@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Camera, Plus, Pencil, Trash2, MapPin, Power, PowerOff, Search, X, Video } from "lucide-react";
@@ -36,13 +36,15 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
-import { camerasApi } from "@/lib/api";
-import type { Camera as CameraType, ManagedCamera } from "@/types";
+import type { ManagedCamera } from "@/types";
 import { cn } from "@/lib/utils";
+import { useStreams } from "@/hooks/useMonitoring";
 
 export function CCTVPageContent() {
-  const [cameras, setCameras] = useState<ManagedCamera[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: cameras = [], isLoading } = useStreams();
+  
+  // Local state for UI interactions (search, dialogs)
+  // Note: In a real app, mutations (add/edit/delete) would also use React Query mutations
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -56,32 +58,25 @@ export function CCTVPageContent() {
   });
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchCameras = async () => {
-      try {
-        const data = await camerasApi.getAll();
-        const managedCameras: ManagedCamera[] = data.map((cam: CameraType, index: number) => ({
-          ...cam,
-          ipAddress: `192.168.1.${100 + index}`,
-          resolution: '1920x1080',
-          active: cam.status !== 'offline',
-        }));
-        setCameras(managedCameras);
-      } catch (error) {
-        console.error('Failed to fetch cameras:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Temporary local state for mutations until backend is ready
+  // This mimics the previous behavior but initializes from React Query data
+  // In the next step, we should replace this with useMutation
+  const [localCameras, setLocalCameras] = useState<ManagedCamera[]>([]);
+  
+  // Sync local state with fetched data initially
+  // This is a temporary workaround to keep the UI interactive without backend mutations
+  if (cameras.length > 0 && localCameras.length === 0 && !isLoading) {
+    setLocalCameras(cameras);
+  }
+  
+  // Use localCameras if available (for optimistic UI updates simulation), otherwise use fetched data
+  const displayCameras = localCameras.length > 0 ? localCameras : cameras;
 
-    fetchCameras();
-  }, []);
+  const alertCount = displayCameras.filter(c => c.status === 'alert').length;
+  const warningCount = displayCameras.filter(c => c.status === 'warning').length;
+  const activeCameras = displayCameras.filter(cam => cam.active).length;
 
-  const alertCount = cameras.filter(c => c.status === 'alert').length;
-  const warningCount = cameras.filter(c => c.status === 'warning').length;
-  const activeCameras = cameras.filter(cam => cam.active).length;
-
-  const filteredCameras = cameras.filter(cam =>
+  const filteredCameras = displayCameras.filter(cam =>
     cam.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     cam.location.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -96,7 +91,7 @@ export function CCTVPageContent() {
       resolution: formData.resolution,
       active: true,
     };
-    setCameras([...cameras, newCamera]);
+    setLocalCameras([...displayCameras, newCamera]);
     setIsAddDialogOpen(false);
     setFormData({ name: '', location: '', ipAddress: '', resolution: '1920x1080' });
     toast({
@@ -107,7 +102,7 @@ export function CCTVPageContent() {
 
   const handleEdit = () => {
     if (!selectedCamera) return;
-    setCameras(cameras.map(cam =>
+    setLocalCameras(displayCameras.map(cam =>
       cam.id === selectedCamera.id
         ? {
             ...cam,
@@ -128,7 +123,7 @@ export function CCTVPageContent() {
 
   const handleDelete = () => {
     if (!selectedCamera) return;
-    setCameras(cameras.filter(cam => cam.id !== selectedCamera.id));
+    setLocalCameras(displayCameras.filter(cam => cam.id !== selectedCamera.id));
     setIsDeleteDialogOpen(false);
     setSelectedCamera(null);
     toast({
@@ -138,7 +133,7 @@ export function CCTVPageContent() {
   };
 
   const handleToggleActive = (cameraId: string) => {
-    setCameras(cameras.map(cam =>
+    setLocalCameras(displayCameras.map(cam =>
       cam.id === cameraId
         ? { ...cam, active: !cam.active, status: !cam.active ? 'normal' : 'offline' }
         : cam
@@ -173,7 +168,7 @@ export function CCTVPageContent() {
     }
   };
 
-  if (loading) {
+  if (isLoading && displayCameras.length === 0) {
     return (
       <ProtectedRoute>
         <DashboardLayout title="CCTV">
@@ -193,7 +188,7 @@ export function CCTVPageContent() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <Badge variant="outline" className="text-sm py-1 px-3">
-                총 {cameras.length}대
+                총 {displayCameras.length}대
               </Badge>
               <Badge className="bg-success/10 text-success border-success/20 text-sm py-1 px-3">
                 <Power className="h-3 w-3 mr-1" />
@@ -201,7 +196,7 @@ export function CCTVPageContent() {
               </Badge>
               <Badge variant="secondary" className="text-sm py-1 px-3">
                 <PowerOff className="h-3 w-3 mr-1" />
-                비활성 {cameras.length - activeCameras}대
+                비활성 {displayCameras.length - activeCameras}대
               </Badge>
               {alertCount > 0 && (
                 <Badge variant="destructive" className="text-sm py-1 px-3">

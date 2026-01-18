@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { CCTVGrid } from "@/components/dashboard/CCTVGrid";
 import { EventLog } from "@/components/dashboard/EventLog";
@@ -10,35 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Monitor, ClipboardList, LayoutDashboard, BarChart3 } from "lucide-react";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
-import { camerasApi, eventsApi, aiResponsesApi } from "@/lib/api";
-import type { Camera, Event, AIResponse } from "@/types";
+import { useStreams, useEventLogs, useAIResponses } from "@/hooks/useMonitoring";
 
 export function DashboardContent() {
-  const [cameras, setCameras] = useState<Camera[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [aiResponses, setAiResponses] = useState<AIResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: cameras = [], isLoading: isLoadingCameras } = useStreams();
+  const { data: events = [], isLoading: isLoadingEvents } = useEventLogs();
+  const { data: aiResponses = [], isLoading: isLoadingAI } = useAIResponses();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [camerasData, eventsData, aiResponsesData] = await Promise.all([
-          camerasApi.getAll(),
-          eventsApi.getAll(),
-          aiResponsesApi.getAll(),
-        ]);
-        setCameras(camerasData);
-        setEvents(eventsData);
-        setAiResponses(aiResponsesData);
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  const loading = isLoadingCameras || isLoadingEvents || isLoadingAI;
 
   return (
     <ProtectedRoute>

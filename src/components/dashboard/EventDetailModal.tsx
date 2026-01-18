@@ -44,8 +44,6 @@ const getEventTypeBadge = (type: Event['type']) => {
 
 const getStatusBadge = (status: Event['status']) => {
   switch (status) {
-    case 'pending':
-      return <Badge variant="outline">대기중</Badge>;
     case 'processing':
       return <Badge variant="secondary" className="bg-primary/10 text-primary">처리중</Badge>;
     case 'resolved':
@@ -209,8 +207,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                   <div className="p-3 bg-muted/30 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">처리 상태</p>
                     <p className="text-sm font-medium">
-                      {event.status === 'pending' ? '대기중' : 
-                       event.status === 'processing' ? '처리중' : '완료'}
+                      {event.status === 'processing' ? '처리중' : '완료'}
                     </p>
                   </div>
                 </div>

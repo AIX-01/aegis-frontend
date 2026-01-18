@@ -10,8 +10,7 @@ import {
   AlertTriangle, 
   Info, 
   CheckCircle2,
-  ExternalLink,
-  Check
+  ExternalLink
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -24,7 +23,6 @@ interface NotificationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onMarkAsRead: (id: string) => void;
-  onMarkAllAsRead: () => void;
 }
 
 const getNotificationIcon = (type: Notification['type']) => {
@@ -57,8 +55,7 @@ export function NotificationModal({
   notifications, 
   open, 
   onOpenChange, 
-  onMarkAsRead,
-  onMarkAllAsRead
+  onMarkAsRead
 }: NotificationModalProps) {
   const router = useRouter();
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -82,17 +79,6 @@ export function NotificationModal({
                 </Badge>
               )}
             </DialogTitle>
-            {unreadCount > 0 && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-xs h-7"
-                onClick={onMarkAllAsRead}
-              >
-                <Check className="h-3 w-3 mr-1" />
-                모두 읽음
-              </Button>
-            )}
           </div>
         </DialogHeader>
 
@@ -108,7 +94,12 @@ export function NotificationModal({
                 {notifications.slice(0, 5).map((notification) => (
                   <div
                     key={notification.id}
-                    onClick={() => onMarkAsRead(notification.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!notification.read) {
+                        onMarkAsRead(notification.id);
+                      }
+                    }}
                     className={cn(
                       "p-3 rounded-lg cursor-pointer transition-colors",
                       notification.read 

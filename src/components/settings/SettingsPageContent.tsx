@@ -27,6 +27,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { statsApi } from "@/lib/api";
+import type { StorageInfo } from "@/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,14 +45,12 @@ export function SettingsPageContent() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
 
-  const usedStorage = 245; // GB
-  const totalStorage = 500; // GB
-  const storagePercentage = (usedStorage / totalStorage) * 100;
+  const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null);
 
   // Profile states
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('010-1234-5678');
+  const [phone, setPhone] = useState('');
 
   // Sync user data when loaded
   useEffect(() => {
@@ -59,6 +59,23 @@ export function SettingsPageContent() {
       setEmail(user.email || '');
     }
   }, [user]);
+
+  // Fetch storage info
+  useEffect(() => {
+    const fetchStorageInfo = async () => {
+      try {
+        const data = await statsApi.getStorageInfo();
+        setStorageInfo(data);
+      } catch (error) {
+        console.error('Failed to fetch storage info:', error);
+      }
+    };
+    fetchStorageInfo();
+  }, []);
+
+  const usedStorage = storageInfo?.usedStorage ?? 0;
+  const totalStorage = storageInfo?.totalStorage ?? 1;
+  const storagePercentage = (usedStorage / totalStorage) * 100;
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');

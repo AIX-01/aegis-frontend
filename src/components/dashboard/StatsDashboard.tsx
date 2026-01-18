@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { statsApi } from "@/lib/api";
-import type { DailyStat, EventTypeStat, MonthlyEventData } from "@/types";
+import type { DailyStat, EventTypeStat, MonthlyEventData, SummaryStats } from "@/types";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -58,17 +58,22 @@ export function StatsDashboard() {
   const [dailyStats, setDailyStats] = useState<DailyStat[]>([]);
   const [eventTypeStats, setEventTypeStats] = useState<EventTypeStat[]>([]);
   const [monthlyEventData, setMonthlyEventData] = useState<MonthlyEventData>({});
+  const [summaryStats, setSummaryStats] = useState<SummaryStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const data = await statsApi.getDaily();
-        const eventTypes = await statsApi.getEventTypes();
-        const monthly = await statsApi.getMonthly();
-        setDailyStats(data);
+        const [daily, eventTypes, monthly, summary] = await Promise.all([
+          statsApi.getDaily(),
+          statsApi.getEventTypes(),
+          statsApi.getMonthly(),
+          statsApi.getSummary(),
+        ]);
+        setDailyStats(daily);
         setEventTypeStats(eventTypes);
         setMonthlyEventData(monthly);
+        setSummaryStats(summary);
       } catch (error) {
         console.error('Failed to fetch stats:', error);
       } finally {
@@ -116,30 +121,30 @@ export function StatsDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="오늘 총 이벤트"
-          value="23"
-          change="전일 대비 -15%"
-          changeType="positive"
+          value={summaryStats?.todayEvents ?? 0}
+          change={summaryStats ? `전일 대비 ${summaryStats.todayEventsChange}%` : undefined}
+          changeType={summaryStats && summaryStats.todayEventsChange < 0 ? "positive" : "negative"}
           icon={<Activity className="h-5 w-5" />}
         />
         <StatCard
           title="AI 대응률"
-          value="98.5%"
-          change="+2.1% 향상"
+          value={summaryStats ? `${summaryStats.aiResponseRate}%` : '0%'}
+          change={summaryStats ? `+${summaryStats.aiResponseRateChange}% 향상` : undefined}
           changeType="positive"
           icon={<Shield className="h-5 w-5" />}
         />
         <StatCard
           title="평균 대응 시간"
-          value="2.3초"
+          value={summaryStats ? `${summaryStats.avgResponseTime}초` : '0초'}
           change="목표 달성"
           changeType="positive"
           icon={<Clock className="h-5 w-5" />}
         />
         <StatCard
           title="위험 알림"
-          value="2"
+          value={summaryStats?.activeAlerts ?? 0}
           change="현재 활성"
-          changeType="negative"
+          changeType={summaryStats && summaryStats.activeAlerts > 0 ? "negative" : "neutral"}
           icon={<AlertTriangle className="h-5 w-5" />}
         />
       </div>

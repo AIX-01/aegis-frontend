@@ -2,7 +2,7 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
-import { AlertCircle, AlertTriangle, CheckCircle2, Clock, Shield } from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCircle2, Shield } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -42,17 +42,9 @@ const getEventTypeBadge = (type: Event['type']) => {
 
 const getStatusBadge = (status: Event['status']) => {
   switch (status) {
-    case 'pending':
-      return (
-        <Badge variant="outline" className="text-xs gap-1">
-          <Clock className="h-3 w-3" />
-          대기중
-        </Badge>
-      );
     case 'processing':
       return (
-        <Badge variant="secondary" className="text-xs gap-1 bg-primary/10 text-primary">
-          <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+        <Badge variant="secondary" className="text-xs gap-1">
           처리중
         </Badge>
       );
@@ -83,12 +75,7 @@ export function EventLog({ events }: EventLogProps) {
             <div
               key={event.id}
               onClick={() => handleEventClick(event)}
-              className={cn(
-                "p-3 rounded-lg border transition-colors cursor-pointer",
-                event.status === 'processing' && event.type !== 'normal' 
-                  ? "bg-card border-primary/20 hover:border-primary/40" 
-                  : "bg-card/50 border-border/50 hover:bg-card hover:border-border"
-              )}
+              className="p-3 rounded-lg border bg-card/50 border-border/50 cursor-pointer"
             >
               <div className="flex items-start gap-3">
                 <div className="mt-0.5">

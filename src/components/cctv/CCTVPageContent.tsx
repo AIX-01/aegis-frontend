@@ -2,15 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { CCTVGrid } from "@/components/dashboard/CCTVGrid";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Monitor, Maximize2, Camera, Plus, Pencil, Trash2, MapPin, Power, PowerOff, Search, X, Settings } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Camera, Plus, Pencil, Trash2, MapPin, Power, PowerOff, Search, X, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -36,18 +34,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { camerasApi } from "@/lib/api";
 import type { Camera as CameraType, ManagedCamera } from "@/types";
+import { cn } from "@/lib/utils";
 
 export function CCTVPageContent() {
   const [cameras, setCameras] = useState<ManagedCamera[]>([]);
@@ -170,6 +161,18 @@ export function CCTVPageContent() {
     setIsDeleteDialogOpen(true);
   };
 
+  const getStatusBadge = (camera: ManagedCamera) => {
+    if (camera.status === 'alert') {
+      return <Badge variant="destructive">경고</Badge>;
+    } else if (camera.status === 'warning') {
+      return <Badge className="bg-warning text-warning-foreground">주의</Badge>;
+    } else if (camera.active) {
+      return <Badge className="bg-success text-success-foreground">정상</Badge>;
+    } else {
+      return <Badge variant="secondary">오프라인</Badge>;
+    }
+  };
+
   if (loading) {
     return (
       <ProtectedRoute>
@@ -185,221 +188,156 @@ export function CCTVPageContent() {
   return (
     <ProtectedRoute>
       <DashboardLayout title="CCTV">
-        <Tabs defaultValue="monitoring" className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="monitoring" className="gap-2">
-              <Monitor className="h-4 w-4" />
-              모니터링
-            </TabsTrigger>
-            <TabsTrigger value="management" className="gap-2">
-              <Settings className="h-4 w-4" />
-              카메라 관리
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Monitoring Tab */}
-          <TabsContent value="monitoring" className="m-0">
-            <div className="space-y-6">
-              {/* Status overview */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <Badge variant="outline" className="text-sm py-1 px-3">
-                    총 {cameras.length}대 카메라
-                  </Badge>
-                  {alertCount > 0 && (
-                    <Badge variant="destructive" className="text-sm py-1 px-3">
-                      {alertCount}건 위험
-                    </Badge>
-                  )}
-                  {warningCount > 0 && (
-                    <Badge className="bg-warning text-warning-foreground text-sm py-1 px-3">
-                      {warningCount}건 의심
-                    </Badge>
-                  )}
-                </div>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Maximize2 className="h-4 w-4" />
-                  전체화면
-                </Button>
-              </div>
-
-              {/* Main CCTV Grid */}
-              <Card className="soft-shadow">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Monitor className="h-5 w-5 text-primary" />
-                    실시간 영상 (3x3)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CCTVGrid cameras={cameras} />
-                </CardContent>
-              </Card>
+        <div className="space-y-6">
+          {/* Stats and Actions */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Badge variant="outline" className="text-sm py-1 px-3">
+                총 {cameras.length}대
+              </Badge>
+              <Badge className="bg-success/10 text-success border-success/20 text-sm py-1 px-3">
+                <Power className="h-3 w-3 mr-1" />
+                활성 {activeCameras}대
+              </Badge>
+              <Badge variant="secondary" className="text-sm py-1 px-3">
+                <PowerOff className="h-3 w-3 mr-1" />
+                비활성 {cameras.length - activeCameras}대
+              </Badge>
+              {alertCount > 0 && (
+                <Badge variant="destructive" className="text-sm py-1 px-3">
+                  {alertCount}건 위험
+                </Badge>
+              )}
+              {warningCount > 0 && (
+                <Badge className="bg-warning text-warning-foreground text-sm py-1 px-3">
+                  {warningCount}건 의심
+                </Badge>
+              )}
             </div>
-          </TabsContent>
+            <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              카메라 추가
+            </Button>
+          </div>
 
-          {/* Management Tab */}
-          <TabsContent value="management" className="m-0">
-            <div className="space-y-6">
-              {/* Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="soft-shadow">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 rounded-lg bg-primary/10">
-                        <Camera className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold">{cameras.length}</p>
-                        <p className="text-sm text-muted-foreground">전체 카메라</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="soft-shadow">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 rounded-lg bg-success/10">
-                        <Power className="h-5 w-5 text-success" />
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold">{activeCameras}</p>
-                        <p className="text-sm text-muted-foreground">활성화</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="soft-shadow">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 rounded-lg bg-muted">
-                        <PowerOff className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold">{cameras.length - activeCameras}</p>
-                        <p className="text-sm text-muted-foreground">비활성화</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+          {/* Search */}
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="카메라 이름 또는 위치로 검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                onClick={() => setSearchQuery('')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
 
-              {/* Camera List */}
-              <Card className="soft-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Camera className="h-5 w-5 text-primary" />
-                      카메라 목록
-                    </CardTitle>
-                    <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      카메라 추가
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {/* Search */}
-                  <div className="relative mb-4">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="카메라 이름 또는 위치로 검색..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9"
-                    />
-                    {searchQuery && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-                        onClick={() => setSearchQuery('')}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+          {/* Camera Grid */}
+          {filteredCameras.length === 0 ? (
+            <Card className="soft-shadow">
+              <CardContent className="py-12">
+                <div className="text-center text-muted-foreground">
+                  <Camera className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>{searchQuery ? '검색 결과가 없습니다.' : '등록된 카메라가 없습니다.'}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredCameras.map((camera) => (
+                <Card
+                  key={camera.id}
+                  className={cn(
+                    "soft-shadow overflow-hidden transition-all",
+                    camera.status === 'alert' && "ring-2 ring-destructive",
+                    camera.status === 'warning' && "ring-2 ring-warning"
+                  )}
+                >
+                  {/* Thumbnail Area */}
+                  <div className={cn(
+                    "relative h-40 bg-muted flex items-center justify-center",
+                    !camera.active && "opacity-50"
+                  )}>
+                    {camera.active ? (
+                      <>
+                        <Video className="h-12 w-12 text-muted-foreground/50" />
+                        <span className="absolute bottom-2 left-2 text-xs text-muted-foreground bg-background/80 px-2 py-0.5 rounded">
+                          {camera.resolution}
+                        </span>
+                        <span className="absolute top-2 right-2">
+                          {getStatusBadge(camera)}
+                        </span>
+                        {/* Live indicator */}
+                        <span className="absolute top-2 left-2 flex items-center gap-1 text-xs bg-destructive text-destructive-foreground px-2 py-0.5 rounded">
+                          <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
+                          LIVE
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <PowerOff className="h-12 w-12 text-muted-foreground/30" />
+                        <span className="absolute top-2 right-2">
+                          {getStatusBadge(camera)}
+                        </span>
+                      </>
                     )}
                   </div>
 
-                  {/* Table */}
-                  <div className="rounded-lg border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>카메라 이름</TableHead>
-                          <TableHead>위치</TableHead>
-                          <TableHead>IP 주소</TableHead>
-                          <TableHead>해상도</TableHead>
-                          <TableHead>상태</TableHead>
-                          <TableHead className="text-center">활성화</TableHead>
-                          <TableHead className="text-right">작업</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredCameras.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                              {searchQuery ? '검색 결과가 없습니다.' : '등록된 카메라가 없습니다.'}
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          filteredCameras.map((camera) => (
-                            <TableRow key={camera.id}>
-                              <TableCell className="font-medium">{camera.name}</TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-1 text-muted-foreground">
-                                  <MapPin className="h-3 w-3" />
-                                  {camera.location}
-                                </div>
-                              </TableCell>
-                              <TableCell className="font-mono text-sm">{camera.ipAddress}</TableCell>
-                              <TableCell>{camera.resolution}</TableCell>
-                              <TableCell>
-                                {camera.status === 'alert' ? (
-                                  <Badge variant="destructive">경고</Badge>
-                                ) : camera.status === 'warning' ? (
-                                  <Badge className="bg-warning text-warning-foreground">주의</Badge>
-                                ) : camera.active ? (
-                                  <Badge className="bg-success text-success-foreground">정상</Badge>
-                                ) : (
-                                  <Badge variant="secondary">오프라인</Badge>
-                                )}
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Switch
-                                  checked={camera.active}
-                                  onCheckedChange={() => handleToggleActive(camera.id)}
-                                />
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex items-center justify-end gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => openEditDialog(camera)}
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-destructive hover:text-destructive"
-                                    onClick={() => openDeleteDialog(camera)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
+                  {/* Info Area */}
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <h3 className="font-medium">{camera.name}</h3>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <MapPin className="h-3 w-3" />
+                          {camera.location}
+                        </div>
+                      </div>
+                      <Switch
+                        checked={camera.active}
+                        onCheckedChange={() => handleToggleActive(camera.id)}
+                      />
+                    </div>
+
+                    <div className="text-xs text-muted-foreground font-mono">
+                      IP: {camera.ipAddress}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => openEditDialog(camera)}
+                      >
+                        <Pencil className="h-3 w-3 mr-1" />
+                        수정
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-destructive hover:text-destructive"
+                        onClick={() => openDeleteDialog(camera)}
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        삭제
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
 
         {/* Add Dialog */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from "react";
 import {
   LayoutDashboard, 
   Monitor, 
@@ -24,16 +23,13 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { notificationsApi } from "@/lib/api";
-import type { Notification } from "@/types";
 
 const mainMenuItems = [
   { title: "대시보드", url: "/", icon: LayoutDashboard },
   { title: "CCTV", url: "/cctv", icon: Monitor },
-  { title: "이벤트/알림", url: "/events", icon: ClipboardList, badge: 3, showUnread: true },
+  { title: "이벤트", url: "/events", icon: ClipboardList },
 ];
 
 const adminMenuItems = [
@@ -43,35 +39,22 @@ const adminMenuItems = [
 export function AppSidebar() {
   const { user, isAdmin, logout } = useAuth();
   const router = useRouter();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const data = await notificationsApi.getAll();
-        setNotifications(data);
-      } catch (error) {
-        console.error('Failed to fetch notifications:', error);
-      }
-    };
-
-    fetchNotifications();
-  }, []);
-
-  const unreadNotifications = notifications.filter(n => !n.read).length;
 
   return (
     <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
+        <button
+          onClick={() => router.push('/')}
+          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+        >
           <div className="p-2 rounded-lg bg-primary text-primary-foreground">
             <Shield className="h-5 w-5" />
           </div>
-          <div>
-            <h1 className="font-semibold text-base">AI 안전 관제</h1>
-            <p className="text-xs text-muted-foreground">Safety Monitoring</p>
+          <div className="text-left">
+            <h1 className="font-semibold text-base">AEGIS</h1>
+            <p className="text-xs text-muted-foreground">AI Safety Monitoring</p>
           </div>
-        </div>
+        </button>
       </SidebarHeader>
 
       <SidebarContent className="p-2">
@@ -91,16 +74,6 @@ export function AppSidebar() {
                     >
                       <item.icon className="h-4 w-4" />
                       <span className="flex-1">{item.title}</span>
-                      {item.badge && (
-                        <Badge variant="destructive" className="h-5 min-w-5 text-xs">
-                          {item.badge}
-                        </Badge>
-                      )}
-                      {item.showUnread && unreadNotifications > 0 && (
-                        <Badge variant="destructive" className="h-5 min-w-5 text-xs">
-                          {unreadNotifications}
-                        </Badge>
-                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

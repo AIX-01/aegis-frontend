@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { camerasApi, eventsApi, aiResponsesApi } from '@/lib/api';
-import type { Camera, ManagedCamera, Event, AIResponse } from '@/types';
+import { QUERY_KEYS } from '@/lib/queryKeys';
+import type { Camera, ManagedCamera } from '@/types';
 
 export const useStreams = () => {
   return useQuery({
-    queryKey: ['streams'],
+    queryKey: QUERY_KEYS.STREAMS.ALL,
     queryFn: async () => {
       const data = await camerasApi.getAll();
       // Transform Camera to ManagedCamera format if needed
@@ -21,14 +22,14 @@ export const useStreams = () => {
 
 export const useEventLogs = () => {
   return useQuery({
-    queryKey: ['eventLogs'],
+    queryKey: QUERY_KEYS.EVENT_LOGS.ALL,
     queryFn: eventsApi.getAll,
   });
 };
 
 export const useAIResponses = () => {
   return useQuery({
-    queryKey: ['aiResponses'],
+    queryKey: QUERY_KEYS.AI_RESPONSES.ALL,
     queryFn: aiResponsesApi.getAll,
   });
 };

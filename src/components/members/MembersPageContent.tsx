@@ -1,0 +1,454 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import ProtectedRoute from '@/components/layout/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
+import { usersApi, camerasApi } from '@/lib/api';
+import type { User, Camera as CameraType } from '@/types';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Users, UserCheck, UserX, Trash2, Search, Camera as CameraIcon } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+// Camera Permission Editor Component
+const CameraPermissionEditor: React.FC<{
+  user: User;
+  cameras: CameraType[];
+  onSave: (cameraIds: string[]) => void;
+}> = ({ user, cameras, onSave }) => {
+  const [allCameras, setAllCameras] = useState(user.assignedCameras.includes('all'));
+  const [selectedCameras, setSelectedCameras] = useState<string[]>(
+    user.assignedCameras.includes('all') ? cameras.map(c => c.id) : user.assignedCameras
+  );
+
+  const handleToggleAll = (checked: boolean) => {
+    setAllCameras(checked);
+    if (checked) {
+      setSelectedCameras(cameras.map(c => c.id));
+    }
+  };
+
+  const handleToggleCamera = (cameraId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedCameras([...selectedCameras, cameraId]);
+    } else {
+      setSelectedCameras(selectedCameras.filter(id => id !== cameraId));
+      setAllCameras(false);
+    }
+  };
+
+  const handleSave = () => {
+    if (allCameras) {
+      onSave(['all']);
+    } else {
+      onSave(selectedCameras);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+        <Label htmlFor="all-cameras" className="font-medium">전체 카메라 접근</Label>
+        <Switch
+          id="all-cameras"
+          checked={allCameras}
+          onCheckedChange={handleToggleAll}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+        {cameras.map((camera) => (
+          <div
+            key={camera.id}
+            className="flex items-center gap-2 p-2 rounded-lg border bg-card"
+          >
+            <Switch
+              id={`camera-${camera.id}`}
+              checked={selectedCameras.includes(camera.id)}
+              onCheckedChange={(checked) => handleToggleCamera(camera.id, checked)}
+              disabled={allCameras}
+            />
+            <Label htmlFor={`camera-${camera.id}`} className="text-sm cursor-pointer flex-1">
+              {camera.location}
+            </Label>
+          </div>
+        ))}
+      </div>
+
+      <DialogFooter>
+        <Button onClick={handleSave}>저장</Button>
+      </DialogFooter>
+    </div>
+  );
+};
+
+export function MembersPageContent() {
+  const router = useRouter();
+  const { user: currentUser, isAdmin } = useAuth();
+  const { toast } = useToast();
+  const [users, setUsers] = useState<User[]>([]);
+  const [cameras, setCameras] = useState<CameraType[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      router.push('/');
+      return;
+    }
+    refreshData();
+  }, [isAdmin, router]);
+
+  const refreshData = async () => {
+    try {
+      const [usersData, camerasData] = await Promise.all([
+        usersApi.getAll(),
+        camerasApi.getAll(),
+      ]);
+      setUsers(usersData);
+      setCameras(camerasData);
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+    }
+  };
+
+  const handleApprove = async (userId: string) => {
+    try {
+      await usersApi.approve(userId);
+      await refreshData();
+      toast({
+        title: '승인 완료',
+        description: '멤버가 승인되었습니다.',
+      });
+    } catch (error) {
+      toast({
+        title: '오류',
+        description: '승인 처리 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleReject = async (userId: string) => {
+    try {
+      await usersApi.delete(userId);
+      await refreshData();
+      toast({
+        title: '거절 완료',
+        description: '가입 요청이 거절되었습니다.',
+      });
+    } catch (error) {
+      toast({
+        title: '오류',
+        description: '처리 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDelete = async (userId: string) => {
+    if (userId === currentUser?.id) {
+      toast({
+        title: '삭제 불가',
+        description: '자신의 계정은 삭제할 수 없습니다.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    try {
+      await usersApi.delete(userId);
+      await refreshData();
+      toast({
+        title: '삭제 완료',
+        description: '멤버가 삭제되었습니다.',
+      });
+    } catch (error) {
+      toast({
+        title: '오류',
+        description: '삭제 처리 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleUpdateRole = async (userId: string, role: 'user' | 'admin') => {
+    try {
+      await usersApi.update(userId, { role });
+      await refreshData();
+      toast({
+        title: '역할 변경',
+        description: `역할이 ${role === 'admin' ? '관리자' : '일반 사용자'}로 변경되었습니다.`,
+      });
+    } catch (error) {
+      toast({
+        title: '오류',
+        description: '역할 변경 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleUpdateCameras = async (userId: string, cameraIds: string[]) => {
+    try {
+      await usersApi.update(userId, { assignedCameras: cameraIds });
+      await refreshData();
+      setIsEditDialogOpen(false);
+      toast({
+        title: '카메라 권한 변경',
+        description: '카메라 접근 권한이 업데이트되었습니다.',
+      });
+    } catch (error) {
+      toast({
+        title: '오류',
+        description: '권한 변경 중 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const pendingUsers = users.filter(u => !u.approved);
+  const approvedUsers = users.filter(u => u.approved);
+  const filteredUsers = approvedUsers.filter(u =>
+    u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const stats = {
+    total: approvedUsers.length,
+    admins: approvedUsers.filter(u => u.role === 'admin').length,
+    pending: pendingUsers.length,
+  };
+
+  return (
+    <ProtectedRoute requireAdmin>
+    <DashboardLayout title="멤버 관리">
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">멤버 관리</h1>
+          <p className="text-muted-foreground">시스템 사용자 및 권한을 관리합니다</p>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="glass-card">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-primary/10">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats.total}</p>
+                  <p className="text-sm text-muted-foreground">전체 멤버</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-info/10">
+                  <UserCheck className="h-6 w-6 text-info" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats.admins}</p>
+                  <p className="text-sm text-muted-foreground">관리자</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-warning/10">
+                  <UserX className="h-6 w-6 text-warning" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats.pending}</p>
+                  <p className="text-sm text-muted-foreground">승인 대기</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs defaultValue="members" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="members">멤버 목록</TabsTrigger>
+            <TabsTrigger value="pending" className="relative">
+              승인 대기
+              {pendingUsers.length > 0 && (
+                <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                  {pendingUsers.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="members" className="space-y-4">
+            {/* Search */}
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="이름 또는 이메일로 검색..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Members Table */}
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>이름</TableHead>
+                    <TableHead>이메일</TableHead>
+                    <TableHead>역할</TableHead>
+                    <TableHead>카메라 권한</TableHead>
+                    <TableHead>가입일</TableHead>
+                    <TableHead className="text-right">관리</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((member) => (
+                    <TableRow key={member.id}>
+                      <TableCell className="font-medium">{member.name}</TableCell>
+                      <TableCell>{member.email}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={member.role}
+                          onValueChange={(value: 'user' | 'admin') => handleUpdateRole(member.id, value)}
+                          disabled={member.id === currentUser?.id}
+                        >
+                          <SelectTrigger className="w-28">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">일반 사용자</SelectItem>
+                            <SelectItem value="admin">관리자</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="font-normal">
+                          {member.assignedCameras.includes('all')
+                            ? '전체'
+                            : `${member.assignedCameras.length}개`}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {new Date(member.createdAt).toLocaleDateString('ko-KR')}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Dialog open={isEditDialogOpen && selectedUser?.id === member.id} onOpenChange={(open) => {
+                            setIsEditDialogOpen(open);
+                            if (open) setSelectedUser(member);
+                          }}>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <CameraIcon className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>카메라 권한 설정</DialogTitle>
+                                <DialogDescription>
+                                  {member.name}님에게 접근 가능한 카메라를 설정합니다
+                                </DialogDescription>
+                              </DialogHeader>
+                              <CameraPermissionEditor
+                                user={member}
+                                cameras={cameras}
+                                onSave={(cameraIds) => handleUpdateCameras(member.id, cameraIds)}
+                              />
+                            </DialogContent>
+                          </Dialog>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(member.id)}
+                            disabled={member.id === currentUser?.id}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="pending" className="space-y-4">
+            {pendingUsers.length === 0 ? (
+              <Card className="glass-card">
+                <CardContent className="pt-6 text-center py-12">
+                  <UserCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">승인 대기 중인 요청이 없습니다</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {pendingUsers.map((pending) => (
+                  <Card key={pending.id} className="glass-card">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-lg font-semibold text-primary">
+                              {pending.name.charAt(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium">{pending.name}</p>
+                            <p className="text-sm text-muted-foreground">{pending.email}</p>
+                            <p className="text-xs text-muted-foreground">
+                              신청일: {new Date(pending.createdAt).toLocaleDateString('ko-KR')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleReject(pending.id)}
+                          >
+                            거절
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleApprove(pending.id)}
+                          >
+                            승인
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </DashboardLayout>
+    </ProtectedRoute>
+  );
+}

@@ -115,7 +115,7 @@ export const mockEvents: Event[] = [
     cameraName: '주차장 A구역',
     type: 'suspicious',
     timestamp: new Date(Date.now() - 10 * 60 * 1000),
-    status: 'pending',
+    status: 'processing',
     description: '장시간 배회 감지',
     aiAction: '모니터링 강화',
     clipUrl: '/clips/evt-3.mp4',
@@ -320,6 +320,29 @@ export const mockMonthlyEventData: MonthlyEventData = {
   '2026-01-11': { events: 5, alerts: 0 },
   '2026-01-12': { events: 8, alerts: 2 },
   '2026-01-13': { events: 23, alerts: 5 },
+  '2026-01-19': { events: 23, alerts: 5 },
+};
+
+// Summary Stats (for dashboard stat cards)
+export const mockSummaryStats = {
+  todayEvents: 23,
+  aiResponseRate: 98.5,
+  avgResponseTime: 2.3,
+  activeAlerts: 2,
+  todayEventsChange: -15,
+  aiResponseRateChange: 2.1,
+};
+
+// System Status
+export const mockSystemStatus = {
+  status: 'normal' as const,
+  message: '시스템 정상',
+};
+
+// Storage Info
+export const mockStorageInfo = {
+  usedStorage: 245,
+  totalStorage: 500,
 };
 
 // Helper: Generate tokens

@@ -12,6 +12,8 @@ import {
   Filter,
   X,
   Calendar as CalendarIcon,
+  Clock,
+  CheckCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -150,20 +152,53 @@ export function EventsPageContent() {
     <ProtectedRoute>
       <DashboardLayout title="이벤트">
         <div className="space-y-6">
-          {/* Header with filter button */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Badge variant="outline" className="text-sm py-1 px-3">
-                총 {events.length}건
-              </Badge>
-              <Badge variant="secondary" className="text-sm py-1 px-3">
-                처리중 {processingCount}건
-              </Badge>
-              <Badge variant="secondary" className="text-sm py-1 px-3">
-                완료 {resolvedCount}건
-              </Badge>
-            </div>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="glass-card">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-primary/10">
+                    <ClipboardList className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{events.length}</p>
+                    <p className="text-sm text-muted-foreground">전체</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
+            <Card className="glass-card">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-warning/10">
+                    <Clock className="h-6 w-6 text-warning" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{processingCount}</p>
+                    <p className="text-sm text-muted-foreground">처리중</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="glass-card">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-success/10">
+                    <CheckCircle className="h-6 w-6 text-success" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{resolvedCount}</p>
+                    <p className="text-sm text-muted-foreground">완료</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Filter button */}
+          <div className="flex justify-end">
             <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">

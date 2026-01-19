@@ -612,10 +612,10 @@ interface User {
 ```typescript
 interface Camera {
   id: string;
-  name: string;
-  location: string;
-  status: 'normal' | 'alert' | 'warning' | 'offline';
-  alertType?: 'assault' | 'theft' | 'suspicious';
+  name: string;           // 미디어서버 원본 이름 (수정 불가)
+  connected: boolean;     // 온라인/오프라인 (미디어서버 연결 여부)
+  alias: string;          // 사용자 지정 별칭 (수정 가능)
+  active: boolean;        // ON/OFF 상태 (사용자 제어)
 }
 ```
 
@@ -649,16 +649,6 @@ interface Notification {
 }
 ```
 
-### AIResponse
-```typescript
-interface AIResponse {
-  id: string;
-  eventId: string;
-  action: string;
-  timestamp: string;           // ISO8601
-  status: 'pending' | 'in_progress' | 'completed';
-}
-```
 
 ### SummaryStats
 ```typescript
@@ -730,7 +720,7 @@ interface StorageInfo {
 | 페이지 | 사용 API |
 |--------|----------|
 | 로그인/회원가입 | auth/login, auth/signup |
-| 대시보드 | cameras, events, ai-responses, stats (summary) |
+| 대시보드 | cameras, events, stats (summary) |
 | CCTV | cameras |
 | 이벤트 | events |
 | 멤버 관리 (Admin) | users (전체) |

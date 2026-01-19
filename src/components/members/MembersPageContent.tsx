@@ -10,14 +10,13 @@ import type { User, Camera as CameraType } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, UserCheck, UserX, Trash2, Search, Camera as CameraIcon } from 'lucide-react';
+import { Users, UserCheck, UserX, Trash2, Camera as CameraIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Camera Permission Editor Component
@@ -98,7 +97,6 @@ export function MembersPageContent() {
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [cameras, setCameras] = useState<CameraType[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -219,10 +217,6 @@ export function MembersPageContent() {
 
   const pendingUsers = users.filter(u => !u.approved);
   const approvedUsers = users.filter(u => u.approved);
-  const filteredUsers = approvedUsers.filter(u =>
-    u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const stats = {
     total: approvedUsers.length,
@@ -298,17 +292,6 @@ export function MembersPageContent() {
           </TabsList>
 
           <TabsContent value="members" className="space-y-4">
-            {/* Search */}
-            <div className="relative max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="이름 또는 이메일로 검색..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
             {/* Members Table */}
             <Card>
               <Table>
@@ -323,7 +306,7 @@ export function MembersPageContent() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.map((member) => (
+                  {approvedUsers.map((member) => (
                     <TableRow key={member.id}>
                       <TableCell className="font-medium">{member.name}</TableCell>
                       <TableCell>{member.email}</TableCell>

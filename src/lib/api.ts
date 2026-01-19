@@ -1,6 +1,6 @@
 import api, { setAccessToken } from './axios';
 import type {
-  Camera,
+  ManagedCamera,
   Event,
   Notification,
   User,
@@ -48,8 +48,8 @@ export const authApi = {
 
 // Cameras API
 export const camerasApi = {
-  getAll: async (): Promise<Camera[]> => {
-    const response = await api.get<Camera[]>('/api/cameras');
+  getAll: async (): Promise<ManagedCamera[]> => {
+    const response = await api.get<ManagedCamera[]>('/api/cameras');
     return response.data;
   },
 };

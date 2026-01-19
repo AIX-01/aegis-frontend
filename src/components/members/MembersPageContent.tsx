@@ -237,7 +237,6 @@ export function MembersPageContent() {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-foreground">멤버 관리</h1>
-          <p className="text-muted-foreground">시스템 사용자 및 권한을 관리합니다</p>
         </div>
 
         {/* Stats Cards */}

@@ -197,201 +197,6 @@ export function EventsPageContent() {
             </Card>
           </div>
 
-          {/* Filter button */}
-          <div className="flex justify-end">
-            <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Filter className="h-4 w-4" />
-                  필터
-                  {activeFiltersCount > 0 && (
-                    <Badge variant="destructive" className="h-5 min-w-5 text-xs">
-                      {activeFiltersCount}
-                    </Badge>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
-                <SheetHeader>
-                  <SheetTitle>이벤트 필터</SheetTitle>
-                  <SheetDescription>
-                    원하는 조건으로 이벤트를 필터링합니다
-                  </SheetDescription>
-                </SheetHeader>
-
-                <div className="py-6 space-y-6">
-                  {/* 상태 필터 */}
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">상태</Label>
-                    <Select
-                      value={selectedStatus}
-                      onValueChange={(value: 'all' | 'processing' | 'resolved') => setSelectedStatus(value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">전체</SelectItem>
-                        <SelectItem value="processing">처리중</SelectItem>
-                        <SelectItem value="resolved">완료</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* 기간 필터 */}
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">기간</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start text-left font-normal"
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {dateRange?.from ? (
-                            dateRange.to ? (
-                              <>
-                                {format(dateRange.from, "yyyy.MM.dd", { locale: ko })} -{" "}
-                                {format(dateRange.to, "yyyy.MM.dd", { locale: ko })}
-                              </>
-                            ) : (
-                              format(dateRange.from, "yyyy.MM.dd", { locale: ko })
-                            )
-                          ) : (
-                            <span className="text-muted-foreground">기간 선택</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="range"
-                          selected={dateRange}
-                          onSelect={setDateRange}
-                          numberOfMonths={2}
-                          locale={ko}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    {dateRange?.from && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => setDateRange(undefined)}
-                      >
-                        <X className="h-3 w-3 mr-1" />
-                        기간 초기화
-                      </Button>
-                    )}
-                  </div>
-
-                  {/* 이상행동 라벨링 */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium">이상행동 유형</Label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => setSelectedBehaviors(
-                          selectedBehaviors.length === behaviorLabels.length
-                            ? []
-                            : behaviorLabels.map(b => b.id)
-                        )}
-                      >
-                        {selectedBehaviors.length === behaviorLabels.length ? '전체 해제' : '전체 선택'}
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {behaviorLabels.map((behavior) => (
-                        <div
-                          key={behavior.id}
-                          className="flex items-center space-x-2"
-                        >
-                          <Checkbox
-                            id={behavior.id}
-                            checked={selectedBehaviors.includes(behavior.id)}
-                            onCheckedChange={() => handleBehaviorToggle(behavior.id)}
-                          />
-                          <label
-                            htmlFor={behavior.id}
-                            className="text-sm cursor-pointer"
-                          >
-                            {behavior.label}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 위험도 */}
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">위험도</Label>
-                    <div className="flex gap-2">
-                      <Button
-                        variant={selectedRisks.includes('high') ? 'default' : 'outline'}
-                        size="sm"
-                        className={selectedRisks.includes('high') ? 'bg-destructive hover:bg-destructive/90' : ''}
-                        onClick={() => handleRiskToggle('high')}
-                      >
-                        높음
-                      </Button>
-                      <Button
-                        variant={selectedRisks.includes('medium') ? 'default' : 'outline'}
-                        size="sm"
-                        className={selectedRisks.includes('medium') ? 'bg-warning hover:bg-warning/90 text-warning-foreground' : ''}
-                        onClick={() => handleRiskToggle('medium')}
-                      >
-                        중간
-                      </Button>
-                      <Button
-                        variant={selectedRisks.includes('low') ? 'default' : 'outline'}
-                        size="sm"
-                        className={selectedRisks.includes('low') ? 'bg-success hover:bg-success/90 text-success-foreground' : ''}
-                        onClick={() => handleRiskToggle('low')}
-                      >
-                        낮음
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* AI 대응 방식 */}
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">AI 대응 방식</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {aiResponseTypes.map((response) => (
-                        <div
-                          key={response.id}
-                          className="flex items-center space-x-2"
-                        >
-                          <Checkbox
-                            id={`ai-${response.id}`}
-                            checked={selectedAiResponses.includes(response.id)}
-                            onCheckedChange={() => handleAiResponseToggle(response.id)}
-                          />
-                          <label
-                            htmlFor={`ai-${response.id}`}
-                            className="text-sm cursor-pointer"
-                          >
-                            {response.label}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <SheetFooter className="flex gap-2">
-                  <Button variant="outline" onClick={handleResetFilters} className="flex-1">
-                    초기화
-                  </Button>
-                  <Button onClick={handleApplyFilters} className="flex-1">
-                    적용
-                  </Button>
-                </SheetFooter>
-              </SheetContent>
-            </Sheet>
-          </div>
 
           {/* Event Log Card */}
           <Card className="soft-shadow">
@@ -403,6 +208,202 @@ export function EventsPageContent() {
             </CardHeader>
             <CardContent>
               <EventLog events={filteredEvents} />
+
+              {/* Filter button */}
+              <div className="flex justify-end mt-4">
+                <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Filter className="h-4 w-4" />
+                      필터
+                      {activeFiltersCount > 0 && (
+                        <Badge variant="destructive" className="h-5 min-w-5 text-xs">
+                          {activeFiltersCount}
+                        </Badge>
+                      )}
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+                    <SheetHeader>
+                      <SheetTitle>이벤트 필터</SheetTitle>
+                      <SheetDescription>
+                        원하는 조건으로 이벤트를 필터링합니다
+                      </SheetDescription>
+                    </SheetHeader>
+
+                    <div className="py-6 space-y-6">
+                      {/* 상태 필터 */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">상태</Label>
+                        <Select
+                          value={selectedStatus}
+                          onValueChange={(value: 'all' | 'processing' | 'resolved') => setSelectedStatus(value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">전체</SelectItem>
+                            <SelectItem value="processing">처리중</SelectItem>
+                            <SelectItem value="resolved">완료</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* 기간 필터 */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">기간</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="w-full justify-start text-left font-normal"
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {dateRange?.from ? (
+                                dateRange.to ? (
+                                  <>
+                                    {format(dateRange.from, "yyyy.MM.dd", { locale: ko })} -{" "}
+                                    {format(dateRange.to, "yyyy.MM.dd", { locale: ko })}
+                                  </>
+                                ) : (
+                                  format(dateRange.from, "yyyy.MM.dd", { locale: ko })
+                                )
+                              ) : (
+                                <span className="text-muted-foreground">기간 선택</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="range"
+                              selected={dateRange}
+                              onSelect={setDateRange}
+                              numberOfMonths={2}
+                              locale={ko}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        {dateRange?.from && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => setDateRange(undefined)}
+                          >
+                            <X className="h-3 w-3 mr-1" />
+                            기간 초기화
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* 이상행동 라벨링 */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium">이상행동 유형</Label>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => setSelectedBehaviors(
+                              selectedBehaviors.length === behaviorLabels.length
+                                ? []
+                                : behaviorLabels.map(b => b.id)
+                            )}
+                          >
+                            {selectedBehaviors.length === behaviorLabels.length ? '전체 해제' : '전체 선택'}
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {behaviorLabels.map((behavior) => (
+                            <div
+                              key={behavior.id}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                id={behavior.id}
+                                checked={selectedBehaviors.includes(behavior.id)}
+                                onCheckedChange={() => handleBehaviorToggle(behavior.id)}
+                              />
+                              <label
+                                htmlFor={behavior.id}
+                                className="text-sm cursor-pointer"
+                              >
+                                {behavior.label}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* 위험도 */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">위험도</Label>
+                        <div className="flex gap-2">
+                          <Button
+                            variant={selectedRisks.includes('high') ? 'default' : 'outline'}
+                            size="sm"
+                            className={selectedRisks.includes('high') ? 'bg-destructive hover:bg-destructive/90' : ''}
+                            onClick={() => handleRiskToggle('high')}
+                          >
+                            높음
+                          </Button>
+                          <Button
+                            variant={selectedRisks.includes('medium') ? 'default' : 'outline'}
+                            size="sm"
+                            className={selectedRisks.includes('medium') ? 'bg-warning hover:bg-warning/90 text-warning-foreground' : ''}
+                            onClick={() => handleRiskToggle('medium')}
+                          >
+                            중간
+                          </Button>
+                          <Button
+                            variant={selectedRisks.includes('low') ? 'default' : 'outline'}
+                            size="sm"
+                            className={selectedRisks.includes('low') ? 'bg-success hover:bg-success/90 text-success-foreground' : ''}
+                            onClick={() => handleRiskToggle('low')}
+                          >
+                            낮음
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* AI 대응 방식 */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">AI 대응 방식</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {aiResponseTypes.map((response) => (
+                            <div
+                              key={response.id}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                id={`ai-${response.id}`}
+                                checked={selectedAiResponses.includes(response.id)}
+                                onCheckedChange={() => handleAiResponseToggle(response.id)}
+                              />
+                              <label
+                                htmlFor={`ai-${response.id}`}
+                                className="text-sm cursor-pointer"
+                              >
+                                {response.label}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <SheetFooter className="flex gap-2">
+                      <Button variant="outline" onClick={handleResetFilters} className="flex-1">
+                        초기화
+                      </Button>
+                      <Button onClick={handleApplyFilters} className="flex-1">
+                        적용
+                      </Button>
+                    </SheetFooter>
+                  </SheetContent>
+                </Sheet>
+              </div>
             </CardContent>
           </Card>
         </div>

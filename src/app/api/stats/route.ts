@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockDailyStats, mockEventTypeStats, mockMonthlyEventData, mockSummaryStats, mockSystemStatus, mockStorageInfo } from '@/lib/mock-data';
+import { mockDailyStats, mockEventTypeStats, mockMonthlyEventData, mockSummaryStats } from '@/lib/mock-data';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -14,18 +14,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(mockMonthlyEventData);
     case 'summary':
       return NextResponse.json(mockSummaryStats);
-    case 'system':
-      return NextResponse.json(mockSystemStatus);
-    case 'storage':
-      return NextResponse.json(mockStorageInfo);
     default:
       return NextResponse.json({
         daily: mockDailyStats,
         eventTypes: mockEventTypeStats,
         monthly: mockMonthlyEventData,
         summary: mockSummaryStats,
-        system: mockSystemStatus,
-        storage: mockStorageInfo,
       });
   }
 }

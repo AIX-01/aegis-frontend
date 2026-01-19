@@ -9,13 +9,10 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Shield,
-  HardDrive,
   Users,
-  Database,
   User,
   Lock,
   Trash2,
@@ -27,8 +24,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { statsApi } from "@/lib/api";
-import type { StorageInfo } from "@/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,7 +40,6 @@ export function SettingsPageContent() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
 
-  const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null);
 
   // Profile states
   const [name, setName] = useState('');
@@ -60,22 +54,6 @@ export function SettingsPageContent() {
     }
   }, [user]);
 
-  // Fetch storage info
-  useEffect(() => {
-    const fetchStorageInfo = async () => {
-      try {
-        const data = await statsApi.getStorageInfo();
-        setStorageInfo(data);
-      } catch (error) {
-        console.error('Failed to fetch storage info:', error);
-      }
-    };
-    fetchStorageInfo();
-  }, []);
-
-  const usedStorage = storageInfo?.usedStorage ?? 0;
-  const totalStorage = storageInfo?.totalStorage ?? 1;
-  const storagePercentage = (usedStorage / totalStorage) * 100;
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -191,63 +169,6 @@ export function SettingsPageContent() {
               </CardContent>
             </Card>
 
-            {/* Storage Settings */}
-            <Card className="soft-shadow">
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <HardDrive className="h-5 w-5 text-primary" />
-                  저장 공간
-                </CardTitle>
-                <CardDescription>
-                  영상 클립 및 데이터 저장 공간 현황
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">사용 중</span>
-                    <span className="text-sm text-muted-foreground">
-                      {usedStorage}GB / {totalStorage}GB ({storagePercentage.toFixed(1)}%)
-                    </span>
-                  </div>
-                  <Progress value={storagePercentage} className="h-3" />
-                </div>
-
-                <div className="grid gap-4">
-                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Database className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">영상 클립</span>
-                    </div>
-                    <span className="text-sm font-medium">180 GB</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Database className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">이벤트 로그</span>
-                    </div>
-                    <span className="text-sm font-medium">45 GB</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Database className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">분석 보고서</span>
-                    </div>
-                    <span className="text-sm font-medium">20 GB</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>자동 정리</Label>
-                    <p className="text-sm text-muted-foreground">
-                      30일 이상 된 영상을 자동으로 삭제합니다
-                    </p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Contact Settings */}
             <Card className="soft-shadow">

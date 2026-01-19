@@ -12,8 +12,6 @@ import type {
   SignupRequest,
   RefreshResponse,
   SummaryStats,
-  SystemStatus,
-  StorageInfo,
 } from '@/types';
 
 // Auth API
@@ -89,16 +87,6 @@ export const statsApi = {
 
   getSummary: async (): Promise<SummaryStats> => {
     const response = await api.get<SummaryStats>('/api/stats?type=summary');
-    return response.data;
-  },
-
-  getSystemStatus: async (): Promise<SystemStatus> => {
-    const response = await api.get<SystemStatus>('/api/stats?type=system');
-    return response.data;
-  },
-
-  getStorageInfo: async (): Promise<StorageInfo> => {
-    const response = await api.get<StorageInfo>('/api/stats?type=storage');
     return response.data;
   },
 };

@@ -101,14 +101,3 @@ export interface SummaryStats {
   aiResponseRateChange: number;
 }
 
-// System Status types
-export interface SystemStatus {
-  status: 'normal' | 'warning' | 'error';
-  message: string;
-}
-
-// Storage Info types
-export interface StorageInfo {
-  usedStorage: number;
-  totalStorage: number;
-}

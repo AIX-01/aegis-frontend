@@ -201,16 +201,12 @@ export function EventsPageContent() {
           {/* Event Log Card */}
           <Card className="soft-shadow">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <ClipboardList className="h-5 w-5 text-primary" />
-                이벤트 목록
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <EventLog events={filteredEvents} />
-
-              {/* Filter button */}
-              <div className="flex justify-end mt-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <ClipboardList className="h-5 w-5 text-primary" />
+                  이벤트 목록
+                </CardTitle>
+                {/* Filter button */}
                 <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2">
@@ -404,6 +400,9 @@ export function EventsPageContent() {
                   </SheetContent>
                 </Sheet>
               </div>
+            </CardHeader>
+            <CardContent>
+              <EventLog events={filteredEvents} />
             </CardContent>
           </Card>
         </div>

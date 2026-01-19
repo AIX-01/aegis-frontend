@@ -228,10 +228,6 @@ export function MembersPageContent() {
     <ProtectedRoute requireAdmin>
     <DashboardLayout title="멤버 관리">
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">멤버 관리</h1>
-        </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

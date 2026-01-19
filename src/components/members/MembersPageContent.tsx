@@ -6,7 +6,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { usersApi, camerasApi } from '@/lib/api';
-import type { User, Camera as CameraType } from '@/types';
+import type { User, ManagedCamera as CameraType } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

@@ -1,5 +1,5 @@
 // Mock data for development API routes (stored in memory)
-import type { Camera, Event, Notification, User, DailyStat, EventTypeStat, MonthlyEventData } from '@/types';
+import type { ManagedCamera, Event, Notification, User, DailyStat, EventTypeStat, MonthlyEventData } from '@/types';
 
 // Mock Users (메모리 저장)
 export const mockUsers: User[] = [
@@ -23,16 +23,16 @@ export const mockPasswords: Record<string, string> = {
 export const mockRefreshTokens: Map<string, string> = new Map(); // token -> userId
 
 // Cameras
-export const mockCameras: Camera[] = [
-  { id: 'cam-1', name: 'CAM-01', connected: true },
-  { id: 'cam-2', name: 'CAM-02', connected: true },
-  { id: 'cam-3', name: 'CAM-03', connected: true },
-  { id: 'cam-4', name: 'CAM-04', connected: true },
-  { id: 'cam-5', name: 'CAM-05', connected: true },
-  { id: 'cam-6', name: 'CAM-06', connected: false },
-  { id: 'cam-7', name: 'CAM-07', connected: true },
-  { id: 'cam-8', name: 'CAM-08', connected: true },
-  { id: 'cam-9', name: 'CAM-09', connected: true },
+export const mockCameras: ManagedCamera[] = [
+  { id: 'cam-1', name: 'CAM-01', connected: true, alias: 'CAM-01', active: true },
+  { id: 'cam-2', name: 'CAM-02', connected: true, alias: 'CAM-02', active: true },
+  { id: 'cam-3', name: 'CAM-03', connected: true, alias: 'CAM-03', active: true },
+  { id: 'cam-4', name: 'CAM-04', connected: true, alias: 'CAM-04', active: true },
+  { id: 'cam-5', name: 'CAM-05', connected: true, alias: 'CAM-05', active: true },
+  { id: 'cam-6', name: 'CAM-06', connected: false, alias: 'CAM-06', active: false },
+  { id: 'cam-7', name: 'CAM-07', connected: true, alias: 'CAM-07', active: true },
+  { id: 'cam-8', name: 'CAM-08', connected: true, alias: 'CAM-08', active: true },
+  { id: 'cam-9', name: 'CAM-09', connected: true, alias: 'CAM-09', active: true },
 ];
 
 // Events

@@ -3,8 +3,18 @@
 > AI 기반 안전 모니터링 시스템 백엔드 API 명세
 
 **Base URL**: `/api`  
-**버전**: 1.1.0  
+**버전**: 2.0.0  
 **최종 업데이트**: 2026-01-19
+
+---
+
+## 기술 스택
+
+| 용도 | 기술 |
+|------|------|
+| 메인 DB | PostgreSQL |
+| 캐시/세션 | Redis |
+| 오브젝트 스토리지 | MinIO |
 
 ---
 
@@ -16,15 +26,16 @@
 4. [알림 (Notifications)](#4-알림-notifications)
 5. [통계 (Stats)](#5-통계-stats)
 6. [사용자 관리 (Users)](#6-사용자-관리-users---admin-전용)
-7. [타입 정의](#7-타입-정의)
-8. [에러 응답](#8-에러-응답)
+7. [설정 (Settings)](#7-설정-settings)
+8. [타입 정의](#8-타입-정의)
+9. [에러 응답](#9-에러-응답)
 
 ---
 
 ## 인증 방식
 
-- **Access Token**: `Authorization: Bearer {accessToken}` 헤더로 전송
-- **Refresh Token**: `httpOnly` 쿠키로 관리 (`refreshToken`)
+- **Access Token**: `Authorization: Bearer {accessToken}` 헤더로 전송 (Redis 저장, 15분 TTL)
+- **Refresh Token**: `httpOnly` 쿠키로 관리 (`refreshToken`) (Redis 저장, 7일 TTL)
 - Access Token 만료 시 `/api/auth/refresh`로 갱신
 
 ---
@@ -192,6 +203,44 @@ Authorization: Bearer {accessToken}
 |--------|-------|-------------|
 | 401 | 인증이 필요합니다. | Authorization 헤더 미존재 |
 | 401 | 사용자를 찾을 수 없습니다. | 유효하지 않은 토큰 |
+
+---
+
+### 1.6 비밀번호 변경
+
+현재 비밀번호 확인 후 새 비밀번호로 변경
+
+```
+PATCH /api/auth/password
+```
+
+**Request Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+```json
+{
+  "currentPassword": "string",
+  "newPassword": "string"
+}
+```
+
+**Response** `200 OK`
+```json
+{
+  "success": true,
+  "message": "비밀번호가 변경되었습니다."
+}
+```
+
+**Error Responses**
+| Status | Error | Description |
+|--------|-------|-------------|
+| 400 | 현재 비밀번호가 일치하지 않습니다. | 비밀번호 불일치 |
+| 400 | 새 비밀번호는 6자 이상이어야 합니다. | 비밀번호 길이 오류 |
+| 401 | 인증이 필요합니다. | 미인증 |
 
 ---
 
@@ -558,6 +607,78 @@ Authorization: Bearer {accessToken}
 
 ---
 
+## 7. 설정 (Settings)
+
+### 7.1 비상 연락처 조회
+
+비상 연락처 목록 조회
+
+```
+GET /api/settings/emergency-contacts
+```
+
+**Request Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response** `200 OK`
+```json
+[
+  {
+    "id": "string",
+    "type": "primary",
+    "phone": "010-1234-5678",
+    "email": "primary@company.com"
+  },
+  {
+    "id": "string",
+    "type": "secondary",
+    "phone": "010-9876-5432",
+    "email": "secondary@company.com"
+  }
+]
+```
+
+---
+
+### 7.2 비상 연락처 수정
+
+비상 연락처 정보 수정
+
+```
+PUT /api/settings/emergency-contacts
+```
+
+**Request Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+```json
+{
+  "primary": {
+    "phone": "010-1234-5678",
+    "email": "primary@company.com"
+  },
+  "secondary": {
+    "phone": "010-9876-5432",
+    "email": "secondary@company.com"
+  }
+}
+```
+
+**Response** `200 OK`
+```json
+{
+  "success": true,
+  "message": "비상 연락처가 수정되었습니다."
+}
+```
+
+---
+
 ## 8. 타입 정의
 
 ### User
@@ -673,6 +794,8 @@ interface SummaryStats {
 | 대시보드 | cameras, events, stats (summary) |
 | CCTV | cameras |
 | 이벤트 | events |
+| 통계 | stats (daily, event-types, monthly) |
 | 멤버 관리 (Admin) | users (전체) |
-| 설정 | auth/me |
+| 설정 - 시스템 | settings/emergency-contacts |
+| 설정 - 마이페이지 | auth/me, auth/password |
 | 헤더 (공통) | notifications |

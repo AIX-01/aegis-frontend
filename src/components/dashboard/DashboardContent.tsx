@@ -1,84 +1,77 @@
 'use client';
 
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { CCTVGrid } from "@/components/dashboard/CCTVGrid";
-import { EventLog } from "@/components/dashboard/EventLog";
-import { AIResponseStatus } from "@/components/dashboard/AIResponseStatus";
-import { StatsDashboard } from "@/components/dashboard/StatsDashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Monitor, ClipboardList, LayoutDashboard, BarChart3 } from "lucide-react";
+import { Monitor } from "lucide-react";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
-import { useStreams, useEventLogs, useAIResponses } from "@/hooks/useMonitoring";
+import { useStreams } from "@/hooks/useMonitoring";
+import { useToast } from "@/hooks/use-toast";
+import type { ManagedCamera } from "@/types";
 
 export function DashboardContent() {
-  const { data: cameras = [], isLoading: isLoadingCameras } = useStreams();
-  const { data: events = [], isLoading: isLoadingEvents } = useEventLogs();
-  const { data: aiResponses = [], isLoading: isLoadingAI } = useAIResponses();
+  const { data: fetchedCameras = [], isLoading } = useStreams();
+  const { toast } = useToast();
 
-  const loading = isLoadingCameras || isLoadingEvents || isLoadingAI;
+  // Local state for optimistic UI updates
+  const [cameras, setCameras] = useState<ManagedCamera[]>([]);
+
+  // Sync with fetched data
+  useEffect(() => {
+    if (fetchedCameras.length > 0 && cameras.length === 0) {
+      setCameras(fetchedCameras);
+    }
+  }, [fetchedCameras, cameras.length]);
+
+  const displayCameras = cameras.length > 0 ? cameras : fetchedCameras;
+
+  const handleUpdateAlias = (cameraId: string, alias: string) => {
+    setCameras(prev => prev.map(cam =>
+      cam.id === cameraId ? { ...cam, alias } : cam
+    ));
+    toast({
+      title: "별칭 수정 완료",
+      description: `카메라 별칭이 "${alias}"(으)로 변경되었습니다.`,
+    });
+  };
+
+  const handleToggleActive = (cameraId: string, active: boolean) => {
+    setCameras(prev => prev.map(cam =>
+      cam.id === cameraId ? { ...cam, active } : cam
+    ));
+    toast({
+      title: active ? "카메라 ON" : "카메라 OFF",
+      description: active
+        ? "카메라가 활성화되었습니다."
+        : "카메라가 비활성화되었습니다.",
+    });
+  };
 
   return (
     <ProtectedRoute>
-      <DashboardLayout title="대시보드">
-        <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="dashboard" className="gap-2">
-              <LayoutDashboard className="h-4 w-4" />
-              대시보드
-            </TabsTrigger>
-            <TabsTrigger value="statistics" className="gap-2">
-              <BarChart3 className="h-4 w-4" />
-              통계
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="dashboard" className="m-0">
-            <div className="space-y-6">
-              {/* Top section: CCTV + Event Log */}
-              <div className="grid lg:grid-cols-3 gap-6">
-                {/* CCTV Grid - takes 2 columns */}
-                <Card className="lg:col-span-2 soft-shadow">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Monitor className="h-5 w-5 text-primary" />
-                      실시간 CCTV 모니터링
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {!loading && <CCTVGrid cameras={cameras} />}
-                  </CardContent>
-                </Card>
-
-                {/* Right sidebar: Event Log + AI Status */}
-                <div className="space-y-6">
-                  <Card className="soft-shadow">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <ClipboardList className="h-5 w-5 text-primary" />
-                        실시간 이벤트
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {!loading && <EventLog events={events} />}
-                    </CardContent>
-                  </Card>
-                </div>
+      <DashboardLayout title="카메라">
+        <Card className="soft-shadow">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Monitor className="h-5 w-5 text-primary" />
+              실시간 카메라 모니터링
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <p className="text-muted-foreground">로딩 중...</p>
               </div>
-
-              {/* AI Response Status */}
-              <Card className="soft-shadow">
-                <CardContent className="p-6">
-                  {!loading && <AIResponseStatus responses={aiResponses} events={events} />}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="statistics" className="m-0">
-            <StatsDashboard />
-          </TabsContent>
-        </Tabs>
+            ) : (
+              <CCTVGrid
+                cameras={displayCameras}
+                onUpdateAlias={handleUpdateAlias}
+                onToggleActive={handleToggleActive}
+              />
+            )}
+          </CardContent>
+        </Card>
       </DashboardLayout>
     </ProtectedRoute>
   );

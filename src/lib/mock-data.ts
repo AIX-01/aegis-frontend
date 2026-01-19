@@ -295,17 +295,6 @@ export const mockSummaryStats = {
   aiResponseRateChange: 2.1,
 };
 
-// System Status
-export const mockSystemStatus = {
-  status: 'normal' as const,
-  message: '시스템 정상',
-};
-
-// Storage Info
-export const mockStorageInfo = {
-  usedStorage: 245,
-  totalStorage: 500,
-};
 
 // Helper: Generate tokens
 export const generateAccessToken = (userId: string): string => {

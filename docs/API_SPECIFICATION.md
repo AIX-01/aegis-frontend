@@ -324,8 +324,6 @@ GET /api/stats?type={type}
 | `event-types` | 이벤트 유형별 분포 |
 | `monthly` | 월간 날짜별 이벤트 데이터 |
 | `summary` | 대시보드 요약 통계 |
-| `system` | 시스템 상태 |
-| `storage` | 저장소 사용량 |
 
 ---
 
@@ -405,39 +403,6 @@ GET /api/stats?type=summary
 
 ---
 
-#### 6.1.5 시스템 상태 (system)
-
-```
-GET /api/stats?type=system
-```
-
-**Response** `200 OK`
-```json
-{
-  "status": "normal" | "warning" | "error",
-  "message": "시스템 정상"
-}
-```
-
----
-
-#### 6.1.6 저장소 정보 (storage)
-
-```
-GET /api/stats?type=storage
-```
-
-**Response** `200 OK`
-```json
-{
-  "usedStorage": 245,
-  "totalStorage": 500
-}
-```
-
-> 단위: GB
-
----
 
 ## 6. 사용자 관리 (Users) - Admin 전용
 
@@ -662,21 +627,6 @@ interface SummaryStats {
 }
 ```
 
-### SystemStatus
-```typescript
-interface SystemStatus {
-  status: 'normal' | 'warning' | 'error';
-  message: string;
-}
-```
-
-### StorageInfo
-```typescript
-interface StorageInfo {
-  usedStorage: number;         // GB
-  totalStorage: number;        // GB
-}
-```
 
 ---
 
@@ -724,5 +674,5 @@ interface StorageInfo {
 | CCTV | cameras |
 | 이벤트 | events |
 | 멤버 관리 (Admin) | users (전체) |
-| 설정 | stats (storage), auth/me |
-| 헤더 (공통) | notifications, stats (system) |
+| 설정 | auth/me |
+| 헤더 (공통) | notifications |

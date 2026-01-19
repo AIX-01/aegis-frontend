@@ -5,8 +5,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { Bell, Monitor, ClipboardList, BarChart3, Users, Settings, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { notificationsApi, statsApi } from "@/lib/api";
-import type { Notification, SystemStatus } from "@/types";
+import { notificationsApi } from "@/lib/api";
+import type { Notification } from "@/types";
 import { NotificationModal } from "@/components/notifications/NotificationModal";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,21 +31,16 @@ export function Header({ title: _title }: HeaderProps) {
   const { user, isAdmin, logout } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
-  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [notifData, statusData] = await Promise.all([
-          notificationsApi.getAll(),
-          statsApi.getSystemStatus(),
-        ]);
+        const notifData = await notificationsApi.getAll();
         const parsedData = notifData.map(n => ({
           ...n,
           timestamp: new Date(n.timestamp)
         }));
         setNotifications(parsedData);
-        setSystemStatus(statusData);
       } catch (error) {
         console.error('Failed to fetch data:', error);
       }
@@ -62,23 +57,6 @@ export function Header({ title: _title }: HeaderProps) {
     );
   };
 
-  const getStatusColor = (status?: string) => {
-    switch (status) {
-      case 'normal': return 'bg-success/10 text-success';
-      case 'warning': return 'bg-warning/10 text-warning';
-      case 'error': return 'bg-destructive/10 text-destructive';
-      default: return 'bg-muted text-muted-foreground';
-    }
-  };
-
-  const getStatusDotColor = (status?: string) => {
-    switch (status) {
-      case 'normal': return 'bg-success';
-      case 'warning': return 'bg-warning';
-      case 'error': return 'bg-destructive';
-      default: return 'bg-muted-foreground';
-    }
-  };
 
   const isActive = (url: string) => {
     if (url === '/') return pathname === '/';
@@ -137,25 +115,8 @@ export function Header({ title: _title }: HeaderProps) {
             </nav>
           </div>
 
-          {/* Right: Status + Notifications + Profile */}
+          {/* Right: Notifications + Profile */}
           <div className="flex items-center gap-3">
-            {/* System status */}
-            <div className={cn(
-              "hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full text-sm",
-              getStatusColor(systemStatus?.status)
-            )}>
-              <span className="relative flex h-2 w-2">
-                <span className={cn(
-                  "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
-                  getStatusDotColor(systemStatus?.status)
-                )}></span>
-                <span className={cn(
-                  "relative inline-flex rounded-full h-2 w-2",
-                  getStatusDotColor(systemStatus?.status)
-                )}></span>
-              </span>
-              <span className="font-medium">{systemStatus?.message ?? '상태 확인 중...'}</span>
-            </div>
 
             {/* Notifications */}
             <Button 

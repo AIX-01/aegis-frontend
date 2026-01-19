@@ -1,20 +1,34 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { Bell, Menu } from "lucide-react";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useRouter, usePathname } from "next/navigation";
+import { Bell, Monitor, ClipboardList, BarChart3, Users, Settings, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { notificationsApi, statsApi } from "@/lib/api";
 import type { Notification, SystemStatus } from "@/types";
 import { NotificationModal } from "@/components/notifications/NotificationModal";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface HeaderProps {
-  title: string;
+  title?: string;
 }
 
-export function Header({ title }: HeaderProps) {
+const navItems = [
+  { title: "카메라", url: "/", icon: Monitor },
+  { title: "이벤트", url: "/events", icon: ClipboardList },
+  { title: "통계", url: "/statistics", icon: BarChart3 },
+];
+
+const adminNavItems = [
+  { title: "멤버 관리", url: "/members", icon: Users },
+];
+
+export function Header({ title: _title }: HeaderProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { user, isAdmin, logout } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
@@ -26,7 +40,6 @@ export function Header({ title }: HeaderProps) {
           notificationsApi.getAll(),
           statsApi.getSystemStatus(),
         ]);
-        // timestamp를 Date 객체로 변환
         const parsedData = notifData.map(n => ({
           ...n,
           timestamp: new Date(n.timestamp)
@@ -67,21 +80,68 @@ export function Header({ title }: HeaderProps) {
     }
   };
 
+  const isActive = (url: string) => {
+    if (url === '/') return pathname === '/';
+    return pathname.startsWith(url);
+  };
+
   return (
     <>
       <header className="h-14 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center justify-between h-full px-4">
-          <div className="flex items-center gap-4">
-            <SidebarTrigger className="lg:hidden">
-              <Menu className="h-5 w-5" />
-            </SidebarTrigger>
-            <h1 className="text-lg font-semibold">{title}</h1>
+          {/* Left: Logo + Navigation */}
+          <div className="flex items-center gap-6">
+            {/* Logo */}
+            <button
+              onClick={() => router.push('/')}
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
+              <div className="p-1.5 rounded-lg bg-primary text-primary-foreground">
+                <Shield className="h-4 w-4" />
+              </div>
+              <span className="font-semibold text-base hidden sm:block">AEGIS</span>
+            </button>
+
+            {/* Navigation */}
+            <nav className="flex items-center gap-1">
+              {navItems.map((item) => (
+                <Button
+                  key={item.url}
+                  variant={isActive(item.url) ? "secondary" : "ghost"}
+                  size="sm"
+                  className={cn(
+                    "gap-2",
+                    isActive(item.url) && "bg-secondary"
+                  )}
+                  onClick={() => router.push(item.url)}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span className="hidden md:inline">{item.title}</span>
+                </Button>
+              ))}
+              {isAdmin && adminNavItems.map((item) => (
+                <Button
+                  key={item.url}
+                  variant={isActive(item.url) ? "secondary" : "ghost"}
+                  size="sm"
+                  className={cn(
+                    "gap-2",
+                    isActive(item.url) && "bg-secondary"
+                  )}
+                  onClick={() => router.push(item.url)}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span className="hidden md:inline">{item.title}</span>
+                </Button>
+              ))}
+            </nav>
           </div>
 
+          {/* Right: Status + Notifications + Profile */}
           <div className="flex items-center gap-3">
             {/* System status */}
             <div className={cn(
-              "hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-sm",
+              "hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full text-sm",
               getStatusColor(systemStatus?.status)
             )}>
               <span className="relative flex h-2 w-2">
@@ -96,7 +156,6 @@ export function Header({ title }: HeaderProps) {
               </span>
               <span className="font-medium">{systemStatus?.message ?? '상태 확인 중...'}</span>
             </div>
-
 
             {/* Notifications */}
             <Button 
@@ -115,6 +174,33 @@ export function Header({ title }: HeaderProps) {
                 </Badge>
               )}
             </Button>
+
+            {/* Settings */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push('/settings')}
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+
+            {/* Profile */}
+            <div className="flex items-center gap-2 pl-3 border-l border-border">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="text-sm font-medium text-primary">
+                  {user?.name?.charAt(0) || '?'}
+                </span>
+              </div>
+              <span className="text-sm font-medium hidden md:block">{user?.name || '사용자'}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={logout}
+                title="로그아웃"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>

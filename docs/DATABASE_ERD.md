@@ -2,7 +2,7 @@
 
 > AI 기반 안전 모니터링 시스템 데이터베이스 설계
 
-**버전**: 1.0.0  
+**버전**: 1.1.0  
 **최종 업데이트**: 2026-01-19
 
 ---
@@ -19,48 +19,46 @@
 ├──────────────────────┤       ├──────────────────────┤       ├──────────────────────┤
 │ *id          VARCHAR │◄──────│ *user_id     VARCHAR │       │ *id          VARCHAR │
 │  email       VARCHAR │  PK   │ *camera_id   VARCHAR │──────►│  name        VARCHAR │
-│  password    VARCHAR │       └──────────────────────┘   PK  │  location    VARCHAR │
-│  name        VARCHAR │              (Junction)              │  ip_address  VARCHAR │
-│  role        ENUM    │                                      │  resolution  VARCHAR │
-│  created_at  DATETIME│                                      │  status      ENUM    │
-│  approved    BOOLEAN │                                      │  alert_type  ENUM    │
-│  updated_at  DATETIME│                                      │  active      BOOLEAN │
-└──────────────────────┘                                      │  created_at  DATETIME│
-         │                                                    │  updated_at  DATETIME│
-         │                                                    └──────────────────────┘
-         │ 1:N                                                           │
-         ▼                                                               │ 1:N
-┌──────────────────────┐                                                 ▼
-│   refresh_tokens     │                                      ┌──────────────────────┐
-├──────────────────────┤                                      │       events         │
-│ *id          VARCHAR │                                      ├──────────────────────┤
-│  user_id     VARCHAR │──────┐                               │ *id          VARCHAR │
-│  token       VARCHAR │      │                               │  camera_id   VARCHAR │◄─┐
-│  expires_at  DATETIME│      │                               │  type        ENUM    │  │
-│  created_at  DATETIME│      │                               │  timestamp   DATETIME│  │
-└──────────────────────┘      │                               │  status      ENUM    │  │
-                              │                               │  description TEXT    │  │
-                              │                               │  ai_action   TEXT    │  │
+│  password    VARCHAR │       └──────────────────────┘   PK  │  connected   BOOLEAN │
+│  name        VARCHAR │              (Junction)              │  alias       VARCHAR │
+│  role        ENUM    │                                      │  active      BOOLEAN │
+│  created_at  DATETIME│                                      │  created_at  DATETIME│
+│  approved    BOOLEAN │                                      │  updated_at  DATETIME│
+│  updated_at  DATETIME│                                      └──────────────────────┘
+└──────────────────────┘                                                 │
+         │                                                               │ 1:N
+         │ 1:N                                                           ▼
+         ▼                                                    ┌──────────────────────┐
+┌──────────────────────┐                                      │       events         │
+│   refresh_tokens     │                                      ├──────────────────────┤
+├──────────────────────┤                                      │ *id          VARCHAR │
+│ *id          VARCHAR │                                      │  camera_id   VARCHAR │◄─┐
+│  user_id     VARCHAR │──────┐                               │  type        ENUM    │  │
+│  token       VARCHAR │      │                               │  timestamp   DATETIME│  │
+│  expires_at  DATETIME│      │                               │  status      ENUM    │  │
+│  created_at  DATETIME│      │                               │  description TEXT    │  │
+└──────────────────────┘      │                               │  ai_action   TEXT    │  │
                               │                               │  clip_url    VARCHAR │  │
-┌──────────────────────┐      │                               │  summary     TEXT    │  │
-│    notifications     │      │                               │  analysis    TEXT    │  │
-├──────────────────────┤      │                               │  created_at  DATETIME│  │
-│ *id          VARCHAR │      │                               │  updated_at  DATETIME│  │
-│  user_id     VARCHAR │◄─────┘                               └──────────────────────┘  │
-│  event_id    VARCHAR │──────────────────────────────────────────────────┬─────────────┘
-│  type        ENUM    │                                                  │
-│  title       VARCHAR │                                                  │ 1:N
-│  message     TEXT    │                                                  ▼
-│  read        BOOLEAN │                                      ┌──────────────────────┐
-│  created_at  DATETIME│                                      │    ai_responses      │
-└──────────────────────┘                                      ├──────────────────────┤
-                                                              │ *id          VARCHAR │
-                                                              │  event_id    VARCHAR │
-┌──────────────────────┐                                      │  action      VARCHAR │
-│   system_settings    │                                      │  status      ENUM    │
-├──────────────────────┤                                      │  created_at  DATETIME│
-│ *key         VARCHAR │                                      │  updated_at  DATETIME│
-│  value       JSON    │                                      └──────────────────────┘
+                              │                               │  summary     TEXT    │  │
+┌──────────────────────┐      │                               │  analysis    TEXT    │  │
+│    notifications     │      │                               │  created_at  DATETIME│  │
+├──────────────────────┤      │                               │  updated_at  DATETIME│  │
+│ *id          VARCHAR │      │                               └──────────────────────┘  │
+│  user_id     VARCHAR │◄─────┘                                                         │
+│  event_id    VARCHAR │────────────────────────────────────────────────────────────────┘
+│  type        ENUM    │
+│  title       VARCHAR │
+│  message     TEXT    │
+│  read        BOOLEAN │
+│  created_at  DATETIME│
+└──────────────────────┘
+
+
+┌──────────────────────┐
+│   system_settings    │
+├──────────────────────┤
+│ *key         VARCHAR │
+│  value       JSON    │
 │  updated_at  DATETIME│
 └──────────────────────┘
 
@@ -99,18 +97,15 @@
 | 컬럼명 | 타입 | 제약조건 | 설명 |
 |--------|------|----------|------|
 | id | VARCHAR(36) | PK | UUID |
-| name | VARCHAR(50) | NOT NULL | 카메라 이름 (CAM-01) |
-| location | VARCHAR(100) | NOT NULL | 설치 위치 |
-| ip_address | VARCHAR(45) | NULL | IP 주소 (IPv4/IPv6) |
-| resolution | VARCHAR(20) | NULL | 해상도 (1920x1080) |
-| status | ENUM('normal', 'alert', 'warning', 'offline') | NOT NULL, DEFAULT 'normal' | 상태 |
-| alert_type | ENUM('assault', 'theft', 'suspicious') | NULL | 경보 유형 |
-| active | BOOLEAN | NOT NULL, DEFAULT TRUE | 활성화 여부 |
+| name | VARCHAR(50) | NOT NULL | 미디어서버 원본 이름 (수정 불가) |
+| connected | BOOLEAN | NOT NULL, DEFAULT TRUE | 온라인/오프라인 (미디어서버 연결 여부) |
+| alias | VARCHAR(100) | NULL | 사용자 지정 별칭 (수정 가능) |
+| active | BOOLEAN | NOT NULL, DEFAULT TRUE | ON/OFF (사용자 제어) |
 | created_at | DATETIME | NOT NULL, DEFAULT NOW() | 생성일시 |
 | updated_at | DATETIME | NOT NULL, DEFAULT NOW() | 수정일시 |
 
 **인덱스**
-- `idx_cameras_status` (status) - 상태별 필터
+- `idx_cameras_connected` (connected) - 연결 상태별 필터
 - `idx_cameras_active` (active) - 활성 카메라 필터
 
 ---
@@ -153,24 +148,7 @@
 
 ---
 
-### 5. ai_responses (AI 대응)
-
-| 컬럼명 | 타입 | 제약조건 | 설명 |
-|--------|------|----------|------|
-| id | VARCHAR(36) | PK | UUID |
-| event_id | VARCHAR(36) | FK → events.id, NOT NULL | 이벤트 ID |
-| action | VARCHAR(200) | NOT NULL | 대응 조치 |
-| status | ENUM('pending', 'in_progress', 'completed') | NOT NULL, DEFAULT 'pending' | 상태 |
-| created_at | DATETIME | NOT NULL, DEFAULT NOW() | 생성일시 |
-| updated_at | DATETIME | NOT NULL, DEFAULT NOW() | 수정일시 |
-
-**인덱스**
-- `idx_ai_responses_event_id` (event_id) - 이벤트별 대응 조회
-- `idx_ai_responses_status` (status) - 상태별 필터
-
----
-
-### 6. notifications (알림)
+### 5. notifications (알림)
 
 | 컬럼명 | 타입 | 제약조건 | 설명 |
 |--------|------|----------|------|
@@ -190,7 +168,7 @@
 
 ---
 
-### 7. refresh_tokens (리프레시 토큰)
+### 6. refresh_tokens (리프레시 토큰)
 
 | 컬럼명 | 타입 | 제약조건 | 설명 |
 |--------|------|----------|------|
@@ -207,7 +185,7 @@
 
 ---
 
-### 8. system_settings (시스템 설정)
+### 7. system_settings (시스템 설정)
 
 | 컬럼명 | 타입 | 제약조건 | 설명 |
 |--------|------|----------|------|

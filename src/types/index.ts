@@ -25,14 +25,6 @@ export interface Event {
   analysisReport?: string;
 }
 
-// AI Response types
-export interface AIResponse {
-  id: string;
-  eventId: string;
-  action: string;
-  timestamp: Date;
-  status: 'pending' | 'in_progress' | 'completed';
-}
 
 // Notification types
 export interface Notification {

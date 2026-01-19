@@ -3,7 +3,7 @@
 > AI 기반 안전 모니터링 시스템 백엔드 API 명세
 
 **Base URL**: `/api`  
-**버전**: 1.0.0  
+**버전**: 1.1.0  
 **최종 업데이트**: 2026-01-19
 
 ---
@@ -14,11 +14,10 @@
 2. [카메라 (Cameras)](#2-카메라-cameras)
 3. [이벤트 (Events)](#3-이벤트-events)
 4. [알림 (Notifications)](#4-알림-notifications)
-5. [AI 대응 (AI Responses)](#5-ai-대응-ai-responses)
-6. [통계 (Stats)](#6-통계-stats)
-7. [사용자 관리 (Users)](#7-사용자-관리-users---admin-전용)
-8. [타입 정의](#8-타입-정의)
-9. [에러 응답](#9-에러-응답)
+5. [통계 (Stats)](#5-통계-stats)
+6. [사용자 관리 (Users)](#6-사용자-관리-users---admin-전용)
+7. [타입 정의](#7-타입-정의)
+8. [에러 응답](#8-에러-응답)
 
 ---
 
@@ -217,12 +216,21 @@ Authorization: Bearer {accessToken}
   {
     "id": "string",
     "name": "string",
-    "location": "string",
-    "status": "normal" | "alert" | "warning" | "offline",
-    "alertType": "assault" | "theft" | "suspicious" | null
+    "connected": true,
+    "alias": "string",
+    "active": true
   }
 ]
 ```
+
+**필드 설명**
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | string | 카메라 고유 ID |
+| name | string | 미디어서버 원본 이름 (수정 불가) |
+| connected | boolean | 온라인/오프라인 (미디어서버 연결 여부) |
+| alias | string | 사용자 지정 별칭 (수정 가능) |
+| active | boolean | ON/OFF 상태 (사용자 제어) |
 
 ---
 
@@ -294,70 +302,7 @@ Authorization: Bearer {accessToken}
 
 ---
 
-### 4.2 알림 읽음 처리
-
-특정 알림을 읽음 상태로 변경
-
-```
-PATCH /api/notifications/{id}/read
-```
-
-**Path Parameters**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| id | string | 알림 ID |
-
-**Request Headers**
-```
-Authorization: Bearer {accessToken}
-```
-
-**Response** `200 OK`
-```json
-{
-  "success": true
-}
-```
-
-**Error Responses**
-| Status | Error | Description |
-|--------|-------|-------------|
-| 400 | 알림 ID가 필요합니다. | ID 미제공 |
-| 404 | 알림을 찾을 수 없습니다. | 존재하지 않는 알림 |
-
----
-
-## 5. AI 대응 (AI Responses)
-
-### 5.1 AI 대응 목록 조회
-
-AI가 수행한 모든 대응 조치 목록 조회
-
-```
-GET /api/ai-responses
-```
-
-**Request Headers**
-```
-Authorization: Bearer {accessToken}
-```
-
-**Response** `200 OK`
-```json
-[
-  {
-    "id": "string",
-    "eventId": "string",
-    "action": "string",
-    "timestamp": "ISO8601 string",
-    "status": "pending" | "in_progress" | "completed"
-  }
-]
-```
-
----
-
-## 6. 통계 (Stats)
+## 5. 통계 (Stats)
 
 ### 6.1 통계 조회
 
@@ -494,7 +439,7 @@ GET /api/stats?type=storage
 
 ---
 
-## 7. 사용자 관리 (Users) - Admin 전용
+## 6. 사용자 관리 (Users) - Admin 전용
 
 ### 7.1 사용자 목록 조회
 

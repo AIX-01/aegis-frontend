@@ -8,10 +8,6 @@ export const QUERY_KEYS = {
     DETAIL: (id: string) => ['eventLogs', id] as const,
     FILTER: (filter: Record<string, unknown>) => ['eventLogs', filter] as const,
   },
-  AI_RESPONSES: {
-    ALL: ['aiResponses'] as const,
-    DETAIL: (id: string) => ['aiResponses', id] as const,
-  },
   STATS: {
     ALL: ['stats'] as const,
     DAILY: ['stats', 'daily'] as const,

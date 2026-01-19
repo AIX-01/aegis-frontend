@@ -24,15 +24,15 @@ export const mockRefreshTokens: Map<string, string> = new Map(); // token -> use
 
 // Cameras
 export const mockCameras: Camera[] = [
-  { id: 'cam-1', name: 'CAM-01', location: '1층 로비', status: 'normal' },
-  { id: 'cam-2', name: 'CAM-02', location: '1층 출입구', status: 'alert', alertType: 'assault' },
-  { id: 'cam-3', name: 'CAM-03', location: '2층 복도', status: 'normal' },
-  { id: 'cam-4', name: 'CAM-04', location: '주차장 A구역', status: 'warning', alertType: 'suspicious' },
-  { id: 'cam-5', name: 'CAM-05', location: '주차장 B구역', status: 'normal' },
-  { id: 'cam-6', name: 'CAM-06', location: '3층 사무실', status: 'normal' },
-  { id: 'cam-7', name: 'CAM-07', location: '옥상 출입구', status: 'normal' },
-  { id: 'cam-8', name: 'CAM-08', location: '지하 창고', status: 'alert', alertType: 'theft' },
-  { id: 'cam-9', name: 'CAM-09', location: '비상계단', status: 'normal' },
+  { id: 'cam-1', name: 'CAM-01', connected: true },
+  { id: 'cam-2', name: 'CAM-02', connected: true },
+  { id: 'cam-3', name: 'CAM-03', connected: true },
+  { id: 'cam-4', name: 'CAM-04', connected: true },
+  { id: 'cam-5', name: 'CAM-05', connected: true },
+  { id: 'cam-6', name: 'CAM-06', connected: false },
+  { id: 'cam-7', name: 'CAM-07', connected: true },
+  { id: 'cam-8', name: 'CAM-08', connected: true },
+  { id: 'cam-9', name: 'CAM-09', connected: true },
 ];
 
 // Events

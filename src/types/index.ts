@@ -1,16 +1,13 @@
 // Camera types
 export interface Camera {
   id: string;
-  name: string;
-  location: string;
-  status: 'normal' | 'alert' | 'warning' | 'offline';
-  alertType?: 'assault' | 'theft' | 'suspicious';
+  name: string;           // 미디어서버 원본 이름 (수정 불가)
+  connected: boolean;     // 온라인/오프라인 (미디어서버 연결 여부)
 }
 
 export interface ManagedCamera extends Camera {
-  ipAddress: string;
-  resolution: string;
-  active: boolean;
+  alias: string;          // 별칭 (수정 가능)
+  active: boolean;        // ON/OFF (사용자 제어)
 }
 
 // Event types

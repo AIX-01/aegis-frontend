@@ -3,7 +3,6 @@ import type {
   Camera,
   Event,
   Notification,
-  AIResponse,
   User,
   DailyStat,
   EventTypeStat,
@@ -67,18 +66,6 @@ export const eventsApi = {
 export const notificationsApi = {
   getAll: async (): Promise<Notification[]> => {
     const response = await api.get<Notification[]>('/api/notifications');
-    return response.data;
-  },
-
-  markAsRead: async (id: string): Promise<void> => {
-    await api.patch(`/api/notifications/${id}/read`);
-  },
-};
-
-// AI Responses API
-export const aiResponsesApi = {
-  getAll: async (): Promise<AIResponse[]> => {
-    const response = await api.get<AIResponse[]>('/api/ai-responses');
     return response.data;
   },
 };

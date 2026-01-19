@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { camerasApi, eventsApi, aiResponsesApi } from '@/lib/api';
+import { camerasApi, eventsApi } from '@/lib/api';
 import { QUERY_KEYS } from '@/lib/queryKeys';
 import type { ManagedCamera } from '@/types';
 
@@ -31,9 +31,3 @@ export const useEventLogs = () => {
   });
 };
 
-export const useAIResponses = () => {
-  return useQuery({
-    queryKey: QUERY_KEYS.AI_RESPONSES.ALL,
-    queryFn: aiResponsesApi.getAll,
-  });
-};

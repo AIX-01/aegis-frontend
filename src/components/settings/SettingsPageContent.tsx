@@ -5,13 +5,10 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Shield,
   Users,
   User,
   Lock,
@@ -40,17 +37,14 @@ export function SettingsPageContent() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
 
-
   // Profile states
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
 
   // Sync user data when loaded
   useEffect(() => {
     if (user) {
       setName(user.name || '');
-      setEmail(user.email || '');
     }
   }, [user]);
 
@@ -122,54 +116,7 @@ export function SettingsPageContent() {
 
         {/* System Settings Tab */}
         <TabsContent value="system" className="m-0">
-          <div className="max-w-3xl space-y-6">
-            {/* AI Settings */}
-            <Card className="soft-shadow">
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" />
-                  AI 감지 설정
-                </CardTitle>
-                <CardDescription>
-                  AI의 이상 행동 감지 민감도를 조절합니다
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="sensitivity">감지 민감도</Label>
-                    <span className="text-sm text-muted-foreground">높음</span>
-                  </div>
-                  <Slider
-                    id="sensitivity"
-                    defaultValue={[75]}
-                    max={100}
-                    step={1}
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="auto-response">자동 대응 활성화</Label>
-                    <p className="text-sm text-muted-foreground">
-                      위험 감지 시 자동으로 대응 조치를 실행합니다
-                    </p>
-                  </div>
-                  <Switch id="auto-response" defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="night-mode">야간 모드 강화</Label>
-                    <p className="text-sm text-muted-foreground">
-                      야간 시간대 감지 민감도를 자동 상향합니다
-                    </p>
-                  </div>
-                  <Switch id="night-mode" defaultChecked />
-                </div>
-              </CardContent>
-            </Card>
-
-
+          <div className="max-w-3xl mx-auto space-y-6">
             {/* Contact Settings */}
             <Card className="soft-shadow">
               <CardHeader>
@@ -184,12 +131,20 @@ export function SettingsPageContent() {
               <CardContent className="space-y-4">
                 <div className="grid gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="contact1">주 담당자</Label>
-                    <Input id="contact1" placeholder="010-0000-0000" defaultValue="010-1234-5678" />
+                    <Label htmlFor="contact1-phone">주 담당자 전화번호</Label>
+                    <Input id="contact1-phone" placeholder="010-0000-0000" defaultValue="010-1234-5678" />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="contact2">보조 담당자</Label>
-                    <Input id="contact2" placeholder="010-0000-0000" defaultValue="010-9876-5432" />
+                    <Label htmlFor="contact1-email">주 담당자 이메일</Label>
+                    <Input id="contact1-email" type="email" placeholder="example@email.com" defaultValue="primary@company.com" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="contact2-phone">보조 담당자 전화번호</Label>
+                    <Input id="contact2-phone" placeholder="010-0000-0000" defaultValue="010-9876-5432" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="contact2-email">보조 담당자 이메일</Label>
+                    <Input id="contact2-email" type="email" placeholder="example@email.com" defaultValue="secondary@company.com" />
                   </div>
                 </div>
                 <Button className="w-full">설정 저장</Button>
@@ -200,7 +155,7 @@ export function SettingsPageContent() {
 
         {/* Profile Tab */}
         <TabsContent value="profile" className="m-0">
-          <div className="max-w-3xl space-y-6">
+          <div className="max-w-3xl mx-auto space-y-6">
             {/* 개인정보 수정 */}
             <Card className="soft-shadow">
               <CardHeader>
@@ -227,9 +182,11 @@ export function SettingsPageContent() {
                     <Input
                       id="email"
                       type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      value={user?.email || ''}
+                      disabled
+                      className="bg-muted cursor-not-allowed"
                     />
+                    <p className="text-xs text-muted-foreground">이메일은 변경할 수 없습니다</p>
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="phone">전화번호</Label>

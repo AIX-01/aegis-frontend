@@ -62,20 +62,18 @@ export function CCTVGrid({ cameras, onUpdateAlias, onToggleActive }: CCTVGridPro
     <>
       <div className="relative">
         {/* Left Arrow */}
-        {totalPages > 1 && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 z-10 h-10 w-10 rounded-full bg-background/80 shadow-md hover:bg-background",
-              currentPage === 0 && "opacity-30 pointer-events-none"
-            )}
-            onClick={handlePrevPage}
-            disabled={currentPage === 0}
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 z-10 h-10 w-10 rounded-full bg-background/80 shadow-md hover:bg-background",
+            (totalPages <= 1 || currentPage === 0) && "opacity-30 pointer-events-none"
+          )}
+          onClick={handlePrevPage}
+          disabled={totalPages <= 1 || currentPage === 0}
+        >
+          <ChevronLeft className="h-6 w-6" />
+        </Button>
 
         {/* Camera Grid */}
         <div
@@ -152,20 +150,18 @@ export function CCTVGrid({ cameras, onUpdateAlias, onToggleActive }: CCTVGridPro
         </div>
 
         {/* Right Arrow */}
-        {totalPages > 1 && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 z-10 h-10 w-10 rounded-full bg-background/80 shadow-md hover:bg-background",
-              currentPage === totalPages - 1 && "opacity-30 pointer-events-none"
-            )}
-            onClick={handleNextPage}
-            disabled={currentPage === totalPages - 1}
-          >
-            <ChevronRight className="h-6 w-6" />
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 z-10 h-10 w-10 rounded-full bg-background/80 shadow-md hover:bg-background",
+            (totalPages <= 1 || currentPage === totalPages - 1) && "opacity-30 pointer-events-none"
+          )}
+          onClick={handleNextPage}
+          disabled={totalPages <= 1 || currentPage === totalPages - 1}
+        >
+          <ChevronRight className="h-6 w-6" />
+        </Button>
 
         {/* Page Indicator */}
         {totalPages > 1 && (

@@ -1,28 +1,47 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { CCTVGrid } from "@/components/dashboard/CCTVGrid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Monitor } from "lucide-react";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { useStreams } from "@/hooks/useMonitoring";
+import { useNotificationStream } from "@/hooks/useNotificationStream";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/lib/queryKeys";
 import type { ManagedCamera } from "@/types";
 
 export function DashboardContent() {
   const { data: fetchedCameras = [], isLoading } = useStreams();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Local state for optimistic UI updates
+  // 로컬 상태 (낙관적 UI 업데이트용)
   const [cameras, setCameras] = useState<ManagedCamera[]>([]);
 
-  // Sync with fetched data
+  // 서버 데이터와 동기화
   useEffect(() => {
-    if (fetchedCameras.length > 0 && cameras.length === 0) {
+    if (fetchedCameras.length > 0) {
       setCameras(fetchedCameras);
     }
-  }, [fetchedCameras, cameras.length]);
+  }, [fetchedCameras]);
+
+  // SSE 카메라 업데이트 핸들러 (개별 카메라 변경)
+  const handleCameraUpdate = useCallback((camera: ManagedCamera) => {
+    setCameras(prev => prev.map(cam =>
+      cam.id === camera.id ? camera : cam
+    ));
+  }, []);
+
+  // SSE 카메라 목록 갱신 핸들러 (새 카메라 추가/연결 상태 변경)
+  const handleCameraRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STREAMS.ALL });
+  }, [queryClient]);
+
+  // SSE 연결 (알림 + 카메라 이벤트)
+  useNotificationStream(undefined, handleCameraUpdate, handleCameraRefresh);
 
   const displayCameras = cameras.length > 0 ? cameras : fetchedCameras;
 

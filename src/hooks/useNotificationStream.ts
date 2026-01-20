@@ -3,16 +3,19 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import type { Notification } from '@/types';
+import type { Notification, ManagedCamera } from '@/types';
 
 /**
- * SSE를 통한 실시간 알림 수신 훅
+ * SSE를 통한 실시간 알림 및 카메라 업데이트 수신 훅
  * - 로그인 상태에서 자동 연결
  * - 새 알림 수신 시 토스트 표시
+ * - 카메라 업데이트/목록 갱신 이벤트 수신
  * - 연결 끊김 시 자동 재연결
  */
 export function useNotificationStream(
-  onNotification?: (notification: Notification) => void
+  onNotification?: (notification: Notification) => void,
+  onCameraUpdate?: (camera: ManagedCamera) => void,
+  onCameraRefresh?: () => void
 ) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -61,6 +64,23 @@ export function useNotificationStream(
       }
     });
 
+    // 카메라 업데이트 이벤트 (개별 카메라 변경)
+    eventSource.addEventListener('camera-update', (event) => {
+      try {
+        const camera: ManagedCamera = JSON.parse(event.data);
+        console.log('SSE 카메라 업데이트 수신:', camera);
+        onCameraUpdate?.(camera);
+      } catch (error) {
+        console.error('SSE 카메라 업데이트 파싱 오류:', error);
+      }
+    });
+
+    // 카메라 목록 갱신 이벤트 (새 카메라 추가/연결 상태 변경)
+    eventSource.addEventListener('camera-refresh', (event) => {
+      console.log('SSE 카메라 목록 갱신 요청:', event.data);
+      onCameraRefresh?.();
+    });
+
     eventSource.onerror = (error) => {
       console.error('SSE 연결 오류:', error);
       eventSource.close();
@@ -74,7 +94,7 @@ export function useNotificationStream(
     };
 
     eventSourceRef.current = eventSource;
-  }, [user, onNotification, toast]);
+  }, [user, onNotification, onCameraUpdate, onCameraRefresh, toast]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

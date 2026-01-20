@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Bell, Monitor, ClipboardList, BarChart3, Users, Settings, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import type { Notification } from "@/types";
 import { NotificationModal } from "@/components/notifications/NotificationModal";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotificationStream } from "@/hooks/useNotificationStream";
 
 interface HeaderProps {
   title?: string;
@@ -32,6 +33,13 @@ export function Header({ title: _title }: HeaderProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
 
+  // SSE로 실시간 알림 수신
+  const handleNewNotification = useCallback((notification: Notification) => {
+    setNotifications(prev => [notification, ...prev]);
+  }, []);
+
+  useNotificationStream(handleNewNotification);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -42,15 +50,23 @@ export function Header({ title: _title }: HeaderProps) {
       }
     };
 
-    fetchData();
-  }, []);
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const handleMarkAsRead = (id: string) => {
-    setNotifications(prev => 
+  const handleMarkAsRead = async (id: string) => {
+    setNotifications(prev =>
       prev.map(n => n.id === id ? { ...n, read: true } : n)
     );
+    // 서버에도 읽음 처리 요청
+    try {
+      await notificationsApi.markAsRead(id);
+    } catch (error) {
+      console.error('Failed to mark as read:', error);
+    }
   };
 
 

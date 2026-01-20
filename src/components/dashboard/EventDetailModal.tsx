@@ -150,56 +150,45 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                 <Card>
                   <CardContent className="p-0">
                     <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-                        <div className="text-center">
-                          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                            {isPlaying ? (
-                              <Pause className="h-10 w-10 text-primary" />
-                            ) : (
-                              <Play className="h-10 w-10 text-primary ml-1" />
-                            )}
+                      {/* 클립이 있는 경우 실제 비디오 표시 */}
+                      {clipUrl && !clipError ? (
+                        <>
+                          <video
+                            ref={videoRef}
+                            src={clipUrl}
+                            className="w-full h-full object-contain bg-black"
+                            onPlay={() => setIsPlaying(true)}
+                            onPause={() => setIsPlaying(false)}
+                            onError={() => setClipError(true)}
+                            controls
+                          />
+                        </>
+                      ) : (
+                        /* 클립이 없거나 에러인 경우 placeholder */
+                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                          <div className="text-center">
+                            <div className="w-20 h-20 rounded-full bg-muted-foreground/10 flex items-center justify-center mx-auto mb-3">
+                              <VideoOff className="h-10 w-10 text-muted-foreground" />
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {clipError ? '클립을 불러올 수 없습니다' : '클립이 아직 준비되지 않았습니다'}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {event.status === 'processing' ? '클립 추출 중...' : '클립 없음'}
+                            </p>
                           </div>
-                          <p className="text-sm text-muted-foreground">
-                            {event.cameraName} - 이벤트 클립
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {format(new Date(event.timestamp), 'yyyy.MM.dd HH:mm:ss', { locale: ko })}
-                          </p>
                         </div>
-                      </div>
-                      
-                      {/* 비디오 컨트롤 바 */}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                        <div className="flex items-center gap-3">
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="text-white hover:bg-white/20"
-                            onClick={() => setIsPlaying(!isPlaying)}
-                          >
-                            {isPlaying ? (
-                              <Pause className="h-4 w-4" />
-                            ) : (
-                              <Play className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <div className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-primary rounded-full transition-all duration-300"
-                              style={{ width: isPlaying ? '45%' : '0%' }}
-                            />
-                          </div>
-                          <span className="text-xs text-white/80">00:45 / 01:30</span>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="text-white hover:bg-white/20"
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
+                      )}
                     </div>
+                    {/* 다운로드 버튼 */}
+                    {clipUrl && !clipError && (
+                      <div className="p-3 border-t flex justify-end">
+                        <Button size="sm" variant="outline" onClick={handleDownload}>
+                          <Download className="h-4 w-4 mr-2" />
+                          클립 다운로드
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 

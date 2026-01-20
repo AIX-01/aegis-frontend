@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { ManagedCamera } from "@/types";
 import { cn } from "@/lib/utils";
+import { WebRTCPlayer } from "./WebRTCPlayer";
 
 interface CameraDetailModalProps {
   camera: ManagedCamera | null;
@@ -153,20 +154,17 @@ export function CameraDetailModal({
         <div className="p-6">
           {/* Video Stream */}
           <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-              <div className="text-center">
-                <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Video className="h-12 w-12 text-primary" />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {camera.name}
-                </p>
-              </div>
-            </div>
+            {/* WebRTC Player */}
+            <WebRTCPlayer
+              cameraId={camera.id}
+              cameraName={camera.name}
+              active={camera.active}
+              connected={camera.connected}
+            />
 
             {/* Live indicator overlay */}
             {camera.connected && camera.active && (
-              <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-destructive text-destructive-foreground px-2 py-1 rounded text-xs font-medium">
+              <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-destructive text-destructive-foreground px-2 py-1 rounded text-xs font-medium z-10">
                 <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
                 LIVE
               </div>

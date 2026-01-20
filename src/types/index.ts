@@ -10,13 +10,18 @@ export interface ManagedCamera extends Camera {
   active: boolean;        // ON/OFF (사용자 제어)
 }
 
+export interface CameraUpdateRequest {
+  alias?: string;
+  active?: boolean;
+}
+
 // Event types
 export interface Event {
   id: string;
   cameraId: string;
   cameraName: string;
   type: 'assault' | 'theft' | 'suspicious' | 'normal';
-  timestamp: Date;
+  timestamp: string;      // ISO8601 string (백엔드 호환)
   status: 'processing' | 'resolved';
   description: string;
   aiAction?: string;
@@ -25,6 +30,9 @@ export interface Event {
   analysisReport?: string;
 }
 
+export interface EventUpdateStatusRequest {
+  status: 'processing' | 'resolved';
+}
 
 // Notification types
 export interface Notification {
@@ -32,7 +40,7 @@ export interface Notification {
   type: 'alert' | 'warning' | 'info' | 'success';
   title: string;
   message: string;
-  timestamp: Date;
+  timestamp: string;      // ISO8601 string (백엔드 호환)
   read: boolean;
   eventId?: string;
 }
@@ -91,6 +99,11 @@ export interface RefreshResponse {
   accessToken: string;
 }
 
+export interface PasswordChangeRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 // Summary Stats types
 export interface SummaryStats {
   todayEvents: number;
@@ -101,3 +114,38 @@ export interface SummaryStats {
   aiResponseRateChange: number;
 }
 
+// Settings types
+export interface EmergencyContact {
+  id: string;
+  type: 'primary' | 'secondary';
+  phone: string;
+  email: string;
+}
+
+export interface ContactInfo {
+  phone: string;
+  email: string;
+}
+
+export interface EmergencyContactUpdateRequest {
+  primary: ContactInfo;
+  secondary: ContactInfo;
+}
+
+// System types
+export interface SystemStatus {
+  status: string;
+  message: string;
+}
+
+export interface StorageInfo {
+  usedStorage: number;
+  totalStorage: number;
+}
+
+// User update types
+export interface UserUpdateRequest {
+  name?: string;
+  role?: UserRole;
+  assignedCameras?: string[];
+}

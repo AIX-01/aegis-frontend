@@ -83,10 +83,10 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
             <div className="text-right text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
-                {format(event.timestamp, 'yyyy.MM.dd HH:mm:ss', { locale: ko })}
+                {format(new Date(event.timestamp), 'yyyy.MM.dd HH:mm:ss', { locale: ko })}
               </div>
               <div className="text-xs mt-0.5">
-                {formatDistanceToNow(event.timestamp, { addSuffix: true, locale: ko })}
+                {formatDistanceToNow(new Date(event.timestamp), { addSuffix: true, locale: ko })}
               </div>
             </div>
           </div>
@@ -127,7 +127,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                             {event.cameraName} - 이벤트 클립
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {format(event.timestamp, 'yyyy.MM.dd HH:mm:ss', { locale: ko })}
+                            {format(new Date(event.timestamp), 'yyyy.MM.dd HH:mm:ss', { locale: ko })}
                           </p>
                         </div>
                       </div>
@@ -201,7 +201,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                   <div className="p-3 bg-muted/30 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">발생 시각</p>
                     <p className="text-sm font-medium">
-                      {format(event.timestamp, 'HH:mm:ss', { locale: ko })}
+                      {format(new Date(event.timestamp), 'HH:mm:ss', { locale: ko })}
                     </p>
                   </div>
                   <div className="p-3 bg-muted/30 rounded-lg">

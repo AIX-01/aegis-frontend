@@ -36,11 +36,7 @@ export function Header({ title: _title }: HeaderProps) {
     const fetchData = async () => {
       try {
         const notifData = await notificationsApi.getAll();
-        const parsedData = notifData.map(n => ({
-          ...n,
-          timestamp: new Date(n.timestamp)
-        }));
-        setNotifications(parsedData);
+        setNotifications(notifData);
       } catch (error) {
         console.error('Failed to fetch data:', error);
       }

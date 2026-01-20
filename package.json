@@ -5,8 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "mv src/app/api src/app/_api_dev && next build && mv src/app/_api_dev src/app/api",
-    "build:dev": "next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },

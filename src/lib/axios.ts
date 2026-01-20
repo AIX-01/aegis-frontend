@@ -1,19 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-// 런타임에 API URL 결정
-const getBaseURL = (): string => {
-  // 서버 사이드
-  if (typeof window === 'undefined') return '';
-
-  // 개발 환경: same-origin (Next.js API Route 사용)
-  if (process.env.NODE_ENV === 'development') return '';
-
-  // 프로덕션: 서브도메인을 api로 교체
-  const { protocol, hostname } = window.location;
-  const parts = hostname.split('.');
-  parts[0] = 'api';
-  return `${protocol}//${parts.join('.')}`;
-};
 
 // Access Token 저장소 (메모리)
 let accessToken: string | null = null;
@@ -24,9 +10,8 @@ export const setAccessToken = (token: string | null) => {
 
 export const getAccessToken = () => accessToken;
 
-// Axios 인스턴스 생성
+// Axios 인스턴스 생성 (상대경로 사용 - 게이트웨이가 /api를 백엔드로 라우팅)
 const api = axios.create({
-  baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json',
   },

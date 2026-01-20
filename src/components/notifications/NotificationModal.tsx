@@ -123,7 +123,7 @@ export function NotificationModal({
                           {notification.message}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {formatDistanceToNow(notification.timestamp, { addSuffix: true, locale: ko })}
+                          {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true, locale: ko })}
                         </p>
                       </div>
                     </div>

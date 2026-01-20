@@ -97,7 +97,7 @@ export function EventLog({ events }: EventLogProps) {
                   )}
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(event.timestamp, { addSuffix: true, locale: ko })}
+                      {formatDistanceToNow(new Date(event.timestamp), { addSuffix: true, locale: ko })}
                     </span>
                     {getStatusBadge(event.status)}
                   </div>

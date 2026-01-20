@@ -118,7 +118,7 @@ export function AuthForm() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
             <Shield className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Aegis</h1>
+          <h1 className="text-2xl font-bold text-foreground">AEGIS</h1>
           <p className="text-muted-foreground mt-2">AI 안전 관제 시스템</p>
         </div>
 
@@ -187,10 +187,6 @@ export function AuthForm() {
                       '로그인'
                     )}
                   </Button>
-
-                  <div className="text-center text-sm text-muted-foreground pt-2">
-                    <p>테스트 계정: admin@safety.com / admin123</p>
-                  </div>
                 </form>
               </TabsContent>
 

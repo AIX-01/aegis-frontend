@@ -3,7 +3,7 @@ import './globals.css';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  title: 'Aegis - AI Safety Monitoring System',
+  title: 'AEGIS - AI Safety Monitoring System',
   description: 'AI 기반 안전 모니터링 시스템',
 };
 

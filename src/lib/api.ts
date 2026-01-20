@@ -107,6 +107,11 @@ export const eventsApi = {
     const response = await api.patch<Event>(`/api/events/${id}/status`, data);
     return response.data;
   },
+
+  /** 이벤트 클립 URL 반환 */
+  getClipUrl: (id: string): string => {
+    return `/api/events/${id}/clip`;
+  },
 };
 
 // Notifications API

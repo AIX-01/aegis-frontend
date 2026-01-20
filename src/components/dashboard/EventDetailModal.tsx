@@ -16,12 +16,14 @@ import {
   Clock,
   FileText,
   Video,
-  Brain
+  Brain,
+  VideoOff
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { ko } from "date-fns/locale";
 import type { Event } from "@/types";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { eventsApi } from "@/lib/api";
 
 interface EventDetailModalProps {
   event: Event | null;
@@ -53,8 +55,42 @@ const getStatusBadge = (status: Event['status']) => {
 
 export function EventDetailModal({ event, open, onOpenChange }: EventDetailModalProps) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [hasClip, setHasClip] = useState(false);
+  const [clipError, setClipError] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // 모달 열릴 때 클립 상태 초기화
+  useEffect(() => {
+    if (open && event) {
+      setHasClip(!!event.clipUrl);
+      setClipError(false);
+      setIsPlaying(false);
+    }
+  }, [open, event]);
+
+  const handlePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleDownload = () => {
+    if (event?.clipUrl) {
+      const link = document.createElement('a');
+      link.href = eventsApi.getClipUrl(event.id);
+      link.download = `event-${event.id}.mp4`;
+      link.click();
+    }
+  };
 
   if (!event) return null;
+
+  const clipUrl = event.clipUrl ? eventsApi.getClipUrl(event.id) : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -149,3 +149,15 @@ export interface UserUpdateRequest {
   role?: UserRole;
   assignedCameras?: string[];
 }
+
+// Stream types
+export interface StreamAccessResponse {
+  streamUrl: string;
+  token: string;
+  cameraId: string;
+  cameraName: string;
+}
+
+export interface ThumbnailResponse {
+  image: string;  // Base64 encoded JPEG
+}

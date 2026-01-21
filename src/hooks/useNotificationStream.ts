@@ -8,17 +8,18 @@ import { getAccessToken } from '@/lib/axios';
 import type { Notification, ManagedCamera } from '@/types';
 
 /**
- * SSE를 통한 실시간 알림 및 카메라 업데이트 수신 훅
+ * SSE를 통한 실시간 알림 및 카메라/이벤트/멤버 업데이트 수신 훅
  * - @microsoft/fetch-event-source 사용 (Authorization 헤더 지원)
  * - 로그인 상태에서 자동 연결
  * - 새 알림 수신 시 토스트 표시
- * - 카메라 업데이트/목록 갱신 이벤트 수신
+ * - 카메라/이벤트/멤버 업데이트 이벤트 수신
  * - 연결 끊김 시 자동 재연결
  */
 export function useNotificationStream(
   onNotification?: (notification: Notification) => void,
-  onCameraUpdate?: (camera: ManagedCamera) => void,
-  onCameraRefresh?: () => void
+  onCameraUpdate?: (camera: ManagedCamera | string) => void,
+  onEventUpdate?: (event: unknown) => void,
+  onMemberUpdate?: (member: unknown) => void
 ) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -28,7 +29,8 @@ export function useNotificationStream(
   // 콜백 함수들을 ref로 저장하여 의존성 문제 방지
   const onNotificationRef = useRef(onNotification);
   const onCameraUpdateRef = useRef(onCameraUpdate);
-  const onCameraRefreshRef = useRef(onCameraRefresh);
+  const onEventUpdateRef = useRef(onEventUpdate);
+  const onMemberUpdateRef = useRef(onMemberUpdate);
   const toastRef = useRef(toast);
 
   // 콜백 함수들이 변경될 때 ref 업데이트
@@ -41,8 +43,12 @@ export function useNotificationStream(
   }, [onCameraUpdate]);
 
   useEffect(() => {
-    onCameraRefreshRef.current = onCameraRefresh;
-  }, [onCameraRefresh]);
+    onEventUpdateRef.current = onEventUpdate;
+  }, [onEventUpdate]);
+
+  useEffect(() => {
+    onMemberUpdateRef.current = onMemberUpdate;
+  }, [onMemberUpdate]);
 
   useEffect(() => {
     toastRef.current = toast;
@@ -111,20 +117,39 @@ export function useNotificationStream(
           return;
         }
 
-        if (eventType === 'camera-update') {
+        if (eventType === 'camera') {
           try {
-            const camera: ManagedCamera = JSON.parse(data);
-            console.log('SSE 카메라 업데이트 수신:', camera);
-            onCameraUpdateRef.current?.(camera);
-          } catch (error) {
-            console.error('SSE 카메라 업데이트 파싱 오류:', error);
+            // "refresh" 같은 문자열이거나 카메라 객체일 수 있음
+            const parsed = JSON.parse(data);
+            console.log('SSE 카메라 이벤트 수신:', parsed);
+            onCameraUpdateRef.current?.(parsed);
+          } catch {
+            // JSON 파싱 실패시 문자열 그대로 전달
+            console.log('SSE 카메라 이벤트 수신 (문자열):', data);
+            onCameraUpdateRef.current?.(data);
           }
           return;
         }
 
-        if (eventType === 'camera-refresh') {
-          console.log('SSE 카메라 목록 갱신 요청:', data);
-          onCameraRefreshRef.current?.();
+        if (eventType === 'event') {
+          try {
+            const event = JSON.parse(data);
+            console.log('SSE 이벤트 수신:', event);
+            onEventUpdateRef.current?.(event);
+          } catch (error) {
+            console.error('SSE 이벤트 파싱 오류:', error);
+          }
+          return;
+        }
+
+        if (eventType === 'member') {
+          try {
+            const member = JSON.parse(data);
+            console.log('SSE 멤버 이벤트 수신:', member);
+            onMemberUpdateRef.current?.(member);
+          } catch (error) {
+            console.error('SSE 멤버 이벤트 파싱 오류:', error);
+          }
           return;
         }
       },

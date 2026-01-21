@@ -37,19 +37,19 @@ export function DashboardContent() {
   }, [fetchedCameras]);
 
   // SSE 카메라 업데이트 핸들러 (개별 카메라 변경)
-  const handleCameraUpdate = useCallback((camera: ManagedCamera) => {
+  const handleCameraUpdate = useCallback((camera: ManagedCamera | string) => {
+    // "refresh" 문자열인 경우 목록 갱신
+    if (camera === "refresh" || typeof camera === "string") {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STREAMS.ALL });
+      return;
+    }
     setCameras(prev => prev.map(cam =>
       cam.id === camera.id ? camera : cam
     ));
-  }, []);
-
-  // SSE 카메라 목록 갱신 핸들러 (새 카메라 추가/연결 상태 변경)
-  const handleCameraRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.STREAMS.ALL });
   }, [queryClient]);
 
   // SSE 연결 (알림 + 카메라 이벤트)
-  useNotificationStream(undefined, handleCameraUpdate, handleCameraRefresh);
+  useNotificationStream(undefined, handleCameraUpdate);
 
   const displayCameras = cameras.length > 0 ? cameras : (fetchedCameras ?? []);
 

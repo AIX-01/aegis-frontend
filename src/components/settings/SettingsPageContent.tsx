@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { authApi } from "@/lib/api";
+import { authApi, settingsApi } from "@/lib/api";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +42,13 @@ export function SettingsPageContent() {
   // Profile states
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+
+  // Emergency contact states
+  const [primaryPhone, setPrimaryPhone] = useState('010-1234-5678');
+  const [primaryEmail, setPrimaryEmail] = useState('primary@company.com');
+  const [secondaryPhone, setSecondaryPhone] = useState('010-9876-5432');
+  const [secondaryEmail, setSecondaryEmail] = useState('secondary@company.com');
+  const [isEmergencyLoading, setIsEmergencyLoading] = useState(false);
 
   // Sync user data when loaded
   useEffect(() => {
@@ -118,6 +125,28 @@ export function SettingsPageContent() {
     logout();
   };
 
+  const handleSaveEmergencyContacts = async () => {
+    setIsEmergencyLoading(true);
+    try {
+      await settingsApi.updateEmergencyContacts({
+        primary: { phone: primaryPhone, email: primaryEmail },
+        secondary: { phone: secondaryPhone, email: secondaryEmail },
+      });
+      toast({
+        title: "저장 완료",
+        description: "비상 연락처가 저장되었습니다.",
+      });
+    } catch (error) {
+      toast({
+        title: "저장 실패",
+        description: "비상 연락처 저장에 실패했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEmergencyLoading(false);
+    }
+  };
+
   return (
     <ProtectedRoute>
     <DashboardLayout title="설정">
@@ -151,22 +180,55 @@ export function SettingsPageContent() {
                 <div className="grid gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="contact1-phone">주 담당자 전화번호</Label>
-                    <Input id="contact1-phone" placeholder="010-0000-0000" defaultValue="010-1234-5678" />
+                    <Input
+                      id="contact1-phone"
+                      placeholder="010-0000-0000"
+                      value={primaryPhone}
+                      onChange={(e) => setPrimaryPhone(e.target.value)}
+                    />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="contact1-email">주 담당자 이메일</Label>
-                    <Input id="contact1-email" type="email" placeholder="example@email.com" defaultValue="primary@company.com" />
+                    <Input
+                      id="contact1-email"
+                      type="email"
+                      placeholder="example@email.com"
+                      value={primaryEmail}
+                      onChange={(e) => setPrimaryEmail(e.target.value)}
+                    />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="contact2-phone">보조 담당자 전화번호</Label>
-                    <Input id="contact2-phone" placeholder="010-0000-0000" defaultValue="010-9876-5432" />
+                    <Input
+                      id="contact2-phone"
+                      placeholder="010-0000-0000"
+                      value={secondaryPhone}
+                      onChange={(e) => setSecondaryPhone(e.target.value)}
+                    />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="contact2-email">보조 담당자 이메일</Label>
-                    <Input id="contact2-email" type="email" placeholder="example@email.com" defaultValue="secondary@company.com" />
+                    <Input
+                      id="contact2-email"
+                      type="email"
+                      placeholder="example@email.com"
+                      value={secondaryEmail}
+                      onChange={(e) => setSecondaryEmail(e.target.value)}
+                    />
                   </div>
                 </div>
-                <Button className="w-full">설정 저장</Button>
+                <Button
+                  className="w-full"
+                  onClick={handleSaveEmergencyContacts}
+                  disabled={isEmergencyLoading}
+                >
+                  {isEmergencyLoading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  {isEmergencyLoading ? '저장 중...' : '설정 저장'}
+                </Button>
               </CardContent>
             </Card>
           </div>

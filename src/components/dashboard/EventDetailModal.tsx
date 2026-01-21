@@ -7,9 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
-  Play, 
-  Pause, 
-  Download, 
+  Download,
   AlertCircle, 
   AlertTriangle, 
   Shield, 
@@ -24,11 +22,13 @@ import { ko } from "date-fns/locale";
 import type { Event } from "@/types";
 import { useState, useRef, useEffect } from "react";
 import { eventsApi } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface EventDetailModalProps {
   event: Event | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onStatusChange?: (eventId: string, newStatus: Event['status']) => void;
 }
 
 const getEventTypeBadge = (type: Event['type']) => {
@@ -53,31 +53,19 @@ const getStatusBadge = (status: Event['status']) => {
   }
 };
 
-export function EventDetailModal({ event, open, onOpenChange }: EventDetailModalProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [hasClip, setHasClip] = useState(false);
+export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: EventDetailModalProps) {
   const [clipError, setClipError] = useState(false);
+  const [isStatusLoading, setIsStatusLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { toast } = useToast();
 
   // 모달 열릴 때 클립 상태 초기화
   useEffect(() => {
     if (open && event) {
-      setHasClip(!!event.clipUrl);
       setClipError(false);
-      setIsPlaying(false);
     }
   }, [open, event]);
 
-  const handlePlayPause = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
 
   const handleDownload = () => {
     if (event?.clipUrl) {
@@ -85,6 +73,28 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
       link.href = eventsApi.getClipUrl(event.id);
       link.download = `event-${event.id}.mp4`;
       link.click();
+    }
+  };
+
+  const handleStatusChange = async () => {
+    if (!event || event.status === 'resolved') return;
+
+    setIsStatusLoading(true);
+    try {
+      await eventsApi.updateStatus(event.id, { status: 'resolved' });
+      toast({
+        title: "상태 변경 완료",
+        description: "이벤트가 완료 처리되었습니다.",
+      });
+      onStatusChange?.(event.id, 'resolved');
+    } catch (error) {
+      toast({
+        title: "상태 변경 실패",
+        description: "이벤트 상태 변경에 실패했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsStatusLoading(false);
     }
   };
 
@@ -157,8 +167,6 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                             ref={videoRef}
                             src={clipUrl}
                             className="w-full h-full object-contain bg-black"
-                            onPlay={() => setIsPlaying(true)}
-                            onPause={() => setIsPlaying(false)}
                             onError={() => setClipError(true)}
                             controls
                           />
@@ -296,14 +304,27 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
           </ScrollArea>
         </Tabs>
 
-        <div className="p-4 border-t flex justify-end gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            닫기
-          </Button>
-          <Button>
-            <Download className="h-4 w-4 mr-2" />
-            보고서 다운로드
-          </Button>
+        <div className="p-4 border-t flex justify-between">
+          <div>
+            {event.status === 'processing' && (
+              <Button
+                variant="outline"
+                onClick={handleStatusChange}
+                disabled={isStatusLoading}
+              >
+                {isStatusLoading ? '처리 중...' : '✓ 완료 처리'}
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              닫기
+            </Button>
+            <Button>
+              <Download className="h-4 w-4 mr-2" />
+              보고서 다운로드
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

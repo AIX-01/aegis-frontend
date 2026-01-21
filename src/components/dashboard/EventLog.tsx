@@ -12,6 +12,7 @@ import { EventDetailModal } from "./EventDetailModal";
 
 interface EventLogProps {
   events: Event[];
+  onStatusChange?: (eventId: string, newStatus: Event['status']) => void;
 }
 
 const getEventIcon = (type: Event['type']) => {
@@ -58,13 +59,21 @@ const getStatusBadge = (status: Event['status']) => {
   }
 };
 
-export function EventLog({ events }: EventLogProps) {
+export function EventLog({ events, onStatusChange }: EventLogProps) {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
     setModalOpen(true);
+  };
+
+  const handleStatusChange = (eventId: string, newStatus: Event['status']) => {
+    // 로컬 상태 업데이트
+    if (selectedEvent?.id === eventId) {
+      setSelectedEvent({ ...selectedEvent, status: newStatus });
+    }
+    onStatusChange?.(eventId, newStatus);
   };
 
   return (
@@ -111,7 +120,8 @@ export function EventLog({ events }: EventLogProps) {
       <EventDetailModal 
         event={selectedEvent} 
         open={modalOpen} 
-        onOpenChange={setModalOpen} 
+        onOpenChange={setModalOpen}
+        onStatusChange={handleStatusChange}
       />
     </>
   );

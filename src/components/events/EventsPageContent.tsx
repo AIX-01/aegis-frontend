@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { EventLog } from "@/components/dashboard/EventLog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { eventsApi } from "@/lib/api";
+import { useNotificationStream } from "@/hooks/useNotificationStream";
 import type { Event } from "@/types";
 import {
   ClipboardList,
@@ -96,6 +97,20 @@ export function EventsPageContent() {
     };
 
     fetchData();
+  }, []);
+
+  // 새 알림 수신 시 이벤트 목록 갱신
+  const handleNewNotification = useCallback(() => {
+    eventsApi.getAll().then(setEvents).catch(console.error);
+  }, []);
+
+  useNotificationStream(handleNewNotification);
+
+  // 이벤트 상태 변경 핸들러
+  const handleStatusChange = useCallback((eventId: string, newStatus: Event['status']) => {
+    setEvents(prev => prev.map(e =>
+      e.id === eventId ? { ...e, status: newStatus } : e
+    ));
   }, []);
 
   // 필터링된 이벤트
@@ -466,7 +481,7 @@ export function EventsPageContent() {
               </div>
             </CardHeader>
             <CardContent>
-              <EventLog events={filteredEvents} />
+              <EventLog events={filteredEvents} onStatusChange={handleStatusChange} />
             </CardContent>
           </Card>
         </div>

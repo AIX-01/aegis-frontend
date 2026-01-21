@@ -7,6 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 import { getAccessToken } from '@/lib/axios';
 import type { Notification, ManagedCamera } from '@/types';
 
+const isDev = process.env.NODE_ENV === 'development';
+
 /**
  * SSE를 통한 실시간 알림 및 카메라/이벤트/멤버 업데이트 수신 훅
  * - @microsoft/fetch-event-source 사용 (Authorization 헤더 지원)
@@ -82,12 +84,12 @@ export function useNotificationStream(
 
       onopen: async (response) => {
         if (response.ok) {
-          console.log('SSE 연결 성공');
+          if (isDev) console.log('SSE 연결 성공');
         } else if (response.status === 401 || response.status === 403) {
-          console.error('SSE 인증 실패:', response.status);
+          if (isDev) console.error('SSE 인증 실패:', response.status);
           throw new Error('인증 실패');
         } else {
-          console.error('SSE 연결 실패:', response.status);
+          if (isDev) console.error('SSE 연결 실패:', response.status);
           throw new Error('연결 실패');
         }
       },
@@ -97,14 +99,14 @@ export function useNotificationStream(
         const data = event.data;
 
         if (eventType === 'connect') {
-          console.log('SSE 연결 확인:', data);
+          if (isDev) console.log('SSE 연결 확인:', data);
           return;
         }
 
         if (eventType === 'notification') {
           try {
             const notification: Notification = JSON.parse(data);
-            console.log('SSE 알림 수신:', notification);
+            if (isDev) console.log('SSE 알림 수신:', notification);
             onNotificationRef.current?.(notification);
             toastRef.current({
               title: notification.title,
@@ -112,7 +114,7 @@ export function useNotificationStream(
               variant: notification.type === 'alert' ? 'destructive' : 'default',
             });
           } catch (error) {
-            console.error('SSE 알림 파싱 오류:', error);
+            if (isDev) console.error('SSE 알림 파싱 오류:', error);
           }
           return;
         }
@@ -121,11 +123,11 @@ export function useNotificationStream(
           try {
             // "refresh" 같은 문자열이거나 카메라 객체일 수 있음
             const parsed = JSON.parse(data);
-            console.log('SSE 카메라 이벤트 수신:', parsed);
+            if (isDev) console.log('SSE 카메라 이벤트 수신:', parsed);
             onCameraUpdateRef.current?.(parsed);
           } catch {
             // JSON 파싱 실패시 문자열 그대로 전달
-            console.log('SSE 카메라 이벤트 수신 (문자열):', data);
+            if (isDev) console.log('SSE 카메라 이벤트 수신 (문자열):', data);
             onCameraUpdateRef.current?.(data);
           }
           return;
@@ -134,10 +136,10 @@ export function useNotificationStream(
         if (eventType === 'event') {
           try {
             const event = JSON.parse(data);
-            console.log('SSE 이벤트 수신:', event);
+            if (isDev) console.log('SSE 이벤트 수신:', event);
             onEventUpdateRef.current?.(event);
           } catch (error) {
-            console.error('SSE 이벤트 파싱 오류:', error);
+            if (isDev) console.error('SSE 이벤트 파싱 오류:', error);
           }
           return;
         }
@@ -145,21 +147,21 @@ export function useNotificationStream(
         if (eventType === 'member') {
           try {
             const member = JSON.parse(data);
-            console.log('SSE 멤버 이벤트 수신:', member);
+            if (isDev) console.log('SSE 멤버 이벤트 수신:', member);
             onMemberUpdateRef.current?.(member);
           } catch (error) {
-            console.error('SSE 멤버 이벤트 파싱 오류:', error);
+            if (isDev) console.error('SSE 멤버 이벤트 파싱 오류:', error);
           }
           return;
         }
       },
 
       onerror: (error) => {
-        console.error('SSE 연결 오류:', error);
+        if (isDev) console.error('SSE 연결 오류:', error);
 
         // 5초 후 재연결 시도
         reconnectTimeoutRef.current = setTimeout(() => {
-          console.log('SSE 재연결 시도...');
+          if (isDev) console.log('SSE 재연결 시도...');
           connect();
         }, 5000);
 
@@ -167,7 +169,7 @@ export function useNotificationStream(
       },
 
       onclose: () => {
-        console.log('SSE 연결 종료');
+        if (isDev) console.log('SSE 연결 종료');
       },
     }).catch(() => {
       // fetchEventSource 종료됨
@@ -183,7 +185,7 @@ export function useNotificationStream(
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
-      console.log('SSE 연결 해제');
+      if (isDev) console.log('SSE 연결 해제');
     }
   }, []);
 

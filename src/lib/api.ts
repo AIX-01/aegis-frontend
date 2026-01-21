@@ -15,7 +15,6 @@ import type {
   SignupRequest,
   RefreshResponse,
   PasswordChangeRequest,
-  SummaryStats,
   StreamAccessResponse,
   ThumbnailResponse,
 } from '@/types';
@@ -162,11 +161,6 @@ export const statsApi = {
 
   getMonthly: async (): Promise<MonthlyEventData> => {
     const response = await api.get<MonthlyEventData>('/api/stats?type=monthly');
-    return response.data;
-  },
-
-  getSummary: async (): Promise<SummaryStats> => {
-    const response = await api.get<SummaryStats>('/api/stats?type=summary');
     return response.data;
   },
 };

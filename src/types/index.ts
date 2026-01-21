@@ -104,15 +104,6 @@ export interface PasswordChangeRequest {
   newPassword: string;
 }
 
-// Summary Stats types
-export interface SummaryStats {
-  todayEvents: number;
-  aiResponseRate: number;
-  avgResponseTime: number;
-  activeAlerts: number;
-  todayEventsChange: number;
-  aiResponseRateChange: number;
-}
 
 // User update types
 export interface UserUpdateRequest {

@@ -2,78 +2,33 @@
 
 import { useState, useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
-import { TrendingUp, TrendingDown, Activity, Clock, Shield, AlertTriangle, CalendarDays } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { statsApi } from "@/lib/api";
-import type { DailyStat, EventTypeStat, MonthlyEventData, SummaryStats } from "@/types";
+import type { DailyStat, EventTypeStat, MonthlyEventData } from "@/types";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  change?: string;
-  changeType?: 'positive' | 'negative' | 'neutral';
-  icon: React.ReactNode;
-}
-
-function StatCard({ title, value, change, changeType = 'neutral', icon }: StatCardProps) {
-  return (
-    <Card className="soft-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold mt-1">{value}</p>
-            {change && (
-              <div className="flex items-center gap-1 mt-1">
-                {changeType === 'positive' ? (
-                  <TrendingUp className="h-3 w-3 text-success" />
-                ) : changeType === 'negative' ? (
-                  <TrendingDown className="h-3 w-3 text-destructive" />
-                ) : null}
-                <span className={`text-xs ${
-                  changeType === 'positive' ? 'text-success' : 
-                  changeType === 'negative' ? 'text-destructive' : 
-                  'text-muted-foreground'
-                }`}>
-                  {change}
-                </span>
-              </div>
-            )}
-          </div>
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
-            {icon}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 export function StatsDashboard() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [dailyStats, setDailyStats] = useState<DailyStat[]>([]);
   const [eventTypeStats, setEventTypeStats] = useState<EventTypeStat[]>([]);
   const [monthlyEventData, setMonthlyEventData] = useState<MonthlyEventData>({});
-  const [summaryStats, setSummaryStats] = useState<SummaryStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [daily, eventTypes, monthly, summary] = await Promise.all([
+        const [daily, eventTypes, monthly] = await Promise.all([
           statsApi.getDaily(),
           statsApi.getEventTypes(),
           statsApi.getMonthly(),
-          statsApi.getSummary(),
         ]);
         setDailyStats(daily);
         setEventTypeStats(eventTypes);
         setMonthlyEventData(monthly);
-        setSummaryStats(summary);
       } catch (error) {
         console.error('Failed to fetch stats:', error);
       } finally {
@@ -117,37 +72,6 @@ export function StatsDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="오늘 총 이벤트"
-          value={summaryStats?.todayEvents ?? 0}
-          change={summaryStats ? `전일 대비 ${summaryStats.todayEventsChange}%` : undefined}
-          changeType={summaryStats && summaryStats.todayEventsChange < 0 ? "positive" : "negative"}
-          icon={<Activity className="h-5 w-5" />}
-        />
-        <StatCard
-          title="AI 대응률"
-          value={summaryStats ? `${summaryStats.aiResponseRate}%` : '0%'}
-          change={summaryStats ? `+${summaryStats.aiResponseRateChange}% 향상` : undefined}
-          changeType="positive"
-          icon={<Shield className="h-5 w-5" />}
-        />
-        <StatCard
-          title="평균 대응 시간"
-          value={summaryStats ? `${summaryStats.avgResponseTime}초` : '0초'}
-          change="목표 달성"
-          changeType="positive"
-          icon={<Clock className="h-5 w-5" />}
-        />
-        <StatCard
-          title="위험 알림"
-          value={summaryStats?.activeAlerts ?? 0}
-          change="현재 활성"
-          changeType={summaryStats && summaryStats.activeAlerts > 0 ? "negative" : "neutral"}
-          icon={<AlertTriangle className="h-5 w-5" />}
-        />
-      </div>
 
       {/* Calendar + Selected Date Stats */}
       <div className="grid lg:grid-cols-3 gap-6">

@@ -3,9 +3,7 @@
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import { AlertCircle, AlertTriangle, CheckCircle2, Shield } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import type { Event } from "@/types";
 import { useState } from "react";
 import { EventDetailModal } from "./EventDetailModal";
@@ -83,14 +81,13 @@ export function EventLog({ events, onStatusChange }: EventLogProps) {
 
   return (
     <>
-      <ScrollArea className="h-[400px] pr-3">
-        <div className="space-y-3">
-          {events.map((event) => (
-            <div
-              key={event.id}
-              onClick={() => handleEventClick(event)}
-              className="p-3 rounded-lg border bg-card/50 border-border/50 cursor-pointer"
-            >
+      <div className="space-y-3">
+        {events.map((event) => (
+          <div
+            key={event.id}
+            onClick={() => handleEventClick(event)}
+            className="p-3 rounded-lg border bg-card/50 border-border/50 cursor-pointer"
+          >
               <div className="flex items-start gap-3">
                 <div className="mt-0.5">
                   {getEventIcon(event.type)}
@@ -117,13 +114,12 @@ export function EventLog({ events, onStatusChange }: EventLogProps) {
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </ScrollArea>
+          </div>
+        ))}
+      </div>
 
-      <EventDetailModal 
-        event={selectedEvent} 
+      <EventDetailModal
+        event={selectedEvent}
         open={modalOpen} 
         onOpenChange={setModalOpen}
         onStatusChange={handleStatusChange}

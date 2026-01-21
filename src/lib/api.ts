@@ -16,8 +16,6 @@ import type {
   RefreshResponse,
   PasswordChangeRequest,
   SummaryStats,
-  EmergencyContact,
-  EmergencyContactUpdateRequest,
   SystemStatus,
   StorageInfo,
   StreamAccessResponse,
@@ -55,6 +53,16 @@ export const authApi = {
 
   changePassword: async (data: PasswordChangeRequest): Promise<{ success: boolean; message: string }> => {
     const response = await api.patch('/api/auth/password', data);
+    return response.data;
+  },
+
+  updateProfile: async (data: { name: string }): Promise<User> => {
+    const response = await api.patch<User>('/api/auth/me', data);
+    return response.data;
+  },
+
+  deleteAccount: async (): Promise<{ success: boolean; message: string }> => {
+    const response = await api.delete('/api/auth/me');
     return response.data;
   },
 };
@@ -203,16 +211,4 @@ export const usersApi = {
   },
 };
 
-// Settings API
-export const settingsApi = {
-  getEmergencyContacts: async (): Promise<EmergencyContact[]> => {
-    const response = await api.get<EmergencyContact[]>('/api/settings/emergency-contacts');
-    return response.data;
-  },
-
-  updateEmergencyContacts: async (data: EmergencyContactUpdateRequest): Promise<{ success: boolean; message: string }> => {
-    const response = await api.put('/api/settings/emergency-contacts', data);
-    return response.data;
-  },
-};
 

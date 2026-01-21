@@ -18,10 +18,11 @@ interface EventLogProps {
 const getEventIcon = (type: Event['type']) => {
   switch (type) {
     case 'assault':
+    case 'burglary':
       return <AlertCircle className="h-4 w-4 text-destructive" />;
-    case 'theft':
-      return <AlertTriangle className="h-4 w-4 text-destructive" />;
-    case 'suspicious':
+    case 'dump':
+    case 'swoon':
+    case 'vandalism':
       return <AlertTriangle className="h-4 w-4 text-warning" />;
     default:
       return <Shield className="h-4 w-4 text-success" />;
@@ -32,12 +33,16 @@ const getEventTypeBadge = (type: Event['type']) => {
   switch (type) {
     case 'assault':
       return <Badge variant="destructive" className="text-xs">폭행</Badge>;
-    case 'theft':
+    case 'burglary':
       return <Badge variant="destructive" className="text-xs">절도</Badge>;
-    case 'suspicious':
-      return <Badge className="bg-warning text-warning-foreground text-xs">의심</Badge>;
+    case 'dump':
+      return <Badge className="bg-warning text-warning-foreground text-xs">투기</Badge>;
+    case 'swoon':
+      return <Badge className="bg-warning text-warning-foreground text-xs">실신</Badge>;
+    case 'vandalism':
+      return <Badge className="bg-warning text-warning-foreground text-xs">파손</Badge>;
     default:
-      return <Badge className="bg-success text-success-foreground text-xs">정상</Badge>;
+      return <Badge className="bg-muted text-muted-foreground text-xs">알 수 없음</Badge>;
   }
 };
 

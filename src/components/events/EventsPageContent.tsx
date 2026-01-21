@@ -46,20 +46,13 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
 
-// 12가지 이상행동 라벨
+// 이상행동 유형 (백엔드 EventType과 동일)
 const behaviorLabels = [
-  { id: 'assault', label: '폭행', checked: true },
-  { id: 'fight', label: '싸움', checked: true },
-  { id: 'theft', label: '절도', checked: true },
-  { id: 'vandalism', label: '기물파손', checked: true },
-  { id: 'fainting', label: '실신', checked: true },
-  { id: 'loitering', label: '배회', checked: true },
-  { id: 'intrusion', label: '침입', checked: true },
-  { id: 'dumping', label: '투기', checked: true },
-  { id: 'robbery', label: '강도', checked: true },
-  { id: 'harassment', label: '데이트폭력 및 추행', checked: true },
-  { id: 'kidnapping', label: '납치', checked: true },
-  { id: 'intoxication', label: '주취행동', checked: true },
+  { id: 'assault', label: '폭행' },
+  { id: 'burglary', label: '절도' },
+  { id: 'dump', label: '투기' },
+  { id: 'swoon', label: '실신' },
+  { id: 'vandalism', label: '파손' },
 ];
 
 // AI 대응 방식
@@ -131,20 +124,9 @@ export function EventsPageContent() {
       }
     }
 
-    // 이상행동 유형 필터 (event.type과 매핑)
-    // 백엔드 EventType: assault, theft, suspicious, normal
-    // 프론트 behaviorLabels: assault, fight, theft, vandalism, fainting, loitering, intrusion, dumping, robbery, harassment, kidnapping, intoxication
-    // assault는 assault, fight와 매핑, theft는 theft, robbery와 매핑, 나머지는 suspicious로 매핑
+    // 이상행동 유형 필터 (event.type과 직접 매핑)
     if (selectedBehaviors.length > 0 && selectedBehaviors.length < behaviorLabels.length) {
-      const typeToLabels: Record<string, string[]> = {
-        'assault': ['assault', 'fight'],
-        'theft': ['theft', 'robbery'],
-        'suspicious': ['vandalism', 'fainting', 'loitering', 'intrusion', 'dumping', 'harassment', 'kidnapping', 'intoxication'],
-        'normal': [],
-      };
-      const matchingLabels = typeToLabels[event.type] || [];
-      const hasMatch = matchingLabels.some(label => selectedBehaviors.includes(label));
-      if (!hasMatch && event.type !== 'normal') {
+      if (!selectedBehaviors.includes(event.type)) {
         return false;
       }
     }
@@ -153,9 +135,10 @@ export function EventsPageContent() {
     if (selectedRisks.length > 0 && selectedRisks.length < 3) {
       const typeToRisk: Record<string, string> = {
         'assault': 'high',
-        'theft': 'high',
-        'suspicious': 'medium',
-        'normal': 'low',
+        'burglary': 'high',
+        'dump': 'medium',
+        'swoon': 'medium',
+        'vandalism': 'medium',
       };
       const eventRisk = typeToRisk[event.type] || 'low';
       if (!selectedRisks.includes(eventRisk)) {

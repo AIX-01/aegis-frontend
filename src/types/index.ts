@@ -20,7 +20,7 @@ export interface Event {
   id: string;
   cameraId: string;
   cameraName: string;
-  type: 'assault' | 'theft' | 'suspicious' | 'normal';
+  type: 'assault' | 'burglary' | 'dump' | 'swoon' | 'vandalism';
   timestamp: string;      // ISO8601 string (백엔드 호환)
   status: 'processing' | 'resolved';
   description: string;
@@ -114,23 +114,6 @@ export interface SummaryStats {
   aiResponseRateChange: number;
 }
 
-// Settings types
-export interface EmergencyContact {
-  id: string;
-  type: 'primary' | 'secondary';
-  phone: string;
-  email: string;
-}
-
-export interface ContactInfo {
-  phone: string;
-  email: string;
-}
-
-export interface EmergencyContactUpdateRequest {
-  primary: ContactInfo;
-  secondary: ContactInfo;
-}
 
 // System types
 export interface SystemStatus {

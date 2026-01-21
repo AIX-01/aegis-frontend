@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Video } from 'lucide-react';
 import { camerasApi } from '@/lib/api';
 
@@ -8,44 +8,63 @@ interface CameraThumbnailProps {
   cameraId: string;
   active: boolean;
   connected: boolean;
-  refreshInterval?: number; // ms, default 3000
 }
+
+// 썸네일 캐시 (TTL 3초)
+const thumbnailCache = new Map<string, { data: string; timestamp: number }>();
+const CACHE_TTL = 3000; // 3초
 
 export function CameraThumbnail({
   cameraId,
   active,
   connected,
-  refreshInterval = 3000
 }: CameraThumbnailProps) {
   const [thumbnailSrc, setThumbnailSrc] = useState<string | null>(null);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const fetchThumbnail = useCallback(async () => {
     if (!active || !connected) {
       setThumbnailSrc(null);
       return;
     }
 
-    const fetchThumbnail = async () => {
-      try {
-        const response = await camerasApi.getThumbnail(cameraId);
-        if (response.image) {
-          setThumbnailSrc(`data:image/jpeg;base64,${response.image}`);
-          setError(false);
-        }
-      } catch {
-        setError(true);
+    // 캐시 확인 (TTL 3초)
+    const cached = thumbnailCache.get(cameraId);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      setThumbnailSrc(cached.data);
+      setError(false);
+      return;
+    }
+
+    try {
+      const response = await camerasApi.getThumbnail(cameraId);
+      if (response.image) {
+        const src = `data:image/jpeg;base64,${response.image}`;
+        thumbnailCache.set(cameraId, { data: src, timestamp: Date.now() });
+        setThumbnailSrc(src);
+        setError(false);
+      }
+    } catch {
+      setError(true);
+    }
+  }, [cameraId, active, connected]);
+
+  // 초기 로드 및 visibility 변경 시 재로드
+  useEffect(() => {
+    fetchThumbnail();
+
+    // 탭 visibility 변경 감지
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchThumbnail();
       }
     };
 
-    // 즉시 한 번 실행
-    fetchThumbnail();
-
-    // 주기적으로 갱신
-    const interval = setInterval(fetchThumbnail, refreshInterval);
-
-    return () => clearInterval(interval);
-  }, [cameraId, active, connected, refreshInterval]);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [fetchThumbnail]);
 
   // 썸네일이 있으면 이미지 표시
   if (thumbnailSrc && !error) {
@@ -66,7 +85,6 @@ export function CameraThumbnail({
       <div className="text-muted-foreground/40">
         <Video className="h-8 w-8" />
       </div>
-      {/* Simulated video noise effect */}
       <div
         className="absolute inset-0 opacity-[0.02]"
         style={{

@@ -35,12 +35,16 @@ const getEventTypeBadge = (type: Event['type']) => {
   switch (type) {
     case 'assault':
       return <Badge variant="destructive">폭행</Badge>;
-    case 'theft':
+    case 'burglary':
       return <Badge variant="destructive">절도</Badge>;
-    case 'suspicious':
-      return <Badge className="bg-warning text-warning-foreground">의심</Badge>;
+    case 'dump':
+      return <Badge className="bg-warning text-warning-foreground">투기</Badge>;
+    case 'swoon':
+      return <Badge className="bg-warning text-warning-foreground">실신</Badge>;
+    case 'vandalism':
+      return <Badge className="bg-warning text-warning-foreground">파손</Badge>;
     default:
-      return <Badge className="bg-success text-success-foreground">정상</Badge>;
+      return <Badge className="bg-muted text-muted-foreground">알 수 없음</Badge>;
   }
 };
 
@@ -108,12 +112,10 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
         <DialogHeader className="p-6 pb-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {event.type === 'assault' || event.type === 'theft' ? (
+              {event.type === 'assault' || event.type === 'burglary' ? (
                 <AlertCircle className="h-6 w-6 text-destructive" />
-              ) : event.type === 'suspicious' ? (
-                <AlertTriangle className="h-6 w-6 text-warning" />
               ) : (
-                <Shield className="h-6 w-6 text-success" />
+                <AlertTriangle className="h-6 w-6 text-warning" />
               )}
               <div>
                 <DialogTitle className="text-xl">{event.description}</DialogTitle>
@@ -227,8 +229,10 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
                     <p className="text-xs text-muted-foreground mb-1">이벤트 유형</p>
                     <p className="text-sm font-medium">
                       {event.type === 'assault' ? '폭행' : 
-                       event.type === 'theft' ? '절도' : 
-                       event.type === 'suspicious' ? '의심 행동' : '정상'}
+                       event.type === 'burglary' ? '절도' :
+                       event.type === 'dump' ? '투기' :
+                       event.type === 'swoon' ? '실신' :
+                       event.type === 'vandalism' ? '파손' : '알 수 없음'}
                     </p>
                   </div>
                   <div className="p-3 bg-muted/30 rounded-lg">

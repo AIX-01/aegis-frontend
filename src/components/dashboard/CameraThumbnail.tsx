@@ -1,18 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { Video } from 'lucide-react';
-import { camerasApi } from '@/lib/api';
+import { useState, useEffect, useCallback } from "react";
+import { Video } from "lucide-react";
+import { camerasApi } from "@/lib/api";
 
 interface CameraThumbnailProps {
   cameraId: string;
   active: boolean;
   connected: boolean;
 }
-
-// 썸네일 캐시 (TTL 3초)
-const thumbnailCache = new Map<string, { data: string; timestamp: number }>();
-const CACHE_TTL = 3000; // 3초
 
 export function CameraThumbnail({
   cameraId,
@@ -28,20 +24,10 @@ export function CameraThumbnail({
       return;
     }
 
-    // 캐시 확인 (TTL 3초)
-    const cached = thumbnailCache.get(cameraId);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      setThumbnailSrc(cached.data);
-      setError(false);
-      return;
-    }
-
     try {
       const response = await camerasApi.getThumbnail(cameraId);
       if (response.image) {
-        const src = `data:image/jpeg;base64,${response.image}`;
-        thumbnailCache.set(cameraId, { data: src, timestamp: Date.now() });
-        setThumbnailSrc(src);
+        setThumbnailSrc(`data:image/jpeg;base64,${response.image}`);
         setError(false);
       }
     } catch {
@@ -49,24 +35,22 @@ export function CameraThumbnail({
     }
   }, [cameraId, active, connected]);
 
-  // 초기 로드 및 visibility 변경 시 재로드
+  // 초기 로드 및 탭 visibility 변경 시 재로드
   useEffect(() => {
     fetchThumbnail();
 
-    // 탭 visibility 변경 감지
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === "visible") {
         fetchThumbnail();
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [fetchThumbnail]);
 
-  // 썸네일이 있으면 이미지 표시
   if (thumbnailSrc && !error) {
     return (
       <div className="absolute inset-0">
@@ -79,7 +63,6 @@ export function CameraThumbnail({
     );
   }
 
-  // 썸네일이 없으면 placeholder
   return (
     <div className="absolute inset-0 bg-gradient-to-br from-muted/50 to-muted flex items-center justify-center">
       <div className="text-muted-foreground/40">

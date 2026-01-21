@@ -104,6 +104,70 @@ export function EventsPageContent() {
     if (selectedStatus !== 'all' && event.status !== selectedStatus) {
       return false;
     }
+
+    // 기간 필터
+    if (dateRange?.from) {
+      const eventDate = new Date(event.timestamp);
+      if (eventDate < dateRange.from) {
+        return false;
+      }
+      if (dateRange.to && eventDate > dateRange.to) {
+        return false;
+      }
+    }
+
+    // 이상행동 유형 필터 (event.type과 매핑)
+    // 백엔드 EventType: assault, theft, suspicious, normal
+    // 프론트 behaviorLabels: assault, fight, theft, vandalism, fainting, loitering, intrusion, dumping, robbery, harassment, kidnapping, intoxication
+    // assault는 assault, fight와 매핑, theft는 theft, robbery와 매핑, 나머지는 suspicious로 매핑
+    if (selectedBehaviors.length > 0 && selectedBehaviors.length < behaviorLabels.length) {
+      const typeToLabels: Record<string, string[]> = {
+        'assault': ['assault', 'fight'],
+        'theft': ['theft', 'robbery'],
+        'suspicious': ['vandalism', 'fainting', 'loitering', 'intrusion', 'dumping', 'harassment', 'kidnapping', 'intoxication'],
+        'normal': [],
+      };
+      const matchingLabels = typeToLabels[event.type] || [];
+      const hasMatch = matchingLabels.some(label => selectedBehaviors.includes(label));
+      if (!hasMatch && event.type !== 'normal') {
+        return false;
+      }
+    }
+
+    // 위험도 필터 (event.type 기반)
+    if (selectedRisks.length > 0 && selectedRisks.length < 3) {
+      const typeToRisk: Record<string, string> = {
+        'assault': 'high',
+        'theft': 'high',
+        'suspicious': 'medium',
+        'normal': 'low',
+      };
+      const eventRisk = typeToRisk[event.type] || 'low';
+      if (!selectedRisks.includes(eventRisk)) {
+        return false;
+      }
+    }
+
+    // AI 대응 방식 필터 (event.aiAction 기반)
+    if (selectedAiResponses.length > 0 && event.aiAction) {
+      const aiActionLower = event.aiAction.toLowerCase();
+      const hasMatchingResponse = selectedAiResponses.some(response => {
+        const responseKeywords: Record<string, string[]> = {
+          'security_call': ['경비', '호출'],
+          'door_lock': ['출입', '잠금', '문'],
+          'alarm': ['경보', '알람'],
+          'police_call': ['경찰', '신고', '112'],
+          'recording': ['녹화', '저장', '영상'],
+          'monitoring': ['모니터링', '감시', '주시'],
+        };
+        const keywords = responseKeywords[response] || [];
+        return keywords.some(keyword => aiActionLower.includes(keyword));
+      });
+      if (!hasMatchingResponse) {
+        return false;
+      }
+    }
+
     return true;
   });
 

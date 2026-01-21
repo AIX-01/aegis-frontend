@@ -11,6 +11,7 @@ import { useNotificationStream } from "@/hooks/useNotificationStream";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/lib/queryKeys";
+import { camerasApi } from "@/lib/api";
 import type { ManagedCamera } from "@/types";
 
 export function DashboardContent() {
@@ -23,9 +24,7 @@ export function DashboardContent() {
 
   // 서버 데이터와 동기화
   useEffect(() => {
-    if (fetchedCameras.length > 0) {
-      setCameras(fetchedCameras);
-    }
+    setCameras(fetchedCameras);
   }, [fetchedCameras]);
 
   // SSE 카메라 업데이트 핸들러 (개별 카메라 변경)
@@ -45,26 +44,54 @@ export function DashboardContent() {
 
   const displayCameras = cameras.length > 0 ? cameras : fetchedCameras;
 
-  const handleUpdateAlias = (cameraId: string, alias: string) => {
+  const handleUpdateAlias = async (cameraId: string, alias: string) => {
+    // 낙관적 UI 업데이트
+    const prevCameras = [...cameras];
     setCameras(prev => prev.map(cam =>
       cam.id === cameraId ? { ...cam, alias } : cam
     ));
-    toast({
-      title: "별칭 수정 완료",
-      description: `카메라 별칭이 "${alias}"(으)로 변경되었습니다.`,
-    });
+
+    try {
+      await camerasApi.update(cameraId, { alias });
+      toast({
+        title: "별칭 수정 완료",
+        description: `카메라 별칭이 "${alias}"(으)로 변경되었습니다.`,
+      });
+    } catch (error) {
+      // 실패 시 롤백
+      setCameras(prevCameras);
+      toast({
+        title: "별칭 수정 실패",
+        description: "카메라 별칭 변경에 실패했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleToggleActive = (cameraId: string, active: boolean) => {
+  const handleToggleActive = async (cameraId: string, active: boolean) => {
+    // 낙관적 UI 업데이트
+    const prevCameras = [...cameras];
     setCameras(prev => prev.map(cam =>
       cam.id === cameraId ? { ...cam, active } : cam
     ));
-    toast({
-      title: active ? "카메라 ON" : "카메라 OFF",
-      description: active
-        ? "카메라가 활성화되었습니다."
-        : "카메라가 비활성화되었습니다.",
-    });
+
+    try {
+      await camerasApi.update(cameraId, { active });
+      toast({
+        title: active ? "카메라 ON" : "카메라 OFF",
+        description: active
+          ? "카메라가 활성화되었습니다."
+          : "카메라가 비활성화되었습니다.",
+      });
+    } catch (error) {
+      // 실패 시 롤백
+      setCameras(prevCameras);
+      toast({
+        title: "상태 변경 실패",
+        description: "카메라 상태 변경에 실패했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

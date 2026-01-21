@@ -109,8 +109,6 @@ export function SettingsPageContent() {
       setIsPasswordLoading(false);
     }
   };
-    setConfirmPassword('');
-  };
 
   const handleDeleteAccount = () => {
     toast({

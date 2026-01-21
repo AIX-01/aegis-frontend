@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, UserCheck, UserX, Trash2, Camera as CameraIcon } from 'lucide-react';
+import { Trash2, Camera as CameraIcon, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Camera Permission Editor Component
@@ -218,61 +218,11 @@ export function MembersPageContent() {
   const pendingUsers = users.filter(u => !u.approved);
   const approvedUsers = users.filter(u => u.approved);
 
-  const stats = {
-    total: approvedUsers.length,
-    admins: approvedUsers.filter(u => u.role === 'admin').length,
-    pending: pendingUsers.length,
-  };
 
   return (
     <ProtectedRoute requireAdmin>
     <DashboardLayout title="멤버 관리">
       <div className="space-y-6">
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="glass-card">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-primary/10">
-                  <Users className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.total}</p>
-                  <p className="text-sm text-muted-foreground">전체 멤버</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-info/10">
-                  <UserCheck className="h-6 w-6 text-info" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.admins}</p>
-                  <p className="text-sm text-muted-foreground">관리자</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-warning/10">
-                  <UserX className="h-6 w-6 text-warning" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.pending}</p>
-                  <p className="text-sm text-muted-foreground">승인 대기</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
         <Tabs defaultValue="members" className="space-y-4">
           <TabsList>
@@ -378,7 +328,7 @@ export function MembersPageContent() {
             {pendingUsers.length === 0 ? (
               <Card className="glass-card">
                 <CardContent className="pt-6 text-center py-12">
-                  <UserCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground">승인 대기 중인 요청이 없습니다</p>
                 </CardContent>
               </Card>

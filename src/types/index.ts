@@ -114,18 +114,6 @@ export interface SummaryStats {
   aiResponseRateChange: number;
 }
 
-
-// System types
-export interface SystemStatus {
-  status: string;
-  message: string;
-}
-
-export interface StorageInfo {
-  usedStorage: number;
-  totalStorage: number;
-}
-
 // User update types
 export interface UserUpdateRequest {
   name?: string;

@@ -1,12 +1,15 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { getAccessToken } from '@/lib/axios';
 import type { Notification, ManagedCamera } from '@/types';
 
 /**
  * SSE를 통한 실시간 알림 및 카메라 업데이트 수신 훅
+ * - @microsoft/fetch-event-source 사용 (Authorization 헤더 지원)
  * - 로그인 상태에서 자동 연결
  * - 새 알림 수신 시 토스트 표시
  * - 카메라 업데이트/목록 갱신 이벤트 수신
@@ -19,7 +22,7 @@ export function useNotificationStream(
 ) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 콜백 함수들을 ref로 저장하여 의존성 문제 방지
@@ -55,75 +58,96 @@ export function useNotificationStream(
     if (!userRef.current) return;
 
     // 기존 연결 정리
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
 
-    // SSE 연결 생성
-    const eventSource = new EventSource('/api/notifications/stream', {
-      withCredentials: true,
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    const accessToken = getAccessToken();
+
+    fetchEventSource('/api/notifications/stream', {
+      method: 'GET',
+      headers: {
+        'Authorization': accessToken ? `Bearer ${accessToken}` : '',
+      },
+      signal: abortController.signal,
+
+      onopen: async (response) => {
+        if (response.ok) {
+          console.log('SSE 연결 성공');
+        } else if (response.status === 401 || response.status === 403) {
+          console.error('SSE 인증 실패:', response.status);
+          throw new Error('인증 실패');
+        } else {
+          console.error('SSE 연결 실패:', response.status);
+          throw new Error('연결 실패');
+        }
+      },
+
+      onmessage: (event) => {
+        const eventType = event.event;
+        const data = event.data;
+
+        if (eventType === 'connect') {
+          console.log('SSE 연결 확인:', data);
+          return;
+        }
+
+        if (eventType === 'notification') {
+          try {
+            const notification: Notification = JSON.parse(data);
+            console.log('SSE 알림 수신:', notification);
+            onNotificationRef.current?.(notification);
+            toastRef.current({
+              title: notification.title,
+              description: notification.message,
+              variant: notification.type === 'alert' ? 'destructive' : 'default',
+            });
+          } catch (error) {
+            console.error('SSE 알림 파싱 오류:', error);
+          }
+          return;
+        }
+
+        if (eventType === 'camera-update') {
+          try {
+            const camera: ManagedCamera = JSON.parse(data);
+            console.log('SSE 카메라 업데이트 수신:', camera);
+            onCameraUpdateRef.current?.(camera);
+          } catch (error) {
+            console.error('SSE 카메라 업데이트 파싱 오류:', error);
+          }
+          return;
+        }
+
+        if (eventType === 'camera-refresh') {
+          console.log('SSE 카메라 목록 갱신 요청:', data);
+          onCameraRefreshRef.current?.();
+          return;
+        }
+      },
+
+      onerror: (error) => {
+        console.error('SSE 연결 오류:', error);
+
+        // 5초 후 재연결 시도
+        reconnectTimeoutRef.current = setTimeout(() => {
+          console.log('SSE 재연결 시도...');
+          connect();
+        }, 5000);
+
+        throw error;
+      },
+
+      onclose: () => {
+        console.log('SSE 연결 종료');
+      },
+    }).catch(() => {
+      // fetchEventSource 종료됨
     });
-
-    eventSource.onopen = () => {
-      console.log('SSE 연결 성공');
-    };
-
-    // 연결 확인 이벤트
-    eventSource.addEventListener('connect', (event) => {
-      console.log('SSE 연결 확인:', event.data);
-    });
-
-    // 알림 수신 이벤트
-    eventSource.addEventListener('notification', (event) => {
-      try {
-        const notification: Notification = JSON.parse(event.data);
-        console.log('SSE 알림 수신:', notification);
-
-        // 콜백 호출 (알림 목록 갱신용)
-        onNotificationRef.current?.(notification);
-
-        // 토스트 알림 표시
-        toastRef.current({
-          title: notification.title,
-          description: notification.message,
-          variant: notification.type === 'alert' ? 'destructive' : 'default',
-        });
-      } catch (error) {
-        console.error('SSE 알림 파싱 오류:', error);
-      }
-    });
-
-    // 카메라 업데이트 이벤트 (개별 카메라 변경)
-    eventSource.addEventListener('camera-update', (event) => {
-      try {
-        const camera: ManagedCamera = JSON.parse(event.data);
-        console.log('SSE 카메라 업데이트 수신:', camera);
-        onCameraUpdateRef.current?.(camera);
-      } catch (error) {
-        console.error('SSE 카메라 업데이트 파싱 오류:', error);
-      }
-    });
-
-    // 카메라 목록 갱신 이벤트 (새 카메라 추가/연결 상태 변경)
-    eventSource.addEventListener('camera-refresh', (event) => {
-      console.log('SSE 카메라 목록 갱신 요청:', event.data);
-      onCameraRefreshRef.current?.();
-    });
-
-    eventSource.onerror = (error) => {
-      console.error('SSE 연결 오류:', error);
-      eventSource.close();
-      eventSourceRef.current = null;
-
-      // 5초 후 재연결 시도
-      reconnectTimeoutRef.current = setTimeout(() => {
-        console.log('SSE 재연결 시도...');
-        connect();
-      }, 5000);
-    };
-
-    eventSourceRef.current = eventSource;
-  }, []); // 의존성 없음 (user는 ref로 참조)
+  }, []);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -131,9 +155,9 @@ export function useNotificationStream(
       reconnectTimeoutRef.current = null;
     }
 
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-      eventSourceRef.current = null;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
       console.log('SSE 연결 해제');
     }
   }, []);

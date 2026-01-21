@@ -127,8 +127,17 @@ export function Header({ title: _title }: HeaderProps) {
             </nav>
           </div>
 
-          {/* Right: Notifications + Profile */}
-          <div className="flex items-center gap-3">
+          {/* Right: Profile + Actions */}
+          <div className="flex items-center gap-2">
+            {/* Profile */}
+            <div className="flex items-center gap-2 pr-3 border-r border-border">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="text-sm font-medium text-primary">
+                  {user?.name?.charAt(0) || '?'}
+                </span>
+              </div>
+              <span className="text-sm font-medium hidden md:block">{user?.name || '사용자'}</span>
+            </div>
 
             {/* Notifications */}
             <Button 
@@ -157,23 +166,15 @@ export function Header({ title: _title }: HeaderProps) {
               <Settings className="h-5 w-5" />
             </Button>
 
-            {/* Profile */}
-            <div className="flex items-center gap-2 pl-3 border-l border-border">
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-sm font-medium text-primary">
-                  {user?.name?.charAt(0) || '?'}
-                </span>
-              </div>
-              <span className="text-sm font-medium hidden md:block">{user?.name || '사용자'}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={logout}
-                title="로그아웃"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
+            {/* Logout */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={logout}
+              title="로그아웃"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </header>

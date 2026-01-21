@@ -17,10 +17,12 @@ import {
   Save,
   Eye,
   EyeOff,
-  Settings
+  Settings,
+  Loader2
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { authApi } from "@/lib/api";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +57,7 @@ export function SettingsPageContent() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
   const handleUpdateProfile = () => {
     toast({
@@ -63,7 +66,7 @@ export function SettingsPageContent() {
     });
   };
 
-  const handleUpdatePassword = () => {
+  const handleUpdatePassword = async () => {
     if (newPassword !== confirmPassword) {
       toast({
         title: "비밀번호 불일치",
@@ -82,12 +85,30 @@ export function SettingsPageContent() {
       return;
     }
 
-    toast({
-      title: "비밀번호 변경 완료",
-      description: "비밀번호가 성공적으로 변경되었습니다.",
-    });
-    setCurrentPassword('');
-    setNewPassword('');
+    setIsPasswordLoading(true);
+    try {
+      await authApi.changePassword({
+        currentPassword,
+        newPassword,
+      });
+      toast({
+        title: "비밀번호 변경 완료",
+        description: "비밀번호가 성공적으로 변경되었습니다.",
+      });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      toast({
+        title: "비밀번호 변경 실패",
+        description: err.response?.data?.error || "비밀번호 변경에 실패했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPasswordLoading(false);
+    }
+  };
     setConfirmPassword('');
   };
 
@@ -291,9 +312,13 @@ export function SettingsPageContent() {
                     </div>
                   </div>
                 </div>
-                <Button className="w-full" onClick={handleUpdatePassword}>
-                  <Lock className="h-4 w-4 mr-2" />
-                  비밀번호 변경
+                <Button className="w-full" onClick={handleUpdatePassword} disabled={isPasswordLoading}>
+                  {isPasswordLoading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Lock className="h-4 w-4 mr-2" />
+                  )}
+                  {isPasswordLoading ? '변경 중...' : '비밀번호 변경'}
                 </Button>
               </CardContent>
             </Card>

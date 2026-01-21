@@ -30,13 +30,6 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -55,15 +48,6 @@ const behaviorLabels = [
   { id: 'vandalism', label: '파손' },
 ];
 
-// AI 대응 방식
-const aiResponseTypes = [
-  { id: 'security_call', label: '경비실 호출' },
-  { id: 'door_lock', label: '출입문 잠금' },
-  { id: 'alarm', label: '경보 발령' },
-  { id: 'police_call', label: '경찰 신고' },
-  { id: 'recording', label: '영상 녹화' },
-  { id: 'monitoring', label: '모니터링 강화' },
-];
 
 export function EventsPageContent() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -72,9 +56,6 @@ export function EventsPageContent() {
   const [selectedBehaviors, setSelectedBehaviors] = useState<string[]>(
     behaviorLabels.map(b => b.id)
   );
-  const [selectedRisks, setSelectedRisks] = useState<string[]>(['high', 'medium', 'low']);
-  const [selectedAiResponses, setSelectedAiResponses] = useState<string[]>([]);
-  const [selectedStatus, setSelectedStatus] = useState<'all' | 'processing' | 'resolved'>('all');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
@@ -108,11 +89,6 @@ export function EventsPageContent() {
 
   // 필터링된 이벤트
   const filteredEvents = events.filter(event => {
-    // 상태 필터
-    if (selectedStatus !== 'all' && event.status !== selectedStatus) {
-      return false;
-    }
-
     // 기간 필터
     if (dateRange?.from) {
       const eventDate = new Date(event.timestamp);
@@ -131,41 +107,6 @@ export function EventsPageContent() {
       }
     }
 
-    // 위험도 필터 (event.type 기반)
-    if (selectedRisks.length > 0 && selectedRisks.length < 3) {
-      const typeToRisk: Record<string, string> = {
-        'assault': 'high',
-        'burglary': 'high',
-        'dump': 'medium',
-        'swoon': 'medium',
-        'vandalism': 'medium',
-      };
-      const eventRisk = typeToRisk[event.type] || 'low';
-      if (!selectedRisks.includes(eventRisk)) {
-        return false;
-      }
-    }
-
-    // AI 대응 방식 필터 (event.aiAction 기반)
-    if (selectedAiResponses.length > 0 && event.aiAction) {
-      const aiActionLower = event.aiAction.toLowerCase();
-      const hasMatchingResponse = selectedAiResponses.some(response => {
-        const responseKeywords: Record<string, string[]> = {
-          'security_call': ['경비', '호출'],
-          'door_lock': ['출입', '잠금', '문'],
-          'alarm': ['경보', '알람'],
-          'police_call': ['경찰', '신고', '112'],
-          'recording': ['녹화', '저장', '영상'],
-          'monitoring': ['모니터링', '감시', '주시'],
-        };
-        const keywords = responseKeywords[response] || [];
-        return keywords.some(keyword => aiActionLower.includes(keyword));
-      });
-      if (!hasMatchingResponse) {
-        return false;
-      }
-    }
-
     return true;
   });
 
@@ -178,24 +119,9 @@ export function EventsPageContent() {
     );
   };
 
-  const handleRiskToggle = (risk: string) => {
-    setSelectedRisks(prev =>
-      prev.includes(risk) ? prev.filter(r => r !== risk) : [...prev, risk]
-    );
-  };
-
-  const handleAiResponseToggle = (id: string) => {
-    setSelectedAiResponses(prev =>
-      prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]
-    );
-  };
-
   const handleApplyFilters = () => {
     let count = 0;
     if (selectedBehaviors.length < behaviorLabels.length) count++;
-    if (selectedRisks.length < 3) count++;
-    if (selectedAiResponses.length > 0) count++;
-    if (selectedStatus !== 'all') count++;
     if (dateRange?.from) count++;
     setActiveFiltersCount(count);
     setIsFilterOpen(false);
@@ -203,9 +129,6 @@ export function EventsPageContent() {
 
   const handleResetFilters = () => {
     setSelectedBehaviors(behaviorLabels.map(b => b.id));
-    setSelectedRisks(['high', 'medium', 'low']);
-    setSelectedAiResponses([]);
-    setSelectedStatus('all');
     setDateRange(undefined);
     setActiveFiltersCount(0);
   };
@@ -290,23 +213,6 @@ export function EventsPageContent() {
                     </SheetHeader>
 
                     <div className="py-6 space-y-6">
-                      {/* 상태 필터 */}
-                      <div className="space-y-3">
-                        <Label className="text-sm font-medium">상태</Label>
-                        <Select
-                          value={selectedStatus}
-                          onValueChange={(value: 'all' | 'processing' | 'resolved') => setSelectedStatus(value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">전체</SelectItem>
-                            <SelectItem value="processing">처리중</SelectItem>
-                            <SelectItem value="resolved">완료</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
 
                       {/* 기간 필터 */}
                       <div className="space-y-3">
@@ -388,62 +294,6 @@ export function EventsPageContent() {
                                 className="text-sm cursor-pointer"
                               >
                                 {behavior.label}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* 위험도 */}
-                      <div className="space-y-3">
-                        <Label className="text-sm font-medium">위험도</Label>
-                        <div className="flex gap-2">
-                          <Button
-                            variant={selectedRisks.includes('high') ? 'default' : 'outline'}
-                            size="sm"
-                            className={selectedRisks.includes('high') ? 'bg-destructive hover:bg-destructive/90' : ''}
-                            onClick={() => handleRiskToggle('high')}
-                          >
-                            높음
-                          </Button>
-                          <Button
-                            variant={selectedRisks.includes('medium') ? 'default' : 'outline'}
-                            size="sm"
-                            className={selectedRisks.includes('medium') ? 'bg-warning hover:bg-warning/90 text-warning-foreground' : ''}
-                            onClick={() => handleRiskToggle('medium')}
-                          >
-                            중간
-                          </Button>
-                          <Button
-                            variant={selectedRisks.includes('low') ? 'default' : 'outline'}
-                            size="sm"
-                            className={selectedRisks.includes('low') ? 'bg-success hover:bg-success/90 text-success-foreground' : ''}
-                            onClick={() => handleRiskToggle('low')}
-                          >
-                            낮음
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* AI 대응 방식 */}
-                      <div className="space-y-3">
-                        <Label className="text-sm font-medium">AI 대응 방식</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {aiResponseTypes.map((response) => (
-                            <div
-                              key={response.id}
-                              className="flex items-center space-x-2"
-                            >
-                              <Checkbox
-                                id={`ai-${response.id}`}
-                                checked={selectedAiResponses.includes(response.id)}
-                                onCheckedChange={() => handleAiResponseToggle(response.id)}
-                              />
-                              <label
-                                htmlFor={`ai-${response.id}`}
-                                className="text-sm cursor-pointer"
-                              >
-                                {response.label}
                               </label>
                             </div>
                           ))}

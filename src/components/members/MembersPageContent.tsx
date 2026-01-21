@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { usersApi, camerasApi } from '@/lib/api';
+import { useNotificationStream } from '@/hooks/useNotificationStream';
 import type { User, ManagedCamera as CameraType } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -107,6 +108,13 @@ export function MembersPageContent() {
     }
     refreshData();
   }, [isAdmin, router]);
+
+  // SSE member 이벤트 수신 시 멤버 목록 갱신
+  const handleMemberUpdate = useCallback(() => {
+    refreshData();
+  }, []);
+
+  useNotificationStream(undefined, undefined, undefined, handleMemberUpdate);
 
   const refreshData = async () => {
     try {

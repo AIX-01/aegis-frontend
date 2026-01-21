@@ -76,7 +76,12 @@ export function EventsPageContent() {
     eventsApi.getAll().then(setEvents).catch(console.error);
   }, []);
 
-  useNotificationStream(handleNewNotification);
+  // SSE event 이벤트 수신 시 이벤트 목록 갱신
+  const handleEventUpdate = useCallback(() => {
+    eventsApi.getAll().then(setEvents).catch(console.error);
+  }, []);
+
+  useNotificationStream(handleNewNotification, undefined, handleEventUpdate);
 
   // 이벤트 상태 변경 핸들러
   const handleStatusChange = useCallback((eventId: string, newStatus: Event['status']) => {

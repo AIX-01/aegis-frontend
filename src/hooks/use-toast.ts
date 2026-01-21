@@ -174,7 +174,7 @@ function useToast() {
         listeners.splice(index, 1);
       }
     };
-  }, [state]);
+  }, []); // 마운트 시 한 번만 실행
 
   return {
     ...state,

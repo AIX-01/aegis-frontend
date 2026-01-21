@@ -22,8 +22,37 @@ export function useNotificationStream(
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // 콜백 함수들을 ref로 저장하여 의존성 문제 방지
+  const onNotificationRef = useRef(onNotification);
+  const onCameraUpdateRef = useRef(onCameraUpdate);
+  const onCameraRefreshRef = useRef(onCameraRefresh);
+  const toastRef = useRef(toast);
+
+  // 콜백 함수들이 변경될 때 ref 업데이트
+  useEffect(() => {
+    onNotificationRef.current = onNotification;
+  }, [onNotification]);
+
+  useEffect(() => {
+    onCameraUpdateRef.current = onCameraUpdate;
+  }, [onCameraUpdate]);
+
+  useEffect(() => {
+    onCameraRefreshRef.current = onCameraRefresh;
+  }, [onCameraRefresh]);
+
+  useEffect(() => {
+    toastRef.current = toast;
+  }, [toast]);
+
+  // user를 ref로 저장하여 connect 내에서 참조
+  const userRef = useRef(user);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
   const connect = useCallback(() => {
-    if (!user) return;
+    if (!userRef.current) return;
 
     // 기존 연결 정리
     if (eventSourceRef.current) {
@@ -51,10 +80,10 @@ export function useNotificationStream(
         console.log('SSE 알림 수신:', notification);
 
         // 콜백 호출 (알림 목록 갱신용)
-        onNotification?.(notification);
+        onNotificationRef.current?.(notification);
 
         // 토스트 알림 표시
-        toast({
+        toastRef.current({
           title: notification.title,
           description: notification.message,
           variant: notification.type === 'alert' ? 'destructive' : 'default',
@@ -69,7 +98,7 @@ export function useNotificationStream(
       try {
         const camera: ManagedCamera = JSON.parse(event.data);
         console.log('SSE 카메라 업데이트 수신:', camera);
-        onCameraUpdate?.(camera);
+        onCameraUpdateRef.current?.(camera);
       } catch (error) {
         console.error('SSE 카메라 업데이트 파싱 오류:', error);
       }
@@ -78,7 +107,7 @@ export function useNotificationStream(
     // 카메라 목록 갱신 이벤트 (새 카메라 추가/연결 상태 변경)
     eventSource.addEventListener('camera-refresh', (event) => {
       console.log('SSE 카메라 목록 갱신 요청:', event.data);
-      onCameraRefresh?.();
+      onCameraRefreshRef.current?.();
     });
 
     eventSource.onerror = (error) => {
@@ -94,7 +123,7 @@ export function useNotificationStream(
     };
 
     eventSourceRef.current = eventSource;
-  }, [user, onNotification, onCameraUpdate, onCameraRefresh, toast]);
+  }, []); // 의존성 없음 (user는 ref로 참조)
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -109,6 +138,8 @@ export function useNotificationStream(
     }
   }, []);
 
+
+  // user 변경 시 연결/해제 처리
   useEffect(() => {
     if (user) {
       connect();

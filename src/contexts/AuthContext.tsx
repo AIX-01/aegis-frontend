@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api';
 import { setAccessToken } from '@/lib/axios';
@@ -41,7 +41,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     initAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const { user: loggedInUser } = await authApi.login({ email, password });
       setUser(loggedInUser);
@@ -53,9 +53,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         error: err.response?.data?.error || '로그인에 실패했습니다.'
       };
     }
-  };
+  }, []);
 
-  const signup = async (email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> => {
+  const signup = useCallback(async (email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> => {
     try {
       await authApi.signup({ email, password, name });
       return { success: true };
@@ -66,9 +66,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         error: err.response?.data?.error || '회원가입에 실패했습니다.'
       };
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await authApi.logout();
     } catch {
@@ -78,17 +78,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setAccessToken(null);
       router.push('/auth');
     }
-  };
+  }, [router]);
+
+  const value = useMemo(() => ({
+    user,
+    isLoading,
+    login,
+    signup,
+    logout,
+    isAdmin: user?.role === 'admin',
+  }), [user, isLoading, login, signup, logout]);
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      isLoading,
-      login,
-      signup,
-      logout,
-      isAdmin: user?.role === 'admin',
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

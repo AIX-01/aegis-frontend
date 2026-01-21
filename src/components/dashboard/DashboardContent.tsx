@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { CCTVGrid } from "@/components/dashboard/CCTVGrid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,16 +15,25 @@ import { camerasApi } from "@/lib/api";
 import type { ManagedCamera } from "@/types";
 
 export function DashboardContent() {
-  const { data: fetchedCameras = [], isLoading } = useStreams();
+  const { data: fetchedCameras, isLoading } = useStreams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // 로컬 상태 (낙관적 UI 업데이트용)
   const [cameras, setCameras] = useState<ManagedCamera[]>([]);
 
-  // 서버 데이터와 동기화
+  // 이전 데이터 참조 (불필요한 업데이트 방지)
+  const prevFetchedRef = useRef<string>('');
+
+  // 서버 데이터와 동기화 (실제 데이터 변경 시에만)
   useEffect(() => {
-    setCameras(fetchedCameras);
+    if (!fetchedCameras) return;
+
+    const currentJson = JSON.stringify(fetchedCameras);
+    if (prevFetchedRef.current !== currentJson) {
+      prevFetchedRef.current = currentJson;
+      setCameras(fetchedCameras);
+    }
   }, [fetchedCameras]);
 
   // SSE 카메라 업데이트 핸들러 (개별 카메라 변경)
@@ -42,7 +51,7 @@ export function DashboardContent() {
   // SSE 연결 (알림 + 카메라 이벤트)
   useNotificationStream(undefined, handleCameraUpdate, handleCameraRefresh);
 
-  const displayCameras = cameras.length > 0 ? cameras : fetchedCameras;
+  const displayCameras = cameras.length > 0 ? cameras : (fetchedCameras ?? []);
 
   const handleUpdateAlias = async (cameraId: string, alias: string) => {
     // 낙관적 UI 업데이트

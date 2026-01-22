@@ -73,6 +73,10 @@ export function WebRTCPlayer({
       }
       const whepUrl = urlParts.join('/');
 
+      console.log('[WebRTC] streamUrl:', streamUrl);
+      console.log('[WebRTC] token:', token);
+      console.log('[WebRTC] whepUrl:', whepUrl);
+
       const response = await fetch(whepUrl, {
         method: 'POST',
         headers: {

@@ -64,12 +64,19 @@ export function WebRTCPlayer({
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      // 6. WHEP 요청 (Authorization 헤더로 토큰 전달)
-      const response = await fetch(streamUrl, {
+      // 6. WHEP 요청 (토큰을 path에 포함: /cam/whep -> /cam__token/whep)
+      // MediaMTX는 path를 그대로 인증 요청에 전달함
+      const urlParts = streamUrl.split('/');
+      const whepIndex = urlParts.findIndex(p => p === 'whep');
+      if (whepIndex > 0) {
+        urlParts[whepIndex - 1] = `${urlParts[whepIndex - 1]}__${token}`;
+      }
+      const whepUrl = urlParts.join('/');
+
+      const response = await fetch(whepUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/sdp',
-          'Authorization': `Bearer ${token}`,
         },
         body: offer.sdp,
       });

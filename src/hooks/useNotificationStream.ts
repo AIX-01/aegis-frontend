@@ -65,6 +65,14 @@ export function useNotificationStream(
   const connect = useCallback(() => {
     if (!userRef.current) return;
 
+    const accessToken = getAccessToken();
+
+    // 토큰이 없으면 연결하지 않음
+    if (!accessToken) {
+      if (isDev) console.log('SSE 연결 스킵: 토큰 없음');
+      return;
+    }
+
     // 기존 연결 정리
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -73,7 +81,6 @@ export function useNotificationStream(
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 
-    const accessToken = getAccessToken();
 
     fetchEventSource('/api/notifications/stream', {
       method: 'GET',

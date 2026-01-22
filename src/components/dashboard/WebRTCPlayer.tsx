@@ -43,17 +43,33 @@ export function WebRTCPlayer({
 
       // 3. 트랙 수신 시 비디오에 연결
       pc.ontrack = (event) => {
+        console.log('[WebRTC] ontrack:', event.streams);
         if (videoRef.current && event.streams[0]) {
+          console.log('[WebRTC] Setting video srcObject');
           videoRef.current.srcObject = event.streams[0];
+          videoRef.current.play().catch(e => console.error('[WebRTC] Video play error:', e));
           setState('playing');
+          console.log('[WebRTC] State set to playing');
         }
       };
 
+      pc.onicecandidate = (event) => {
+        console.log('[WebRTC] ICE candidate:', event.candidate);
+      };
+
       pc.oniceconnectionstatechange = () => {
+        console.log('[WebRTC] ICE connection state:', pc.iceConnectionState);
         if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
           setState('error');
           setErrorMessage('연결이 끊어졌습니다');
         }
+        if (pc.iceConnectionState === 'connected') {
+          console.log('[WebRTC] ICE connected successfully');
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        console.log('[WebRTC] Connection state:', pc.connectionState);
       };
 
       // 4. Transceiver 추가 (recvonly)
@@ -122,55 +138,53 @@ export function WebRTCPlayer({
     return null; // 부모 컴포넌트에서 오버레이 처리
   }
 
-  // 연결 중
-  if (state === 'connecting') {
-    return (
-      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 text-primary animate-spin mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">연결 중...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // 에러
-  if (state === 'error') {
-    return (
-      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground mb-4">{errorMessage}</p>
-          <Button variant="outline" size="sm" onClick={startStream}>
-            다시 시도
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // 대기 중 (idle)
-  if (state === 'idle') {
-    return (
-      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-        <div className="text-center">
-          <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <Video className="h-12 w-12 text-primary" />
-          </div>
-          <p className="text-sm text-muted-foreground">{cameraName}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // 재생 중
   return (
-    <video
-      ref={videoRef}
-      autoPlay
-      playsInline
-      muted
-      className="absolute inset-0 w-full h-full object-cover"
-    />
+    <>
+      {/* 비디오 요소는 항상 렌더링 (ref 유지 필요) */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className={`absolute inset-0 w-full h-full object-cover ${
+          state === 'playing' ? 'block' : 'hidden'
+        }`}
+      />
+
+      {/* 연결 중 */}
+      {state === 'connecting' && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 text-primary animate-spin mx-auto mb-4" />
+            <p className="text-sm text-muted-foreground">연결 중...</p>
+          </div>
+        </div>
+      )}
+
+      {/* 에러 */}
+      {state === 'error' && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <p className="text-sm text-muted-foreground mb-4">{errorMessage}</p>
+            <Button variant="outline" size="sm" onClick={startStream}>
+              다시 시도
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* 대기 중 (idle) */}
+      {state === 'idle' && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+          <div className="text-center">
+            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <Video className="h-12 w-12 text-primary" />
+            </div>
+            <p className="text-sm text-muted-foreground">{cameraName}</p>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -64,12 +64,12 @@ export function WebRTCPlayer({
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      // 6. WHEP 요청 (토큰을 user로 전달)
-      const whepUrl = `${streamUrl}?user=${token}`;
-      const response = await fetch(whepUrl, {
+      // 6. WHEP 요청 (Authorization 헤더로 토큰 전달)
+      const response = await fetch(streamUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/sdp',
+          'Authorization': `Bearer ${token}`,
         },
         body: offer.sdp,
       });

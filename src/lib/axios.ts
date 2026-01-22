@@ -34,12 +34,18 @@ api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const url = originalRequest.url || '';
 
-    // 401 에러이고, 재시도하지 않은 요청이며, refresh 요청이 아닌 경우
+    // 인증이 필요 없는 요청은 인터셉터 스킵
+    const isAuthEndpoint = url.includes('/api/auth/login') ||
+                          url.includes('/api/auth/signup') ||
+                          url.includes('/api/auth/refresh');
+
+    // 401 에러이고, 재시도하지 않은 요청이며, 인증 관련 요청이 아닌 경우
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url?.includes('/api/auth/refresh')
+      !isAuthEndpoint
     ) {
       originalRequest._retry = true;
 

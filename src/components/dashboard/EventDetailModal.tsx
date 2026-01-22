@@ -202,12 +202,12 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
                   </CardContent>
                 </Card>
 
-                {/* AI 자동 요약 */}
+                {/* Agent 자동 요약 */}
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                       <Brain className="h-4 w-4 text-primary" />
-                      AI 자동 요약
+                      Agent 자동 요약
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -249,17 +249,17 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
                   </div>
                 </div>
 
-                {/* AI 자동 대응 */}
-                {event.aiAction && (
+                {/* Agent 자동 대응 */}
+                {event.agentAction && (
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm flex items-center gap-2">
                         <Shield className="h-4 w-4 text-primary" />
-                        AI 자동 대응
+                        Agent 자동 대응
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">{event.aiAction}</p>
+                      <p className="text-sm text-muted-foreground">{event.agentAction}</p>
                     </CardContent>
                   </Card>
                 )}

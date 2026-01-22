@@ -24,7 +24,7 @@ export interface Event {
   timestamp: string;      // ISO8601 string (백엔드 호환)
   status: 'processing' | 'resolved';
   description: string;
-  aiAction?: string;
+  agentAction?: string;
   clipUrl?: string;
   summary?: string;
   analysisReport?: string;

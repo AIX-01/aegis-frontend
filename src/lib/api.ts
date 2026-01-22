@@ -113,7 +113,17 @@ export const eventsApi = {
     return response.data;
   },
 
-  /** 이벤트 클립 URL 반환 */
+  /** 클립 다운로드 URL (attachment) */
+  getClipDownloadUrl: (id: string): string => {
+    return `/api/events/${id}/clip`;
+  },
+
+  /** 클립 스트리밍 URL (inline, 비디오 재생용) */
+  getClipStreamUrl: (id: string): string => {
+    return `/api/events/${id}/clip/stream`;
+  },
+
+  /** @deprecated getClipDownloadUrl 사용 */
   getClipUrl: (id: string): string => {
     return `/api/events/${id}/clip`;
   },

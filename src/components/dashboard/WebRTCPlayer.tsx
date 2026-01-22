@@ -64,18 +64,16 @@ export function WebRTCPlayer({
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      // 6. WHEP 요청 (토큰을 query parameter로 전달)
+      // 6. WHEP 요청 (Authorization 헤더로 토큰 전달)
       // streamUrl: /stream/cam/whep
-      const whepUrl = `${streamUrl}?token=${token}`;
-
       console.log('[WebRTC] streamUrl:', streamUrl);
       console.log('[WebRTC] token:', token);
-      console.log('[WebRTC] whepUrl:', whepUrl);
 
-      const response = await fetch(whepUrl, {
+      const response = await fetch(streamUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/sdp',
+          'Authorization': `Bearer ${token}`,
         },
         body: offer.sdp,
       });

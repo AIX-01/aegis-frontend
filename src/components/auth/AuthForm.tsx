@@ -119,7 +119,7 @@ export function AuthForm() {
             <Shield className="h-8 w-8 text-primary" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">AEGIS</h1>
-          <p className="text-muted-foreground mt-2">AI 안전 관제 시스템</p>
+          <p className="text-muted-foreground mt-2">Agent 안전 관제 시스템</p>
         </div>
 
         <Card className="soft-shadow">

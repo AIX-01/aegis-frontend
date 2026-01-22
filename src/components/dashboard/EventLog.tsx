@@ -100,10 +100,10 @@ export function EventLog({ events, onStatusChange }: EventLogProps) {
                     </span>
                   </div>
                   <p className="text-sm mt-1 font-medium">{event.description}</p>
-                  {event.aiAction && (
+                  {event.agentAction && (
                     <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                       <Shield className="h-3 w-3 text-primary" />
-                      AI: {event.aiAction}
+                      Agent: {event.agentAction}
                     </p>
                   )}
                   <div className="flex items-center justify-between mt-2">

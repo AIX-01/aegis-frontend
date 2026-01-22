@@ -3,8 +3,8 @@ import './globals.css';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  title: 'AEGIS - AI Safety Monitoring System',
-  description: 'AI 기반 안전 모니터링 시스템',
+  title: 'AEGIS - Agent Safety Monitoring System',
+  description: 'Agent 기반 안전 모니터링 시스템',
 };
 
 export default function RootLayout({

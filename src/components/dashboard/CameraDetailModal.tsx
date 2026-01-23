@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Video,
   Pencil,
@@ -12,6 +13,7 @@ import {
   X,
   Wifi,
   WifiOff,
+  Brain,
 } from "lucide-react";
 import type { ManagedCamera } from "@/types";
 import { cn } from "@/lib/utils";
@@ -22,7 +24,8 @@ interface CameraDetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdateAlias: (cameraId: string, alias: string) => void;
-  onToggleActive: (cameraId: string, active: boolean) => void;
+  onToggleEnabled: (cameraId: string, enabled: boolean) => void;
+  onToggleAnalysis: (cameraId: string, analysisEnabled: boolean) => void;
 }
 
 export function CameraDetailModal({
@@ -30,7 +33,8 @@ export function CameraDetailModal({
   open,
   onOpenChange,
   onUpdateAlias,
-  onToggleActive,
+  onToggleEnabled,
+  onToggleAnalysis,
 }: CameraDetailModalProps) {
   const [isEditingAlias, setIsEditingAlias] = useState(false);
   const [aliasInput, setAliasInput] = useState('');
@@ -117,7 +121,7 @@ export function CameraDetailModal({
               </div>
             </div>
 
-            {/* Right side: Online/Offline status + ON/OFF toggle */}
+            {/* Right side: Connection status + Switches */}
             <div className="flex items-center gap-4">
               {/* Connection status (Online/Offline) */}
               {camera.connected ? (
@@ -137,14 +141,35 @@ export function CameraDetailModal({
                 </div>
               )}
 
-              {/* ON/OFF Toggle */}
+              {/* 카메라 활성화 스위치 */}
               <div className="flex items-center gap-2 pl-4 border-l">
-                <span className="text-sm text-muted-foreground">
-                  {camera.active ? 'ON' : 'OFF'}
-                </span>
+                <Label htmlFor="enabled-switch" className="text-sm text-muted-foreground">
+                  카메라
+                </Label>
                 <Switch
-                  checked={camera.active}
-                  onCheckedChange={(checked) => onToggleActive(camera.id, checked)}
+                  id="enabled-switch"
+                  checked={camera.enabled}
+                  onCheckedChange={(checked) => onToggleEnabled(camera.id, checked)}
+                />
+              </div>
+
+              {/* AI 분석 스위치 (enabled=true일 때만 활성화) */}
+              <div className="flex items-center gap-2 pl-4 border-l">
+                <Label
+                  htmlFor="analysis-switch"
+                  className={cn(
+                    "text-sm flex items-center gap-1",
+                    camera.enabled ? "text-muted-foreground" : "text-muted-foreground/50"
+                  )}
+                >
+                  <Brain className="h-3.5 w-3.5" />
+                  AI 분석
+                </Label>
+                <Switch
+                  id="analysis-switch"
+                  checked={camera.analysisEnabled}
+                  onCheckedChange={(checked) => onToggleAnalysis(camera.id, checked)}
+                  disabled={!camera.enabled}
                 />
               </div>
             </div>
@@ -158,15 +183,23 @@ export function CameraDetailModal({
             <WebRTCPlayer
               cameraId={camera.id}
               cameraName={camera.name}
-              active={camera.active}
+              active={camera.enabled}
               connected={camera.connected}
             />
 
             {/* Live indicator overlay */}
-            {camera.connected && camera.active && (
+            {camera.connected && camera.enabled && (
               <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-destructive text-destructive-foreground px-2 py-1 rounded text-xs font-medium z-10">
                 <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
                 LIVE
+              </div>
+            )}
+
+            {/* AI 분석 활성화 표시 */}
+            {camera.connected && camera.enabled && camera.analysisEnabled && (
+              <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-medium z-10">
+                <Brain className="h-3 w-3" />
+                AI
               </div>
             )}
 
@@ -181,7 +214,7 @@ export function CameraDetailModal({
             )}
 
             {/* Inactive (OFF) overlay */}
-            {camera.connected && !camera.active && (
+            {camera.connected && !camera.enabled && (
               <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
                 <div className="text-center">
                   <Video className="h-12 w-12 text-muted-foreground mx-auto mb-2" />

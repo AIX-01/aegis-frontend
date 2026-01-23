@@ -66,7 +66,7 @@ export function DashboardContent() {
         title: "별칭 수정 완료",
         description: `카메라 별칭이 "${alias}"(으)로 변경되었습니다.`,
       });
-    } catch (error) {
+    } catch {
       // 실패 시 롤백
       setCameras(prevCameras);
       toast({
@@ -77,22 +77,24 @@ export function DashboardContent() {
     }
   };
 
-  const handleToggleActive = async (cameraId: string, active: boolean) => {
-    // 낙관적 UI 업데이트
+  const handleToggleEnabled = async (cameraId: string, enabled: boolean) => {
+    // 낙관적 UI 업데이트 (Option A: enabled=false면 analysisEnabled도 false)
     const prevCameras = [...cameras];
     setCameras(prev => prev.map(cam =>
-      cam.id === cameraId ? { ...cam, active } : cam
+      cam.id === cameraId
+        ? { ...cam, enabled, analysisEnabled: enabled ? cam.analysisEnabled : false }
+        : cam
     ));
 
     try {
-      await camerasApi.update(cameraId, { active });
+      await camerasApi.update(cameraId, { enabled });
       toast({
-        title: active ? "카메라 ON" : "카메라 OFF",
-        description: active
+        title: enabled ? "카메라 ON" : "카메라 OFF",
+        description: enabled
           ? "카메라가 활성화되었습니다."
           : "카메라가 비활성화되었습니다.",
       });
-    } catch (error) {
+    } catch {
       // 실패 시 롤백
       setCameras(prevCameras);
       toast({
@@ -103,17 +105,43 @@ export function DashboardContent() {
     }
   };
 
+  const handleToggleAnalysis = async (cameraId: string, analysisEnabled: boolean) => {
+    // 낙관적 UI 업데이트
+    const prevCameras = [...cameras];
+    setCameras(prev => prev.map(cam =>
+      cam.id === cameraId ? { ...cam, analysisEnabled } : cam
+    ));
+
+    try {
+      await camerasApi.update(cameraId, { analysisEnabled });
+      toast({
+        title: analysisEnabled ? "AI 분석 ON" : "AI 분석 OFF",
+        description: analysisEnabled
+          ? "AI 분석이 활성화되었습니다."
+          : "AI 분석이 비활성화되었습니다.",
+      });
+    } catch {
+      // 실패 시 롤백
+      setCameras(prevCameras);
+      toast({
+        title: "상태 변경 실패",
+        description: "AI 분석 상태 변경에 실패했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <ProtectedRoute>
       <DashboardLayout title="카메라">
-        <Card className="soft-shadow">
+        <Card className="soft-shadow h-[calc(100vh-8rem)]">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Monitor className="h-5 w-5 text-primary" />
               실시간 카메라 모니터링
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="h-[calc(100%-4rem)]">
             {isLoading ? (
               <div className="flex items-center justify-center h-64">
                 <p className="text-muted-foreground">로딩 중...</p>
@@ -122,7 +150,8 @@ export function DashboardContent() {
               <CCTVGrid
                 cameras={displayCameras}
                 onUpdateAlias={handleUpdateAlias}
-                onToggleActive={handleToggleActive}
+                onToggleEnabled={handleToggleEnabled}
+                onToggleAnalysis={handleToggleAnalysis}
               />
             )}
           </CardContent>

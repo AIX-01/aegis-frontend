@@ -16,7 +16,6 @@ import type {
   RefreshResponse,
   PasswordChangeRequest,
   StreamAccessResponse,
-  ThumbnailResponse,
 } from '@/types';
 
 // Auth API
@@ -84,15 +83,6 @@ export const camerasApi = {
   requestStream: async (id: string): Promise<StreamAccessResponse> => {
     const response = await api.post<StreamAccessResponse>(`/api/cameras/${id}/stream`);
     return response.data;
-  },
-
-  getThumbnail: async (id: string): Promise<ThumbnailResponse> => {
-    const response = await api.get<ThumbnailResponse>(`/api/cameras/${id}/thumbnail`);
-    return response.data;
-  },
-
-  getThumbnailUrl: (id: string): string => {
-    return `/api/cameras/${id}/thumbnail.jpg`;
   },
 };
 

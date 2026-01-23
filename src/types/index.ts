@@ -7,12 +7,14 @@ export interface Camera {
 
 export interface ManagedCamera extends Camera {
   alias: string;          // 별칭 (수정 가능)
-  active: boolean;        // ON/OFF (사용자 제어)
+  enabled: boolean;       // 카메라 활성화 (메인 스위치)
+  analysisEnabled: boolean; // AI 분석 활성화 (enabled=true일 때만 유효)
 }
 
 export interface CameraUpdateRequest {
   alias?: string;
-  active?: boolean;
+  enabled?: boolean;
+  analysisEnabled?: boolean;
 }
 
 // Event types
@@ -118,8 +120,4 @@ export interface StreamAccessResponse {
   token: string;
   cameraId: string;
   cameraName: string;
-}
-
-export interface ThumbnailResponse {
-  image: string;  // Base64 encoded JPEG
 }

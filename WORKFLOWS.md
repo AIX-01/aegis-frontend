@@ -85,17 +85,23 @@ flowchart LR
 
 ### 1.4 연결 흐름
 
+
 **브라우저 → 백엔드:**
+
 1. 브라우저 → Caddy (HTTPS :443)
 2. Caddy → Next.js (`/*`) 또는 Spring Boot (`/api/*`)
 
+
 **WebRTC 스트리밍:**
+
 1. 브라우저 → Spring Boot: `POST /api/cameras/{id}/stream` → 토큰 발급
 2. 브라우저 → Caddy → MediaMTX: `POST /stream/{cam}/whep?token=xxx`
 3. MediaMTX → Spring Boot: `POST /internal/mediamtx/auth` → 토큰 검증
 4. 브라우저 ↔ MediaMTX: UDP ICE 직접 연결 (DTLS 암호화)
 
+
 **카메라 동기화:**
+
 1. 원격 MTX → MediaMTX: SRT 스트림 송출
 2. MediaMTX: `runOnReady` 훅 실행
 3. MediaMTX → Spring Boot: `POST /internal/mediamtx/sync`
@@ -104,7 +110,9 @@ flowchart LR
 6. Spring Boot → 브라우저: SSE `camera` 이벤트
 7. Spring Boot → Redis: Pub/Sub `camera:analysis:update`
 
+
 **AI 분석:**
+
 1. MediaMTX → Python Agent: `POST /frame/{cameraName}` (1fps JPEG)
 2. Agent: Redis `camera:analysis:update` 채널 구독
 3. Agent → Spring Boot: `GET /internal/agent/cameras/analysis`
@@ -340,13 +348,17 @@ erDiagram
 
 ### 3.2 Enum 값
 
+
 **UserRole:**
+
 | 값 | API 값 | 설명 |
 |-----|--------|------|
 | ADMIN | "admin" | 관리자 (모든 권한) |
 | USER | "user" | 일반 사용자 (할당 카메라만) |
 
+
 **EventType:**
+
 | 값 | API 값 | 설명 |
 |-----|--------|------|
 | ASSAULT | "assault" | 폭행 |
@@ -355,13 +367,17 @@ erDiagram
 | SWOON | "swoon" | 실신 |
 | VANDALISM | "vandalism" | 파손 |
 
+
 **EventStatus:**
+
 | 값 | API 값 | 설명 |
 |-----|--------|------|
 | PROCESSING | "processing" | 분석 중 |
 | RESOLVED | "resolved" | 완료 |
 
+
 **NotificationType:**
+
 | 값 | API 값 | 설명 |
 |-----|--------|------|
 | ALERT | "alert" | 긴급 (폭행, 절도) |
@@ -371,22 +387,30 @@ erDiagram
 
 ### 3.3 인덱스
 
+
 **users:**
+
 - `idx_users_email` (email)
 - `idx_users_approved` (approved)
 
+
 **cameras:**
+
 - `idx_cameras_connected` (connected)
 - `idx_cameras_enabled` (enabled)
 - `idx_cameras_analysis_enabled` (analysis_enabled)
 
+
 **events:**
+
 - `idx_events_camera_id` (camera_id)
 - `idx_events_type` (type)
 - `idx_events_status` (status)
 - `idx_events_timestamp` (timestamp)
 
+
 **notifications:**
+
 - `idx_notifications_user_id` (user_id)
 - `idx_notifications_user_read` (user_id, read)
 - `idx_notifications_created_at` (created_at)
@@ -399,7 +423,9 @@ erDiagram
 | `stream_token:{token}` | userId:cameraId | 30초 |
 | `mediamtx:sync:lock` | "locked" | 1초 |
 
+
 **Pub/Sub 채널:**
+
 | 채널 | 메시지 | 구독자 |
 |------|--------|--------|
 | `camera:analysis:update` | "update" | Python Agent |
@@ -519,13 +545,19 @@ files/
 #### POST /api/auth/login
 로그인
 
+
 **Request:**
+
+
+
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | email | string | O | 이메일 |
 | password | string | O | 비밀번호 |
 
 **Response:** `200 OK`
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | accessToken | string | JWT 액세스 토큰 |
@@ -540,7 +572,11 @@ files/
 #### POST /api/auth/signup
 회원가입
 
+
 **Request:**
+
+
+
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | email | string | O | 이메일 |
@@ -548,6 +584,8 @@ files/
 | name | string | O | 이름 |
 
 **Response:** `200 OK`
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | success | boolean | true |
@@ -561,6 +599,8 @@ files/
 로그아웃 (인증 필요)
 
 **Response:** `200 OK`
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | success | boolean | true |
@@ -573,6 +613,8 @@ files/
 **Cookie:** `refreshToken` 필요
 
 **Response:** `200 OK`
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | accessToken | string | 새 JWT 액세스 토큰 |
@@ -586,17 +628,23 @@ files/
 
 **Response:** `200 OK` → User
 
+
 ---
 
 #### PATCH /api/auth/me
 프로필 수정 (인증 필요)
 
+
 **Request:**
+
+
+
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | name | string | O | 새 이름 |
 
 **Response:** `200 OK` → User
+
 
 ---
 
@@ -604,6 +652,8 @@ files/
 회원탈퇴 (인증 필요, 소프트 삭제)
 
 **Response:** `200 OK`
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | success | boolean | true |
@@ -614,13 +664,19 @@ files/
 #### PATCH /api/auth/password
 비밀번호 변경 (인증 필요)
 
+
 **Request:**
+
+
+
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | currentPassword | string | O | 현재 비밀번호 |
 | newPassword | string | O | 새 비밀번호 |
 
 **Response:** `200 OK`
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | success | boolean | true |
@@ -641,12 +697,14 @@ files/
 
 **Response:** `200 OK` → Camera[]
 
+
 ---
 
 #### GET /api/cameras/{id}
 카메라 상세 조회 (인증 필요)
 
 **Response:** `200 OK` → Camera
+
 
 **에러:** CAMERA_NOT_FOUND
 
@@ -655,7 +713,11 @@ files/
 #### PATCH /api/cameras/{id}
 카메라 수정 (인증 필요)
 
+
 **Request:**
+
+
+
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | alias | string | X | 별칭 |
@@ -664,7 +726,10 @@ files/
 
 **Response:** `200 OK` → Camera
 
+
+
 **Side Effect:**
+
 - enabled/analysisEnabled 변경 시 → Redis Pub/Sub 발행
 - SSE `camera` 이벤트 브로드캐스트
 
@@ -674,6 +739,8 @@ files/
 스트림 토큰 발급 (인증 필요)
 
 **Response:** `200 OK`
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | streamUrl | string | WebRTC WHEP URL (/stream/{cam}/whep) |
@@ -692,12 +759,14 @@ files/
 
 **Response:** `200 OK` → Event[]
 
+
 ---
 
 #### GET /api/events/{id}
 이벤트 상세 조회 (인증 필요)
 
 **Response:** `200 OK` → Event
+
 
 **에러:** EVENT_NOT_FOUND
 
@@ -706,7 +775,11 @@ files/
 #### POST /api/events
 이벤트 생성 (인증 필요)
 
+
 **Request:**
+
+
+
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | cameraId | string | O | 카메라 ID |
@@ -720,17 +793,23 @@ files/
 
 **Response:** `200 OK` → Event
 
+
 ---
 
 #### PATCH /api/events/{id}/status
 이벤트 상태 변경 (인증 필요)
 
+
 **Request:**
+
+
+
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | status | string | O | "processing" 또는 "resolved" |
 
 **Response:** `200 OK` → Event
+
 
 ---
 
@@ -738,6 +817,8 @@ files/
 클립 다운로드 (인증 필요)
 
 **Response:** `200 OK`
+
+
 - Content-Type: video/mp4
 - Content-Disposition: attachment; filename="event_{id}.mp4"
 
@@ -746,12 +827,15 @@ files/
 #### GET /api/events/{id}/clip/stream
 클립 스트리밍 (인증 필요, Range 지원)
 
+
 **Request Header:**
+
 | 헤더 | 설명 |
 |------|------|
 | Range | bytes=start-end (선택) |
 
 **Response:** `200 OK` 또는 `206 Partial Content`
+
 - Content-Type: video/mp4
 - Accept-Ranges: bytes
 - Content-Range: bytes start-end/total (206일 때)
@@ -765,6 +849,7 @@ files/
 
 **Response:** `200 OK` → Notification[]
 
+
 ---
 
 #### GET /api/notifications/stream
@@ -772,7 +857,10 @@ SSE 스트림 연결 (인증 필요)
 
 **Response:** `200 OK` (text/event-stream)
 
+
+
 **이벤트:**
+
 | 이벤트 | 데이터 | 범위 | 설명 |
 |--------|--------|------|------|
 | connect | "SSE 연결 성공" | 개별 | 연결 확인 |
@@ -787,6 +875,8 @@ SSE 스트림 연결 (인증 필요)
 읽지 않은 알림 수 (인증 필요)
 
 **Response:** `200 OK`
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | count | number | 읽지 않은 수 |
@@ -798,12 +888,15 @@ SSE 스트림 연결 (인증 필요)
 
 **Response:** `200 OK` → Notification
 
+
 ---
 
 #### POST /api/notifications/read-all
 전체 읽음 처리 (인증 필요)
 
 **Response:** `200 OK`
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | success | boolean | true |
@@ -814,6 +907,8 @@ SSE 스트림 연결 (인증 필요)
 알림 삭제 (인증 필요)
 
 **Response:** `200 OK`
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | success | boolean | true |
@@ -825,7 +920,9 @@ SSE 스트림 연결 (인증 필요)
 #### GET /api/stats
 통계 조회 (인증 필요)
 
+
 **Query:**
+
 | 파라미터 | 값 | 설명 |
 |----------|-----|------|
 | type | 없음 | 전체 통계 |
@@ -834,6 +931,7 @@ SSE 스트림 연결 (인증 필요)
 | type | monthly | 월별 캘린더 |
 
 **Response (type 없음):** `200 OK`
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | daily | DailyStat[] | 일별 통계 |
@@ -849,12 +947,14 @@ SSE 스트림 연결 (인증 필요)
 
 **Response:** `200 OK` → User[]
 
+
 ---
 
 #### GET /api/users/{id}
 사용자 상세 조회
 
 **Response:** `200 OK` → User
+
 
 **에러:** USER_NOT_FOUND_BY_ID
 
@@ -863,7 +963,11 @@ SSE 스트림 연결 (인증 필요)
 #### PATCH /api/users/{id}
 사용자 수정
 
+
 **Request:**
+
+
+
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | name | string | X | 이름 |
@@ -871,6 +975,7 @@ SSE 스트림 연결 (인증 필요)
 | assignedCameras | string[] | X | 할당 카메라 ID 목록 |
 
 **Response:** `200 OK` → User
+
 
 **Side Effect:** SSE `member` 이벤트 브로드캐스트
 
@@ -880,6 +985,8 @@ SSE 스트림 연결 (인증 필요)
 사용자 삭제
 
 **Response:** `200 OK`
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | success | boolean | true |
@@ -893,6 +1000,7 @@ SSE 스트림 연결 (인증 필요)
 
 **Response:** `200 OK` → User
 
+
 **Side Effect:** SSE `member` 이벤트 브로드캐스트
 
 ---
@@ -905,11 +1013,15 @@ SSE 스트림 연결 (인증 필요)
 **Request:** 아무 JSON (또는 빈 body)
 
 **Response:** `200 OK`
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | success | boolean | true |
 
+
 **로직:**
+
 1. Redis `mediamtx:sync:lock` 잠금 확인
 2. 잠금 획득 → 1초 대기 (연속 이벤트 병합)
 3. MediaMTX `GET /v3/paths/list` 호출
@@ -923,7 +1035,11 @@ SSE 스트림 연결 (인증 필요)
 #### POST /internal/mediamtx/auth
 스트림 인증 검증 (MediaMTX → Spring)
 
+
 **Request:**
+
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | user | string | Basic Auth 사용자 |
@@ -936,11 +1052,15 @@ SSE 스트림 연결 (인증 필요)
 | query | string | 쿼리스트링 |
 | jwt | string | JWT 토큰 |
 
+
 **Response:**
+
 - `200 OK`: 인증 성공
 - `401 Unauthorized`: 인증 실패
 
+
 **로직:**
+
 - action=publish: 항상 통과 (MediaMTX 내부 인증)
 - protocol=rtsp/hls: 항상 통과 (내부 사용)
 - protocol=webrtc, action=read: 토큰 검증 (query에서 `token=` 추출)
@@ -952,11 +1072,15 @@ SSE 스트림 연결 (인증 필요)
 분석 대상 카메라 조회 (Agent → Spring)
 
 **Response:** `200 OK`
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | cameras | AnalysisCamera[] | enabled && analysisEnabled인 카메라 |
 
+
 **AnalysisCamera:**
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | id | string | 카메라 ID |
@@ -969,19 +1093,27 @@ SSE 스트림 연결 (인증 필요)
 #### POST /internal/agent/clips
 클립 추출 (Agent → Spring)
 
+
 **Request:**
+
+
+
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | cameraId | UUID | O | 카메라 ID |
 | segmentCount | number | X | 세그먼트 수 (기본: 10) |
 
 **Response:** `200 OK`
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | clipKey | string | MinIO 저장 키 (clips/{uuid}/clip.mp4) |
 | cameraId | string | 카메라 ID |
 
+
 **로직:**
+
 1. MediaMTX HLS `GET /{camera}/index.m3u8` 파싱
 2. 최신 N개 .ts 세그먼트 HTTP 다운로드
 3. FFmpeg `-f concat`으로 MP4 변환
@@ -993,7 +1125,11 @@ SSE 스트림 연결 (인증 필요)
 #### POST /internal/agent/events
 이벤트 생성 (Agent → Spring)
 
+
 **Request:**
+
+
+
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | cameraId | UUID | O | 카메라 ID |
@@ -1003,12 +1139,16 @@ SSE 스트림 연결 (인증 필요)
 | timestamp | string | X | ISO8601 (기본: 현재) |
 
 **Response:** `201 Created`
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | eventId | string | 이벤트 ID |
 | status | string | "processing" |
 
+
 **Side Effect:**
+
 1. DB에 Event 저장 (status=PROCESSING)
 2. 카메라 권한 있는 사용자에게 Notification 생성
 3. SSE `notification` 개별 전송
@@ -1019,7 +1159,11 @@ SSE 스트림 연결 (인증 필요)
 #### PATCH /internal/agent/events/{id}/analysis
 분석 결과 추가 (Agent → Spring)
 
+
 **Request:**
+
+
+
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | agentAction | string | X | 권장 조치 |
@@ -1027,12 +1171,16 @@ SSE 스트림 연결 (인증 필요)
 | analysisReport | string | X | 상세 리포트 |
 
 **Response:** `200 OK`
+
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | eventId | string | 이벤트 ID |
 | status | string | "resolved" |
 
+
 **Side Effect:**
+
 1. Event 업데이트 (status=RESOLVED)
 2. SSE `event` 전체 브로드캐스트
 
@@ -1140,31 +1288,41 @@ SSE 스트림 연결 (인증 필요)
 
 ### 8.2 AuthContext
 
+
 **상태:**
+
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | user | User \| null | 현재 사용자 |
 | isLoading | boolean | 로딩 상태 |
 | isAdmin | boolean | user?.role === 'admin' |
 
+
 **메서드:**
+
 | 메서드 | 설명 |
 |--------|------|
 | login(email, password) | 로그인 → 성공 시 user 설정 |
 | signup(email, password, name) | 회원가입 |
 | logout() | 로그아웃 → user 초기화, /auth 리다이렉트 |
 
+
 **초기화:**
+
 1. 앱 로드 시 `POST /api/auth/refresh` 시도
 2. 성공 → `GET /api/auth/me` → user 설정
 3. 실패 → user = null
 
 ### 8.3 Axios 인터셉터
 
+
 **요청 인터셉터:**
+
 - Access Token이 있으면 `Authorization: Bearer {token}` 헤더 추가
 
+
 **응답 인터셉터 (401 처리):**
+
 1. 401 응답 && 재시도 아님 && 인증 엔드포인트 아님
 2. `POST /api/auth/refresh` 시도
 3. 성공 → Access Token 갱신 → 원래 요청 재시도
@@ -1186,23 +1344,31 @@ SSE 스트림 연결 (인증 필요)
 
 ### 8.5 Custom Hooks
 
+
 **useNotificationStream(onNotification?, onCameraUpdate?, onEventUpdate?, onMemberUpdate?):**
+
 - `@microsoft/fetch-event-source` 사용 (Authorization 헤더 지원)
 - 로그인 상태에서 자동 연결
 - 새 알림 수신 시 토스트 표시
 - 연결 끊김 시 자동 재연결
 
+
 **useStreams():**
+
 - React Query 래퍼
 - `camerasApi.getAll()` 호출
 
+
 **useEventLogs():**
+
 - React Query 래퍼
 - `eventsApi.getAll()` 호출
 
 ### 8.6 API 클라이언트
 
+
 **authApi:**
+
 | 메서드 | 설명 |
 |--------|------|
 | login | 로그인 |
@@ -1214,7 +1380,9 @@ SSE 스트림 연결 (인증 필요)
 | updateProfile | 프로필 수정 |
 | deleteAccount | 회원탈퇴 |
 
+
 **camerasApi:**
+
 | 메서드 | 설명 |
 |--------|------|
 | getAll | 카메라 목록 |
@@ -1222,7 +1390,9 @@ SSE 스트림 연결 (인증 필요)
 | update | 카메라 수정 |
 | requestStream | 스트림 토큰 발급 |
 
+
 **eventsApi:**
+
 | 메서드 | 설명 |
 |--------|------|
 | getAll | 이벤트 목록 |
@@ -1231,7 +1401,9 @@ SSE 스트림 연결 (인증 필요)
 | getClipDownloadUrl | 클립 다운로드 URL |
 | getClipStreamUrl | 클립 스트리밍 URL |
 
+
 **notificationsApi:**
+
 | 메서드 | 설명 |
 |--------|------|
 | getAll | 알림 목록 |
@@ -1240,14 +1412,18 @@ SSE 스트림 연결 (인증 필요)
 | markAllAsRead | 전체 읽음 |
 | delete | 삭제 |
 
+
 **statsApi:**
+
 | 메서드 | 설명 |
 |--------|------|
 | getDaily | 일별 통계 |
 | getEventTypes | 유형별 통계 |
 | getMonthly | 월별 통계 |
 
+
 **usersApi:**
+
 | 메서드 | 설명 |
 |--------|------|
 | getAll | 사용자 목록 |
@@ -1285,23 +1461,31 @@ SSE 스트림 연결 (인증 필요)
 
 ### 9.3 인증
 
+
 **송출 인증 (authInternalUsers):**
+
 | 사용자 | 비밀번호 | 권한 |
 |--------|----------|------|
 | aegis | trillion | publish, read, playback |
 
+
 **시청 인증 (authHTTPAddress):**
+
 - `POST http://host.docker.internal:8080/internal/mediamtx/auth`
 
 ### 9.4 스트림 훅
 
+
 **runOnReady (스트림 시작 시):**
+
 1. `curl -X POST /internal/mediamtx/sync` (동기화 트리거)
 2. FFmpeg 루프: 1fps 프레임 추출 → Agent 전송
    - `ffmpeg -i rtsp://localhost:8554/$MTX_PATH -vframes 1 ...`
    - `curl -X POST $AGENT_URL/frame/$MTX_PATH`
 
+
 **runOnNotReady (스트림 종료 시):**
+
 - `curl -X POST /internal/mediamtx/sync` (동기화 트리거)
 
 ### 9.5 WebRTC 설정
@@ -1403,7 +1587,9 @@ SSE 스트림 연결 (인증 필요)
 
 ### 12.3 카메라 활성화 구조
 
+
 **Option A (계층적):**
+
 - `enabled=false` → analysisEnabled도 자동 false
 - `enabled=true, analysisEnabled=false` → 스트림만 표시
 - `enabled=true, analysisEnabled=true` → 스트림 + AI 분석

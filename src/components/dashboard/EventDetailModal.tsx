@@ -15,7 +15,8 @@ import {
   FileText,
   Video,
   Brain,
-  VideoOff
+  VideoOff,
+  Loader2
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -58,25 +59,52 @@ const getStatusBadge = (status: Event['status']) => {
 };
 
 export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: EventDetailModalProps) {
+  const [clipUrl, setClipUrl] = useState<string | null>(null);
+  const [clipLoading, setClipLoading] = useState(false);
   const [clipError, setClipError] = useState(false);
   const [isStatusLoading, setIsStatusLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
-  // 모달 열릴 때 클립 상태 초기화
+  // 모달 열릴 때 클립 로드
   useEffect(() => {
-    if (open && event) {
+    if (open && event?.clipUrl) {
+      setClipLoading(true);
       setClipError(false);
+
+      eventsApi.getClipBlobUrl(event.id)
+        .then((url) => {
+          setClipUrl(url);
+        })
+        .catch(() => {
+          setClipError(true);
+        })
+        .finally(() => {
+          setClipLoading(false);
+        });
     }
-  }, [open, event]);
+
+    // cleanup: Blob URL 해제
+    return () => {
+      if (clipUrl) {
+        URL.revokeObjectURL(clipUrl);
+        setClipUrl(null);
+      }
+    };
+  }, [open, event?.id, event?.clipUrl]);
 
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (event?.clipUrl) {
-      const link = document.createElement('a');
-      link.href = eventsApi.getClipUrl(event.id);
-      link.download = `event-${event.id}.mp4`;
-      link.click();
+      try {
+        await eventsApi.downloadClip(event.id, `event-${event.id}.mp4`);
+      } catch {
+        toast({
+          title: "다운로드 실패",
+          description: "클립 다운로드에 실패했습니다.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -104,7 +132,6 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
 
   if (!event) return null;
 
-  const clipUrl = event.clipUrl ? eventsApi.getClipUrl(event.id) : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -162,18 +189,25 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
                 <Card>
                   <CardContent className="p-0">
                     <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
+                      {/* 로딩 중 */}
+                      {clipLoading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                          <div className="text-center">
+                            <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-3" />
+                            <p className="text-sm text-muted-foreground">클립 로딩 중...</p>
+                          </div>
+                        </div>
+                      )}
                       {/* 클립이 있는 경우 실제 비디오 표시 */}
-                      {clipUrl && !clipError ? (
-                        <>
-                          <video
-                            ref={videoRef}
-                            src={clipUrl}
-                            className="w-full h-full object-contain bg-black"
-                            onError={() => setClipError(true)}
-                            controls
-                          />
-                        </>
-                      ) : (
+                      {!clipLoading && clipUrl && !clipError ? (
+                        <video
+                          ref={videoRef}
+                          src={clipUrl}
+                          className="w-full h-full object-contain bg-black"
+                          onError={() => setClipError(true)}
+                          controls
+                        />
+                      ) : !clipLoading && (
                         /* 클립이 없거나 에러인 경우 placeholder */
                         <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
                           <div className="text-center">

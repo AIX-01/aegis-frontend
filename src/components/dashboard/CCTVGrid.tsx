@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
-import { Camera, ChevronLeft, ChevronRight } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, Brain, Power } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { ManagedCamera } from "@/types";
 import { CameraDetailModal } from "./CameraDetailModal";
@@ -87,12 +88,12 @@ export function CCTVGrid({
     <>
       <div className="flex flex-col h-full">
         {/* 3x3 그리드 */}
-        <div className="flex-1 grid grid-cols-3 grid-rows-3 gap-2">
+        <div className="flex-1 grid grid-cols-3 gap-2 auto-rows-fr">
           {currentCameras.map((camera) => (
             <Card
               key={camera.id}
               className={cn(
-                "relative overflow-hidden transition-all duration-300 cursor-pointer",
+                "relative overflow-hidden transition-all duration-300 cursor-pointer aspect-video",
                 "border-2 hover:ring-2 hover:ring-primary/20",
                 camera.connected
                   ? "border-border hover:border-primary/30"
@@ -111,51 +112,68 @@ export function CCTVGrid({
               </div>
 
               {/* 카메라 정보 오버레이 */}
-              <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-background/90 to-transparent z-10">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <Camera className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                  <span className="text-xs font-medium truncate">{camera.alias}</span>
+              <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-background/95 via-background/70 to-transparent z-10">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    <Camera className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-xs font-medium truncate">{camera.alias}</span>
+                      <span className="text-[10px] font-mono text-muted-foreground truncate">{camera.name}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {camera.enabled ? (
+                      <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-success/10 text-success border-success/30">
+                        <Power className="h-2.5 w-2.5 mr-0.5" />
+                        ON
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-muted text-muted-foreground border-muted-foreground/30">
+                        <Power className="h-2.5 w-2.5 mr-0.5" />
+                        OFF
+                      </Badge>
+                    )}
+                    {camera.enabled && camera.analysisEnabled && (
+                      <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-primary/10 text-primary border-primary/30">
+                        <Brain className="h-2.5 w-2.5 mr-0.5" />
+                        AI
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-              </div>
-
-              {/* 카메라 ID */}
-              <div className="absolute top-2 left-2 z-10">
-                <span className="text-[10px] font-mono text-muted-foreground bg-background/60 px-1.5 py-0.5 rounded">
-                  {camera.name}
-                </span>
               </div>
 
               {/* 연결 상태 표시 */}
               <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
                 {camera.connected ? (
-                  <>
-                    <span className="relative flex h-2 w-2">
+                  <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-success/20 text-success border-success/30">
+                    <span className="relative flex h-1.5 w-1.5 mr-1">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success"></span>
                     </span>
-                    <span className="text-[10px] font-medium text-success">Online</span>
-                  </>
+                    Online
+                  </Badge>
                 ) : (
-                  <span className="text-[10px] font-medium text-muted-foreground bg-background/60 px-1.5 py-0.5 rounded">
+                  <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-muted text-muted-foreground">
                     Offline
-                  </span>
+                  </Badge>
                 )}
               </div>
 
               {/* 비활성(OFF) 오버레이 */}
               {camera.connected && !camera.enabled && (
-                <div className="absolute inset-0 bg-background/60 flex items-center justify-center z-10">
-                  <span className="text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded">
-                    OFF
+                <div className="absolute inset-0 bg-background/60 flex items-center justify-center z-[5]">
+                  <span className="text-sm text-muted-foreground bg-background/80 px-3 py-1.5 rounded-md font-medium">
+                    카메라 OFF
                   </span>
                 </div>
               )}
 
               {/* 오프라인 오버레이 */}
               {!camera.connected && (
-                <div className="absolute inset-0 bg-background/60 flex items-center justify-center z-10">
-                  <span className="text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded">
-                    Offline
+                <div className="absolute inset-0 bg-background/60 flex items-center justify-center z-[5]">
+                  <span className="text-sm text-muted-foreground bg-background/80 px-3 py-1.5 rounded-md font-medium">
+                    연결 끊김
                   </span>
                 </div>
               )}
@@ -166,7 +184,7 @@ export function CCTVGrid({
           {Array.from({ length: CAMERAS_PER_PAGE - currentCameras.length }).map((_, i) => (
             <Card
               key={`empty-${i}`}
-              className="border-2 border-dashed border-muted bg-muted/20"
+              className="border-2 border-dashed border-muted bg-muted/20 aspect-video"
             />
           ))}
         </div>

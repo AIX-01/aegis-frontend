@@ -68,8 +68,8 @@ export function CameraDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0 gap-0">
-        <DialogHeader className="p-6 pb-4 border-b">
+      <DialogContent className="w-screen h-screen max-w-none m-0 p-0 gap-0 rounded-none flex flex-col">
+        <DialogHeader className="p-4 border-b flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={cn(
@@ -176,52 +176,58 @@ export function CameraDetailModal({
           </div>
         </DialogHeader>
 
-        <div className="p-6">
-          {/* Video Stream */}
-          <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-            {/* WebRTC Player */}
-            <WebRTCPlayer
-              cameraId={camera.id}
-              cameraName={camera.name}
-              active={camera.enabled}
-              connected={camera.connected}
-            />
-
-            {/* Live indicator overlay */}
-            {camera.connected && camera.enabled && (
-              <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-destructive text-destructive-foreground px-2 py-1 rounded text-xs font-medium z-10">
-                <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
-                LIVE
-              </div>
-            )}
-
-            {/* AI 분석 활성화 표시 */}
-            {camera.connected && camera.enabled && camera.analysisEnabled && (
-              <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-medium z-10">
-                <Brain className="h-3 w-3" />
-                AI
-              </div>
-            )}
-
-            {/* Offline overlay */}
-            {!camera.connected && (
-              <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                <div className="text-center">
-                  <WifiOff className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">카메라 연결 끊김</p>
+        <div className="flex-1 flex items-center justify-center bg-black p-4 overflow-hidden">
+          {/* Video Stream - 원본 비율 유지 */}
+          <div className="relative w-full h-full flex items-center justify-center">
+            <div className="relative max-w-full max-h-full" style={{ aspectRatio: '16/9', width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }}>
+              {/* WebRTC Player - object-contain으로 원본 비율 유지 */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-full h-full">
+                  <WebRTCPlayer
+                    cameraId={camera.id}
+                    cameraName={camera.name}
+                    active={camera.enabled}
+                    connected={camera.connected}
+                  />
                 </div>
               </div>
-            )}
 
-            {/* Inactive (OFF) overlay */}
-            {camera.connected && !camera.enabled && (
-              <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                <div className="text-center">
-                  <Video className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">카메라 OFF</p>
+              {/* Live indicator overlay */}
+              {camera.connected && camera.enabled && (
+                <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-destructive text-destructive-foreground px-2 py-1 rounded text-xs font-medium z-10">
+                  <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
+                  LIVE
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* AI 분석 활성화 표시 */}
+              {camera.connected && camera.enabled && camera.analysisEnabled && (
+                <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-medium z-10">
+                  <Brain className="h-3 w-3" />
+                  AI
+                </div>
+              )}
+
+              {/* Offline overlay */}
+              {!camera.connected && (
+                <div className="absolute inset-0 bg-background/80 flex items-center justify-center rounded-lg">
+                  <div className="text-center">
+                    <WifiOff className="h-16 w-16 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-lg text-muted-foreground">카메라 연결 끊김</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Inactive (OFF) overlay */}
+              {camera.connected && !camera.enabled && (
+                <div className="absolute inset-0 bg-background/80 flex items-center justify-center rounded-lg">
+                  <div className="text-center">
+                    <Video className="h-16 w-16 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-lg text-muted-foreground">카메라 OFF</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>

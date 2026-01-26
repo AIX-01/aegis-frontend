@@ -103,17 +103,33 @@ export const eventsApi = {
     return response.data;
   },
 
-  /** 클립 다운로드 URL (attachment) */
-  getClipDownloadUrl: (id: string): string => {
-    return `/api/events/${id}/clip`;
+  /** 클립 Blob URL 가져오기 (인증 토큰 포함) */
+  getClipBlobUrl: async (id: string): Promise<string> => {
+    const response = await api.get(`/api/events/${id}/clip/stream`, {
+      responseType: 'blob',
+    });
+    return URL.createObjectURL(response.data);
   },
 
-  /** 클립 스트리밍 URL (inline, 비디오 재생용) */
+  /** 클립 다운로드 (인증 토큰 포함) */
+  downloadClip: async (id: string, filename?: string): Promise<void> => {
+    const response = await api.get(`/api/events/${id}/clip`, {
+      responseType: 'blob',
+    });
+    const url = URL.createObjectURL(response.data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename || `event-${id}.ts`;
+    link.click();
+    URL.revokeObjectURL(url);
+  },
+
+  /** @deprecated getClipBlobUrl 사용 */
   getClipStreamUrl: (id: string): string => {
     return `/api/events/${id}/clip/stream`;
   },
 
-  /** @deprecated getClipDownloadUrl 사용 */
+  /** @deprecated downloadClip 사용 */
   getClipUrl: (id: string): string => {
     return `/api/events/${id}/clip`;
   },

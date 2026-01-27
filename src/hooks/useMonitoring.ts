@@ -1,18 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { camerasApi, eventsApi } from '@/lib/api';
-import { QUERY_KEYS } from '@/lib/queryKeys';
+import { camerasApi } from '@/lib/api';
+import { queryKeys } from '@/lib/queryKeys';
 
+// 카메라 목록 조회 (SSE 캐시 무효화 연동)
 export const useStreams = () => {
   return useQuery({
-    queryKey: QUERY_KEYS.STREAMS.ALL,
+    queryKey: queryKeys.cameras.all,
     queryFn: camerasApi.getAll,
   });
 };
 
-export const useEventLogs = () => {
-  return useQuery({
-    queryKey: QUERY_KEYS.EVENT_LOGS.ALL,
-    queryFn: eventsApi.getAll,
-  });
-};
 

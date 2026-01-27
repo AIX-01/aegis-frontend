@@ -4,19 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Bell, 
-  AlertCircle, 
-  AlertTriangle, 
-  Info, 
-  CheckCircle2,
-  ExternalLink
-} from "lucide-react";
+import { Bell, ExternalLink } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import { useRouter } from "next/navigation";
 import type { Notification } from "@/types";
 import { cn } from "@/lib/utils";
+import { NotificationTypeBadge, NotificationIcon } from "@/components/common/EventBadges";
 
 interface NotificationModalProps {
   notifications: Notification[];
@@ -25,31 +19,6 @@ interface NotificationModalProps {
   onMarkAsRead: (id: string) => void;
 }
 
-const getNotificationIcon = (type: Notification['type']) => {
-  switch (type) {
-    case 'alert':
-      return <AlertCircle className="h-5 w-5 text-destructive" />;
-    case 'warning':
-      return <AlertTriangle className="h-5 w-5 text-warning" />;
-    case 'success':
-      return <CheckCircle2 className="h-5 w-5 text-success" />;
-    default:
-      return <Info className="h-5 w-5 text-info" />;
-  }
-};
-
-const getNotificationBadge = (type: Notification['type']) => {
-  switch (type) {
-    case 'alert':
-      return <Badge variant="destructive" className="text-xs">긴급</Badge>;
-    case 'warning':
-      return <Badge className="bg-warning text-warning-foreground text-xs">경고</Badge>;
-    case 'success':
-      return <Badge className="bg-success text-success-foreground text-xs">완료</Badge>;
-    default:
-      return <Badge variant="secondary" className="text-xs">정보</Badge>;
-  }
-};
 
 export function NotificationModal({ 
   notifications, 
@@ -109,11 +78,11 @@ export function NotificationModal({
                   >
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5">
-                        {getNotificationIcon(notification.type)}
+                        <NotificationIcon type={notification.type} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          {getNotificationBadge(notification.type)}
+                          <NotificationTypeBadge type={notification.type} size="sm" />
                           {!notification.read && (
                             <div className="h-2 w-2 rounded-full bg-primary" />
                           )}

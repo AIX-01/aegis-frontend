@@ -2,65 +2,18 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
-import { AlertCircle, AlertTriangle, CheckCircle2, Shield } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Shield } from "lucide-react";
 import type { Event } from "@/types";
 import { useState } from "react";
 import { EventDetailModal } from "./EventDetailModal";
+import { EventTypeBadge, EventStatusBadge, EventIcon } from "@/components/common/EventBadges";
 
 interface EventLogProps {
   events: Event[];
   onStatusChange?: (eventId: string, newStatus: Event['status']) => void;
 }
 
-const getEventIcon = (type: Event['type']) => {
-  switch (type) {
-    case 'assault':
-    case 'burglary':
-      return <AlertCircle className="h-4 w-4 text-destructive" />;
-    case 'dump':
-    case 'swoon':
-    case 'vandalism':
-      return <AlertTriangle className="h-4 w-4 text-warning" />;
-    default:
-      return <Shield className="h-4 w-4 text-success" />;
-  }
-};
 
-const getEventTypeBadge = (type: Event['type']) => {
-  switch (type) {
-    case 'assault':
-      return <Badge variant="destructive" className="text-xs">폭행</Badge>;
-    case 'burglary':
-      return <Badge variant="destructive" className="text-xs">절도</Badge>;
-    case 'dump':
-      return <Badge className="bg-warning text-warning-foreground text-xs">투기</Badge>;
-    case 'swoon':
-      return <Badge className="bg-warning text-warning-foreground text-xs">실신</Badge>;
-    case 'vandalism':
-      return <Badge className="bg-warning text-warning-foreground text-xs">파손</Badge>;
-    default:
-      return <Badge className="bg-muted text-muted-foreground text-xs">알 수 없음</Badge>;
-  }
-};
-
-const getStatusBadge = (status: Event['status']) => {
-  switch (status) {
-    case 'processing':
-      return (
-        <Badge variant="secondary" className="text-xs gap-1">
-          처리중
-        </Badge>
-      );
-    case 'resolved':
-      return (
-        <Badge variant="outline" className="text-xs gap-1 text-success border-success/30">
-          <CheckCircle2 className="h-3 w-3" />
-          완료
-        </Badge>
-      );
-  }
-};
 
 export function EventLog({ events, onStatusChange }: EventLogProps) {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -90,11 +43,11 @@ export function EventLog({ events, onStatusChange }: EventLogProps) {
           >
               <div className="flex items-start gap-3">
                 <div className="mt-0.5">
-                  {getEventIcon(event.type)}
+                  <EventIcon type={event.type} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    {getEventTypeBadge(event.type)}
+                    <EventTypeBadge type={event.type} size="sm" />
                     <span className="text-xs text-muted-foreground">
                       {event.cameraName}
                     </span>
@@ -110,7 +63,7 @@ export function EventLog({ events, onStatusChange }: EventLogProps) {
                     <span className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(event.timestamp), { addSuffix: true, locale: ko })}
                     </span>
-                    {getStatusBadge(event.status)}
+                    <EventStatusBadge status={event.status} size="sm" />
                   </div>
                 </div>
               </div>

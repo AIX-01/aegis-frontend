@@ -187,7 +187,7 @@ export function WebRTCPlayer({
             )} />
             <p className={cn(
               "text-sm font-medium",
-              fullscreen ? "text-white text-shadow" : "text-muted-foreground"
+              fullscreen ? "text-white" : "text-muted-foreground"
             )}>연결 중...</p>
           </div>
         </div>
@@ -205,7 +205,7 @@ export function WebRTCPlayer({
             )} />
             <p className={cn(
               "text-sm font-medium mb-2",
-              fullscreen ? "text-white text-shadow" : "text-foreground"
+              fullscreen ? "text-white" : "text-foreground"
             )}>{errorMessage}</p>
             <Button
               variant="outline"
@@ -238,7 +238,7 @@ export function WebRTCPlayer({
             )} />
             <p className={cn(
               "text-xs",
-              fullscreen ? "text-white/80 text-shadow-sm" : "text-muted-foreground"
+              fullscreen ? "text-white/80" : "text-muted-foreground"
             )}>{cameraName}</p>
           </div>
         </div>

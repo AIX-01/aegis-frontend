@@ -89,7 +89,7 @@ export function CameraDetailModal({
   return (
     <div className="fixed inset-0 z-50 bg-background">
       {/* 상단 헤더 */}
-      <header className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-background via-background/80 to-transparent">
+      <header className="absolute top-0 left-0 right-0 z-20 bg-black/70">
         <div className="flex items-center justify-between p-4">
           {/* 왼쪽: 뒤로가기 + 카메라 정보 */}
           <div className="flex items-center gap-4">
@@ -182,6 +182,7 @@ export function CameraDetailModal({
           cameraName={camera.name}
           active={camera.enabled}
           connected={camera.connected}
+          fullscreen={true}
         />
 
         {/* LIVE 표시 */}
@@ -216,11 +217,11 @@ export function CameraDetailModal({
       </div>
 
       {/* 하단 컨트롤 바 */}
-      <footer className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-background via-background/80 to-transparent">
-        <div className="flex items-center justify-center gap-8 p-6">
+      <footer className="absolute bottom-0 left-0 right-0 z-20">
+        <div className="flex items-center justify-center gap-6 p-4 bg-black/70">
           {/* 카메라 ON/OFF */}
-          <div className="flex items-center gap-3 bg-background/50 backdrop-blur-sm rounded-full px-5 py-2.5">
-            <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
+            <div className="flex items-center gap-2 text-sm text-white">
               <Power className="h-4 w-4" />
               <span>카메라</span>
             </div>
@@ -232,10 +233,10 @@ export function CameraDetailModal({
 
           {/* AI 분석 */}
           <div className={cn(
-            "flex items-center gap-3 bg-background/50 backdrop-blur-sm rounded-full px-5 py-2.5",
+            "flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2",
             !camera.enabled && "opacity-50"
           )}>
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-2 text-sm text-white">
               <Brain className="h-4 w-4" />
               <span>AI 분석</span>
             </div>

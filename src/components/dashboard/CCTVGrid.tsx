@@ -257,9 +257,9 @@ export function CCTVGrid({
             <Card
               key={camera.id}
               className={cn(
-                "relative overflow-hidden transition-all duration-300 cursor-pointer aspect-video bg-muted",
+                "relative overflow-hidden transition-all duration-300 cursor-pointer aspect-video",
                 "border-2 hover:ring-2 hover:ring-primary/20",
-                camera.connected ? "border-border hover:border-primary/30" : "border-muted"
+                camera.connected && camera.enabled ? "border-border hover:border-primary/30 bg-black" : "border-muted bg-black"
               )}
               onClick={() => handleCameraClick(camera)}
             >

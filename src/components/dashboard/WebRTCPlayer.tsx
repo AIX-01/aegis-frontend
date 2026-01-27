@@ -158,11 +158,6 @@ export function WebRTCPlayer({
 
   return (
     <>
-      {/* fullscreen에서 재생 중일 때만 검은 배경 */}
-      {fullscreen && localState === 'playing' && (
-        <div className="absolute inset-0 bg-black" />
-      )}
-
       <video
         ref={videoRef}
         autoPlay
@@ -177,44 +172,22 @@ export function WebRTCPlayer({
 
       {localState === 'connecting' && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className={cn(
-            "text-center px-4 py-3",
-            fullscreen && "bg-black/40 border border-white/30 rounded-lg"
-          )}>
-            <Loader2 className={cn(
-              "h-8 w-8 animate-spin mx-auto mb-2",
-              fullscreen ? "text-white" : "text-muted-foreground"
-            )} />
-            <p className={cn(
-              "text-sm font-medium",
-              fullscreen ? "text-white" : "text-muted-foreground"
-            )}>연결 중...</p>
+          <div className="text-center px-4 py-3">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-muted-foreground" />
+            <p className="text-sm font-medium text-muted-foreground">연결 중...</p>
           </div>
         </div>
       )}
 
       {localState === 'error' && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className={cn(
-            "text-center px-4 py-3",
-            fullscreen && "bg-black/40 border border-white/30 rounded-lg"
-          )}>
-            <AlertCircle className={cn(
-              "h-8 w-8 mx-auto mb-2",
-              fullscreen ? "text-destructive" : "text-destructive"
-            )} />
-            <p className={cn(
-              "text-sm font-medium mb-2",
-              fullscreen ? "text-white" : "text-foreground"
-            )}>{errorMessage}</p>
+          <div className="text-center px-4 py-3">
+            <AlertCircle className="h-8 w-8 mx-auto mb-2 text-destructive" />
+            <p className="text-sm font-medium mb-2 text-foreground">{errorMessage}</p>
             <Button
               variant="outline"
               size="sm"
-              className={cn(
-                fullscreen
-                  ? "border-white/30 text-white hover:bg-white/10"
-                  : "border-border text-foreground hover:bg-accent"
-              )}
+              className="border-border text-foreground hover:bg-accent"
               onClick={(e) => {
                 e.stopPropagation();
                 startStream();
@@ -228,18 +201,9 @@ export function WebRTCPlayer({
 
       {localState === 'idle' && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className={cn(
-            "text-center px-4 py-3",
-            fullscreen && "bg-black/40 border border-white/30 rounded-lg"
-          )}>
-            <Video className={cn(
-              "h-8 w-8 mx-auto mb-1",
-              fullscreen ? "text-white/80" : "text-muted-foreground"
-            )} />
-            <p className={cn(
-              "text-xs",
-              fullscreen ? "text-white/80" : "text-muted-foreground"
-            )}>{cameraName}</p>
+          <div className="text-center px-4 py-3">
+            <Video className="h-8 w-8 mx-auto mb-1 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">{cameraName}</p>
           </div>
         </div>
       )}

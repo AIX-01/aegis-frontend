@@ -68,15 +68,35 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
 
   // 모달 열릴 때 클립 로드
   useEffect(() => {
-    if (open && event?.clipUrl) {
+    // clipUrl이 있는 경우에만 클립 로드 시도
+    if (open && event?.id) {
+      console.log('[EventDetailModal] 이벤트 데이터:', {
+        id: event.id,
+        clipUrl: event.clipUrl,
+        status: event.status
+      });
+
+      // clipUrl이 없으면 로딩하지 않음
+      if (!event.clipUrl) {
+        console.log('[EventDetailModal] clipUrl이 없음 - 로딩 스킵');
+        setClipUrl(null);
+        setClipLoading(false);
+        setClipError(false);
+        return;
+      }
+
+      console.log('[EventDetailModal] 클립 로딩 시작:', event.clipUrl);
       setClipLoading(true);
       setClipError(false);
 
       eventsApi.getClipBlobUrl(event.id)
         .then((url) => {
+          console.log('[EventDetailModal] 클립 Blob URL 생성 성공:', url);
           setClipUrl(url);
         })
-        .catch(() => {
+        .catch((error) => {
+          console.error('[EventDetailModal] 클립 로드 실패:', error);
+          console.error('[EventDetailModal] 에러 상세:', error.response?.status, error.response?.data);
           setClipError(true);
         })
         .finally(() => {
@@ -204,7 +224,26 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
                           ref={videoRef}
                           src={clipUrl}
                           className="w-full h-full object-contain bg-black"
-                          onError={() => setClipError(true)}
+                          onError={(e) => {
+                            const video = e.currentTarget;
+                            console.error('[EventDetailModal] 비디오 재생 에러:', {
+                              error: video.error,
+                              errorCode: video.error?.code,
+                              errorMessage: video.error?.message,
+                              networkState: video.networkState,
+                              readyState: video.readyState,
+                              src: video.src
+                            });
+                            setClipError(true);
+                          }}
+                          onLoadedMetadata={(e) => {
+                            const video = e.currentTarget;
+                            console.log('[EventDetailModal] 비디오 메타데이터 로드:', {
+                              duration: video.duration,
+                              videoWidth: video.videoWidth,
+                              videoHeight: video.videoHeight
+                            });
+                          }}
                           controls
                         />
                       ) : !clipLoading && (
@@ -215,10 +254,18 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
                               <VideoOff className="h-10 w-10 text-muted-foreground" />
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              {clipError ? '클립을 불러올 수 없습니다' : '클립이 아직 준비되지 않았습니다'}
+                              {clipError
+                                ? '클립을 불러올 수 없습니다'
+                                : !event.clipUrl
+                                  ? '클립이 저장되지 않았습니다'
+                                  : '클립이 아직 준비되지 않았습니다'}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                              {event.status === 'processing' ? '클립 추출 중...' : '클립 없음'}
+                              {!event.clipUrl
+                                ? '클립 추출에 실패했거나 저장되지 않았습니다'
+                                : event.status === 'processing'
+                                  ? '클립 추출 중...'
+                                  : '클립 없음'}
                             </p>
                           </div>
                         </div>

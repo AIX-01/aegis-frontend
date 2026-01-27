@@ -1,16 +1,89 @@
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
-import { Camera, ChevronLeft, ChevronRight, Brain, Power } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, Brain, Power, ArrowLeft, Pencil, Check, X, WifiOff, Video } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type { ManagedCamera } from "@/types";
-import { CameraDetailModal } from "./CameraDetailModal";
 import { WebRTCPlayer } from "./WebRTCPlayer";
+import { useWebRTC } from "@/contexts/WebRTCContext";
 
-const CAMERAS_PER_PAGE = 9; // 3x3 그리드
+const CAMERAS_PER_PAGE = 9;
+const GRID_PAGE_STORAGE_KEY = 'aegis_cctv_grid_page';
+
+// 공통: 상태 배지 (ON/OFF + AI) - 밝은 배경용
+function StatusBadges({ camera }: { camera: ManagedCamera }) {
+  return (
+    <div className="flex items-center gap-1">
+      {camera.enabled ? (
+        <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-background/80 text-success border-success/50">
+          <Power className="h-2.5 w-2.5 mr-0.5" />
+          ON
+        </Badge>
+      ) : (
+        <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-background/80 text-muted-foreground border-border">
+          <Power className="h-2.5 w-2.5 mr-0.5" />
+          OFF
+        </Badge>
+      )}
+      {camera.enabled && camera.analysisEnabled && (
+        <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-background/80 text-primary border-primary/50">
+          <Brain className="h-2.5 w-2.5 mr-0.5" />
+          AI
+        </Badge>
+      )}
+    </div>
+  );
+}
+
+// 공통: 연결 상태 배지 - 밝은 배경용
+function ConnectionBadge({ camera }: { camera: ManagedCamera }) {
+  return camera.connected ? (
+    <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-background/80 text-success border-success/50">
+      <span className="relative flex h-1.5 w-1.5 mr-1">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success"></span>
+      </span>
+      Online
+    </Badge>
+  ) : (
+    <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-background/80 text-muted-foreground border-border">
+      Offline
+    </Badge>
+  );
+}
+
+// 공통: 카메라 정보 (아이콘 + 별명 + 실명) - 밝은 배경용
+function CameraInfo({
+  camera,
+  showEdit = false,
+  onEditClick
+}: {
+  camera: ManagedCamera;
+  showEdit?: boolean;
+  onEditClick?: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <Camera className="h-3.5 w-3.5 text-foreground flex-shrink-0" />
+      <div className="flex flex-col min-w-0">
+        <div className="flex items-center gap-1">
+          <span className="text-xs font-medium text-foreground truncate">{camera.alias}</span>
+          {showEdit && onEditClick && (
+            <Button size="icon" variant="ghost" className="h-5 w-5 text-foreground hover:bg-accent" onClick={onEditClick}>
+              <Pencil className="h-2.5 w-2.5 text-foreground" />
+            </Button>
+          )}
+        </div>
+        <span className="text-[10px] font-mono text-muted-foreground truncate">{camera.name}</span>
+      </div>
+    </div>
+  );
+}
 
 interface CCTVGridProps {
   cameras: ManagedCamera[];
@@ -25,37 +98,78 @@ export function CCTVGrid({
   onToggleEnabled,
   onToggleAnalysis
 }: CCTVGridProps) {
-  const [currentPage, setCurrentPage] = useState(0);
+  // localStorage에서 페이지 상태 복원
+  const [currentPage, setCurrentPage] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(GRID_PAGE_STORAGE_KEY);
+      return saved ? parseInt(saved, 10) : 0;
+    }
+    return 0;
+  });
   const [selectedCamera, setSelectedCamera] = useState<ManagedCamera | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditingAlias, setIsEditingAlias] = useState(false);
+  const [aliasInput, setAliasInput] = useState('');
+
+
+  const { setActiveGridCameras } = useWebRTC();
 
   const totalPages = Math.max(1, Math.ceil(cameras.length / CAMERAS_PER_PAGE));
 
-  // 현재 페이지의 카메라들
   const currentCameras = useMemo(() => {
     const start = currentPage * CAMERAS_PER_PAGE;
     return cameras.slice(start, start + CAMERAS_PER_PAGE);
   }, [cameras, currentPage]);
 
-  // 페이지 범위 조정 (카메라 수가 줄어들었을 때)
+  // 페이지 변경 시 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem(GRID_PAGE_STORAGE_KEY, currentPage.toString());
+  }, [currentPage]);
+
+  // 현재 그리드 카메라 변경 시 WebRTC Context에 알림
+  useEffect(() => {
+    const activeIds = currentCameras
+      .filter(cam => cam.enabled && cam.connected)
+      .map(cam => cam.id);
+    setActiveGridCameras(activeIds);
+  }, [currentCameras, setActiveGridCameras]);
+
   useEffect(() => {
     if (currentPage >= totalPages) {
       setCurrentPage(Math.max(0, totalPages - 1));
     }
   }, [totalPages, currentPage]);
 
-  // 무한궤도 페이지네이션
-  const goToPrevPage = () => {
-    setCurrentPage((prev) => (prev === 0 ? totalPages - 1 : prev - 1));
-  };
 
-  const goToNextPage = () => {
-    setCurrentPage((prev) => (prev === totalPages - 1 ? 0 : prev + 1));
-  };
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isModalOpen && !isEditingAlias) {
+        setIsModalOpen(false);
+      }
+    };
+
+    if (isModalOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [isModalOpen, isEditingAlias]);
+
+  const goToPrevPage = () => setCurrentPage((prev) => (prev === 0 ? totalPages - 1 : prev - 1));
+  const goToNextPage = () => setCurrentPage((prev) => (prev === totalPages - 1 ? 0 : prev + 1));
 
   const handleCameraClick = (camera: ManagedCamera) => {
     setSelectedCamera(camera);
     setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setIsEditingAlias(false);
   };
 
   const handleUpdateAlias = (cameraId: string, alias: string) => {
@@ -71,7 +185,6 @@ export function CCTVGrid({
       setSelectedCamera({
         ...selectedCamera,
         enabled,
-        // Option A: enabled=false면 analysisEnabled도 false
         analysisEnabled: enabled ? selectedCamera.analysisEnabled : false
       });
     }
@@ -83,6 +196,31 @@ export function CCTVGrid({
       setSelectedCamera({ ...selectedCamera, analysisEnabled });
     }
   };
+
+  const handleStartEdit = () => {
+    if (selectedCamera) {
+      setAliasInput(selectedCamera.alias);
+      setIsEditingAlias(true);
+    }
+  };
+
+  const handleSaveAlias = () => {
+    if (selectedCamera && aliasInput.trim()) {
+      handleUpdateAlias(selectedCamera.id, aliasInput.trim());
+    }
+    setIsEditingAlias(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingAlias(false);
+    setAliasInput('');
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSaveAlias();
+    else if (e.key === 'Escape') { e.stopPropagation(); handleCancelEdit(); }
+  };
+
 
   return (
     <>
@@ -96,12 +234,12 @@ export function CCTVGrid({
                 "relative overflow-hidden transition-all duration-300 cursor-pointer aspect-video",
                 "border-2 hover:ring-2 hover:ring-primary/20",
                 camera.connected
-                  ? "border-border hover:border-primary/30"
-                  : "border-muted bg-muted/50"
+                  ? "border-transparent hover:border-primary/30 bg-muted"
+                  : "border-muted bg-muted"
               )}
               onClick={() => handleCameraClick(camera)}
             >
-              {/* WebRTC 플레이어 (현재 페이지만 연결) */}
+              {/* WebRTC 플레이어 */}
               <div className="absolute inset-0">
                 <WebRTCPlayer
                   cameraId={camera.id}
@@ -111,115 +249,175 @@ export function CCTVGrid({
                 />
               </div>
 
-              {/* 카메라 정보 오버레이 */}
-              <div className="absolute inset-x-0 bottom-0 p-2 bg-black/70 z-10">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                    <Camera className="h-3.5 w-3.5 text-white/70 flex-shrink-0" />
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-xs font-medium truncate text-white">{camera.alias}</span>
-                      <span className="text-[10px] font-mono text-white/60 truncate">{camera.name}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    {camera.enabled ? (
-                      <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-success/20 text-success border-success/50">
-                        <Power className="h-2.5 w-2.5 mr-0.5" />
-                        ON
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-white/10 text-white/60 border-white/20">
-                        <Power className="h-2.5 w-2.5 mr-0.5" />
-                        OFF
-                      </Badge>
-                    )}
-                    {camera.enabled && camera.analysisEnabled && (
-                      <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-primary/20 text-primary border-primary/50">
-                        <Brain className="h-2.5 w-2.5 mr-0.5" />
-                        AI
-                      </Badge>
-                    )}
+              {/* 좌상단: 카메라 정보 - 항상 검은 텍스트 */}
+              <div className="absolute top-2 left-2 z-10">
+                <div className="flex items-center gap-1.5">
+                  <Camera className="h-3.5 w-3.5 flex-shrink-0 text-foreground" />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-medium truncate text-foreground">{camera.alias}</span>
+                    <span className="text-[10px] font-mono truncate text-muted-foreground">{camera.name}</span>
                   </div>
                 </div>
               </div>
 
-              {/* 연결 상태 표시 */}
-              <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
-                {camera.connected ? (
-                  <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-success/20 text-success border-success/50">
-                    <span className="relative flex h-1.5 w-1.5 mr-1">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success"></span>
-                    </span>
-                    Online
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-white/10 text-white/60 border-white/20">
-                    Offline
-                  </Badge>
-                )}
+              {/* 우상단: 상태 + 연결 배지 */}
+              <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+                <StatusBadges camera={camera} />
+                <ConnectionBadge camera={camera} />
               </div>
 
-              {/* 비활성(OFF) 오버레이 */}
+              {/* OFF 오버레이 - 연결된 상태에서만 */}
               {camera.connected && !camera.enabled && (
-                <div className="absolute inset-0 bg-background/60 flex items-center justify-center z-[5]">
-                  <span className="text-sm text-muted-foreground bg-background/80 px-3 py-1.5 rounded-md font-medium">
+                <div className="absolute inset-0 flex items-center justify-center z-[5]">
+                  <span className="text-sm font-semibold text-white px-3 py-1.5 rounded-md border border-white/30 bg-black/40">
                     카메라 OFF
                   </span>
                 </div>
               )}
 
-              {/* 오프라인 오버레이 */}
+              {/* 오프라인 오버레이 - 흰 배경에 검은 텍스트 */}
               {!camera.connected && (
-                <div className="absolute inset-0 bg-background/60 flex items-center justify-center z-[5]">
-                  <span className="text-sm text-muted-foreground bg-background/80 px-3 py-1.5 rounded-md font-medium">
-                    연결 끊김
+                <div className="absolute inset-0 flex items-center justify-center z-[5]">
+                  <span className="text-sm font-semibold text-foreground">
+                    신호 없음
                   </span>
                 </div>
               )}
             </Card>
           ))}
 
-          {/* 빈 셀 채우기 (3x3 유지) */}
+          {/* 빈 셀 */}
           {Array.from({ length: CAMERAS_PER_PAGE - currentCameras.length }).map((_, i) => (
-            <Card
-              key={`empty-${i}`}
-              className="border-2 border-dashed border-muted bg-muted/20 aspect-video"
-            />
+            <Card key={`empty-${i}`} className="border-2 border-dashed border-muted bg-muted/20 aspect-video" />
           ))}
         </div>
 
-        {/* 페이지네이션 버튼 */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-4 mt-4">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={goToPrevPage}
-              className="h-8 w-8"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={goToNextPage}
-              className="h-8 w-8"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+        {/* 페이지네이션 - 항상 표시 */}
+        <div className="flex justify-center items-center gap-4 mt-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={goToPrevPage}
+            className="h-8 w-8"
+            disabled={totalPages <= 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm text-muted-foreground min-w-[60px] text-center">
+            {currentPage + 1} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={goToNextPage}
+            className="h-8 w-8"
+            disabled={totalPages <= 1}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      <CameraDetailModal
-        camera={selectedCamera}
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        onUpdateAlias={handleUpdateAlias}
-        onToggleEnabled={handleToggleEnabled}
-        onToggleAnalysis={handleToggleAnalysis}
-      />
+      {/* 전체화면 모달 */}
+      {isModalOpen && selectedCamera && (
+        <div className="fixed inset-0 z-50 bg-muted">
+          {/* 비디오 영역 - WebRTCPlayer 직접 렌더링 (전역 스트림 공유) */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <WebRTCPlayer
+              cameraId={selectedCamera.id}
+              cameraName={selectedCamera.name}
+              active={selectedCamera.enabled}
+              connected={selectedCamera.connected}
+              fullscreen
+            />
+          </div>
+
+          {/* 좌상단: 뒤로가기 + 카메라 정보 */}
+          <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground hover:bg-accent" onClick={handleCloseModal}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+
+            {isEditingAlias ? (
+              <div className="flex items-center gap-1.5">
+                <Camera className="h-3.5 w-3.5 text-foreground" />
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1">
+                    <Input
+                      value={aliasInput}
+                      onChange={(e) => setAliasInput(e.target.value)}
+                      onKeyDown={handleInputKeyDown}
+                      className="h-6 w-32 text-xs font-medium"
+                      autoFocus
+                    />
+                    <Button size="icon" variant="ghost" className="h-6 w-6 text-foreground hover:bg-accent" onClick={handleSaveAlias}>
+                      <Check className="h-3 w-3 text-success" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-6 w-6 text-foreground hover:bg-accent" onClick={handleCancelEdit}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <span className="text-[10px] font-mono text-muted-foreground">{selectedCamera.name}</span>
+                </div>
+              </div>
+            ) : (
+              <CameraInfo camera={selectedCamera} showEdit onEditClick={handleStartEdit} />
+            )}
+          </div>
+
+          {/* 우상단: 연결 + 상태 배지 */}
+          <div className="absolute top-3 right-3 z-20 flex items-center gap-1">
+            <StatusBadges camera={selectedCamera} />
+            <ConnectionBadge camera={selectedCamera} />
+          </div>
+
+          {/* 하단 컨트롤 (중앙) */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 bg-background border border-border rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 text-xs text-foreground">
+              <Power className="h-3.5 w-3.5 text-foreground" />
+              <span className="text-foreground">카메라</span>
+              <Switch
+                checked={selectedCamera.enabled}
+                onCheckedChange={(checked) => handleToggleEnabled(selectedCamera.id, checked)}
+                className="scale-90"
+              />
+            </div>
+            <div className="w-px h-4 bg-border" />
+            <div className={cn("flex items-center gap-2 text-xs text-foreground", !selectedCamera.enabled && "opacity-50")}>
+              <Brain className="h-3.5 w-3.5 text-foreground" />
+              <span className="text-foreground">AI 분석</span>
+              <Switch
+                checked={selectedCamera.analysisEnabled}
+                onCheckedChange={(checked) => handleToggleAnalysis(selectedCamera.id, checked)}
+                disabled={!selectedCamera.enabled}
+                className="scale-90"
+              />
+            </div>
+          </div>
+
+
+          {/* 오프라인 오버레이 */}
+          {!selectedCamera.connected && (
+            <div className="absolute inset-0 flex items-center justify-center z-[5]">
+              <div className="text-center px-6 py-4">
+                <WifiOff className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                <p className="text-base text-foreground font-semibold">카메라 신호 없음</p>
+                <p className="text-xs text-muted-foreground mt-1">카메라가 꺼져있거나 네트워크 문제입니다</p>
+              </div>
+            </div>
+          )}
+
+          {/* OFF 오버레이 */}
+          {selectedCamera.connected && !selectedCamera.enabled && (
+            <div className="absolute inset-0 flex items-center justify-center z-[5]">
+              <div className="text-center px-6 py-4">
+                <Video className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                <p className="text-base text-foreground font-semibold">카메라 OFF</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 }

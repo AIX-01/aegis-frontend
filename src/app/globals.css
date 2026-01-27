@@ -132,6 +132,24 @@
                 0 2px 8px -2px hsl(var(--foreground) / 0.05);
   }
 
+  /* 영상 위 오버레이 텍스트용 그림자 */
+  .text-shadow {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 0 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .text-shadow-sm {
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+  }
+
+  .text-shadow-lg {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.6);
+  }
+
+  /* 아이콘용 드롭 쉐도우 */
+  .icon-shadow {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+  }
+
   .alert-pulse {
     animation: pulse-ring 1.5s ease-out infinite;
   }

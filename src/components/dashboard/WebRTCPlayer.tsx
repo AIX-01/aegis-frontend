@@ -82,13 +82,11 @@ export function WebRTCPlayer({
       }
 
       // URL에서 path 추출
-      // streamUrl이 상대 경로(/stream/cam1/whep)일 경우 현재 호스트 기준으로 처리
       let fullUrl: URL;
       try {
         if (streamUrl.startsWith('http://') || streamUrl.startsWith('https://')) {
           fullUrl = new URL(streamUrl);
         } else {
-          // 상대 경로인 경우 현재 origin 사용
           fullUrl = new URL(streamUrl, window.location.origin);
         }
       } catch {
@@ -97,7 +95,6 @@ export function WebRTCPlayer({
 
       // 경로에서 카메라 이름 추출: /stream/cam1/whep -> cam1
       const pathParts = fullUrl.pathname.split('/').filter(Boolean);
-      // pathParts: ['stream', 'cam1', 'whep'] 또는 ['cam1', 'whep']
       const whepIndex = pathParts.indexOf('whep');
       const path = whepIndex > 0 ? pathParts[whepIndex - 1] : pathParts[pathParts.length - 2];
 
@@ -125,6 +122,8 @@ export function WebRTCPlayer({
           setErrorMessage('인증 실패');
         } else if (msg.includes('400')) {
           setErrorMessage('잘못된 요청');
+        } else if (msg.includes('404')) {
+          setErrorMessage('스트림을 찾을 수 없음');
         } else {
           setErrorMessage(msg);
         }
@@ -156,13 +155,14 @@ export function WebRTCPlayer({
     return null;
   }
 
-  // 오버레이 공통 스타일 (fullscreen이면 검은 배경, 그리드에서는 투명)
-  const overlayBgClass = fullscreen
-    ? "bg-black/40 border border-white/30 rounded-lg"
-    : "bg-transparent";
 
   return (
     <>
+      {/* fullscreen에서 재생 중일 때만 검은 배경 */}
+      {fullscreen && localState === 'playing' && (
+        <div className="absolute inset-0 bg-black" />
+      )}
+
       <video
         ref={videoRef}
         autoPlay
@@ -177,22 +177,44 @@ export function WebRTCPlayer({
 
       {localState === 'connecting' && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className={cn("text-center px-4 py-3", overlayBgClass)}>
-            <Loader2 className="h-8 w-8 text-white animate-spin mx-auto mb-2 icon-shadow" />
-            <p className="text-sm text-white font-medium text-shadow">연결 중...</p>
+          <div className={cn(
+            "text-center px-4 py-3",
+            fullscreen && "bg-black/40 border border-white/30 rounded-lg"
+          )}>
+            <Loader2 className={cn(
+              "h-8 w-8 animate-spin mx-auto mb-2",
+              fullscreen ? "text-white" : "text-muted-foreground"
+            )} />
+            <p className={cn(
+              "text-sm font-medium",
+              fullscreen ? "text-white text-shadow" : "text-muted-foreground"
+            )}>연결 중...</p>
           </div>
         </div>
       )}
 
       {localState === 'error' && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className={cn("text-center px-4 py-3", overlayBgClass)}>
-            <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-2 icon-shadow" />
-            <p className="text-sm text-white font-medium mb-2 text-shadow">{errorMessage}</p>
+          <div className={cn(
+            "text-center px-4 py-3",
+            fullscreen && "bg-black/40 border border-white/30 rounded-lg"
+          )}>
+            <AlertCircle className={cn(
+              "h-8 w-8 mx-auto mb-2",
+              fullscreen ? "text-destructive" : "text-destructive"
+            )} />
+            <p className={cn(
+              "text-sm font-medium mb-2",
+              fullscreen ? "text-white text-shadow" : "text-foreground"
+            )}>{errorMessage}</p>
             <Button
               variant="outline"
               size="sm"
-              className="border-white/30 text-white hover:bg-white/10"
+              className={cn(
+                fullscreen
+                  ? "border-white/30 text-white hover:bg-white/10"
+                  : "border-border text-foreground hover:bg-accent"
+              )}
               onClick={(e) => {
                 e.stopPropagation();
                 startStream();
@@ -206,9 +228,18 @@ export function WebRTCPlayer({
 
       {localState === 'idle' && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className={cn("text-center px-4 py-3", overlayBgClass)}>
-            <Video className="h-8 w-8 text-white/80 mx-auto mb-1 icon-shadow" />
-            <p className="text-xs text-white/80 text-shadow-sm">{cameraName}</p>
+          <div className={cn(
+            "text-center px-4 py-3",
+            fullscreen && "bg-black/40 border border-white/30 rounded-lg"
+          )}>
+            <Video className={cn(
+              "h-8 w-8 mx-auto mb-1",
+              fullscreen ? "text-white/80" : "text-muted-foreground"
+            )} />
+            <p className={cn(
+              "text-xs",
+              fullscreen ? "text-white/80 text-shadow-sm" : "text-muted-foreground"
+            )}>{cameraName}</p>
           </div>
         </div>
       )}

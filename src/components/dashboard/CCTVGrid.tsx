@@ -234,7 +234,7 @@ export function CCTVGrid({
                 "relative overflow-hidden transition-all duration-300 cursor-pointer aspect-video",
                 "border-2 hover:ring-2 hover:ring-primary/20",
                 camera.connected
-                  ? "border-border hover:border-primary/30 bg-black"
+                  ? "border-transparent hover:border-primary/30 bg-muted"
                   : "border-muted bg-muted"
               )}
               onClick={() => handleCameraClick(camera)}
@@ -328,7 +328,7 @@ export function CCTVGrid({
 
       {/* 전체화면 모달 */}
       {isModalOpen && selectedCamera && (
-        <div className="fixed inset-0 z-50 bg-black">
+        <div className="fixed inset-0 z-50 bg-muted">
           {/* 비디오 영역 - WebRTCPlayer 직접 렌더링 (전역 스트림 공유) */}
           <div className="absolute inset-0 flex items-center justify-center">
             <WebRTCPlayer

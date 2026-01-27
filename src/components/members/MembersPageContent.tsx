@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { usersApi, camerasApi } from '@/lib/api';
-import { useNotificationStream } from '@/hooks/useNotificationStream';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/queryKeys';
 import type { User, ManagedCamera as CameraType } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -96,43 +97,40 @@ export function MembersPageContent() {
   const router = useRouter();
   const { user: currentUser, isAdmin } = useAuth();
   const { toast } = useToast();
-  const [users, setUsers] = useState<User[]>([]);
-  const [cameras, setCameras] = useState<CameraType[]>([]);
+  const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // React Query로 사용자 목록 조회 (SSE에서 자동 갱신)
+  const { data: users = [] } = useQuery({
+    queryKey: queryKeys.users.all,
+    queryFn: () => usersApi.getAll(),
+    enabled: isAdmin,
+  });
+
+  // React Query로 카메라 목록 조회
+  const { data: cameras = [] } = useQuery({
+    queryKey: queryKeys.cameras.all,
+    queryFn: () => camerasApi.getAll(),
+    enabled: isAdmin,
+  });
 
   useEffect(() => {
     if (!isAdmin) {
       router.push('/');
       return;
     }
-    refreshData();
   }, [isAdmin, router]);
 
-  // SSE member 이벤트 수신 시 멤버 목록 갱신
-  const handleMemberUpdate = useCallback(() => {
-    refreshData();
-  }, []);
-
-  useNotificationStream(undefined, undefined, undefined, handleMemberUpdate);
-
-  const refreshData = async () => {
-    try {
-      const [usersData, camerasData] = await Promise.all([
-        usersApi.getAll(),
-        camerasApi.getAll(),
-      ]);
-      setUsers(usersData);
-      setCameras(camerasData);
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
-    }
+  const refreshData = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.cameras.all });
   };
 
   const handleApprove = async (userId: string) => {
     try {
       await usersApi.approve(userId);
-      await refreshData();
+      refreshData();
       toast({
         title: '승인 완료',
         description: '멤버가 승인되었습니다.',
@@ -149,7 +147,7 @@ export function MembersPageContent() {
   const handleReject = async (userId: string) => {
     try {
       await usersApi.delete(userId);
-      await refreshData();
+      refreshData();
       toast({
         title: '거절 완료',
         description: '가입 요청이 거절되었습니다.',
@@ -174,7 +172,7 @@ export function MembersPageContent() {
     }
     try {
       await usersApi.delete(userId);
-      await refreshData();
+      refreshData();
       toast({
         title: '삭제 완료',
         description: '멤버가 삭제되었습니다.',
@@ -191,7 +189,7 @@ export function MembersPageContent() {
   const handleUpdateRole = async (userId: string, role: 'user' | 'admin') => {
     try {
       await usersApi.update(userId, { role });
-      await refreshData();
+      refreshData();
       toast({
         title: '역할 변경',
         description: `역할이 ${role === 'admin' ? '관리자' : '일반 사용자'}로 변경되었습니다.`,
@@ -208,7 +206,7 @@ export function MembersPageContent() {
   const handleUpdateCameras = async (userId: string, cameraIds: string[]) => {
     try {
       await usersApi.update(userId, { assignedCameras: cameraIds });
-      await refreshData();
+      refreshData();
       setIsEditDialogOpen(false);
       toast({
         title: '카메라 권한 변경',
@@ -223,8 +221,8 @@ export function MembersPageContent() {
     }
   };
 
-  const pendingUsers = users.filter(u => !u.approved);
-  const approvedUsers = users.filter(u => u.approved);
+  const pendingUsers = users.filter((u: User) => !u.approved);
+  const approvedUsers = users.filter((u: User) => u.approved);
 
 
   return (

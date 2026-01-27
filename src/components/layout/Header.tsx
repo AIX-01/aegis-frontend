@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Bell, Monitor, ClipboardList, BarChart3, Users, Settings, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,8 @@ import type { Notification } from "@/types";
 import { NotificationModal } from "@/components/notifications/NotificationModal";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNotificationStream } from "@/hooks/useNotificationStream";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 
 interface HeaderProps {
   title?: string;
@@ -30,38 +31,18 @@ export function Header({ title: _title }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAdmin, logout } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
 
-  // SSE로 실시간 알림 수신
-  const handleNewNotification = useCallback((notification: Notification) => {
-    setNotifications(prev => [notification, ...prev]);
-  }, []);
+  // React Query로 알림 목록 조회 (SSE에서 자동 갱신)
+  const { data: notifications = [] } = useQuery({
+    queryKey: queryKeys.notifications.all,
+    queryFn: () => notificationsApi.getAll(),
+    enabled: !!user,
+  });
 
-  useNotificationStream(handleNewNotification);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const notifData = await notificationsApi.getAll();
-        setNotifications(notifData);
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      }
-    };
-
-    if (user) {
-      fetchData();
-    }
-  }, [user]);
-
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n: Notification) => !n.read).length;
 
   const handleMarkAsRead = async (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
-    );
-    // 서버에도 읽음 처리 요청
     try {
       await notificationsApi.markAsRead(id);
     } catch (error) {

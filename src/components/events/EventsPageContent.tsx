@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { EventLog } from "@/components/dashboard/EventLog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { eventsApi } from "@/lib/api";
-import { useNotificationStream } from "@/hooks/useNotificationStream";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 import type { Event } from "@/types";
 import {
   ClipboardList,
@@ -48,7 +49,11 @@ const behaviorLabels = [
 
 
 export function EventsPageContent() {
-  const [events, setEvents] = useState<Event[]>([]);
+  // React Query로 이벤트 목록 조회 (SSE에서 자동 갱신)
+  const { data: events = [] } = useQuery({
+    queryKey: queryKeys.events.all,
+    queryFn: () => eventsApi.getAll(),
+  });
 
   // Filter states
   const [selectedBehaviors, setSelectedBehaviors] = useState<string[]>(
@@ -58,40 +63,14 @@ export function EventsPageContent() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const eventsData = await eventsApi.getAll();
-        setEvents(eventsData);
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  // 새 알림 수신 시 이벤트 목록 갱신
-  const handleNewNotification = useCallback(() => {
-    eventsApi.getAll().then(setEvents).catch(console.error);
-  }, []);
-
-  // SSE event 이벤트 수신 시 이벤트 목록 갱신
-  const handleEventUpdate = useCallback(() => {
-    eventsApi.getAll().then(setEvents).catch(console.error);
-  }, []);
-
-  useNotificationStream(handleNewNotification, undefined, handleEventUpdate);
-
   // 이벤트 상태 변경 핸들러
   const handleStatusChange = useCallback((eventId: string, newStatus: Event['status']) => {
-    setEvents(prev => prev.map(e =>
-      e.id === eventId ? { ...e, status: newStatus } : e
-    ));
+    // React Query가 캐시를 자동 갱신하므로 별도 처리 불필요
+    console.log(`Event ${eventId} status changed to ${newStatus}`);
   }, []);
 
   // 필터링된 이벤트
-  const filteredEvents = events.filter(event => {
+  const filteredEvents = events.filter((event: Event) => {
     // 기간 필터
     if (dateRange?.from) {
       const eventDate = new Date(event.timestamp);

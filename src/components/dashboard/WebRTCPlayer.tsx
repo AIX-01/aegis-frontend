@@ -146,16 +146,16 @@ export function WebRTCPlayer({
         autoPlay
         playsInline
         muted
-        className={`absolute inset-0 w-full h-full object-cover ${
-          state === 'playing' ? 'block' : 'hidden'
-        }`}
+        className={`absolute inset-0 w-full h-full bg-black ${
+          fullscreen ? 'object-contain' : 'object-cover'
+        } ${state === 'playing' ? 'block' : 'hidden'}`}
       />
 
       {/* 연결 중 */}
       {state === 'connecting' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/90">
           <div className="text-center">
-            <Loader2 className="h-12 w-12 text-primary animate-spin mx-auto mb-4" />
+            <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">연결 중...</p>
           </div>
         </div>
@@ -163,11 +163,18 @@ export function WebRTCPlayer({
 
       {/* 에러 */}
       {state === 'error' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/90">
           <div className="text-center">
-            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <p className="text-sm text-muted-foreground mb-4">{errorMessage}</p>
-            <Button variant="outline" size="sm" onClick={startStream}>
+            <AlertCircle className="h-10 w-10 text-destructive mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground mb-3">{errorMessage}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                startStream();
+              }}
+            >
               다시 시도
             </Button>
           </div>
@@ -176,12 +183,10 @@ export function WebRTCPlayer({
 
       {/* 대기 중 (idle) */}
       {state === 'idle' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/90">
           <div className="text-center">
-            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <Video className="h-12 w-12 text-primary" />
-            </div>
-            <p className="text-sm text-muted-foreground">{cameraName}</p>
+            <Video className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
+            <p className="text-xs text-muted-foreground">{cameraName}</p>
           </div>
         </div>
       )}

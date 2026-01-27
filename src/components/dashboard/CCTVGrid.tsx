@@ -112,29 +112,29 @@ export function CCTVGrid({
               </div>
 
               {/* 카메라 정보 오버레이 */}
-              <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-background/95 via-background/70 to-transparent z-10">
+              <div className="absolute inset-x-0 bottom-0 p-2 bg-black/70 z-10">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                    <Camera className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                    <Camera className="h-3.5 w-3.5 text-white/70 flex-shrink-0" />
                     <div className="flex flex-col min-w-0">
-                      <span className="text-xs font-medium truncate">{camera.alias}</span>
-                      <span className="text-[10px] font-mono text-muted-foreground truncate">{camera.name}</span>
+                      <span className="text-xs font-medium truncate text-white">{camera.alias}</span>
+                      <span className="text-[10px] font-mono text-white/60 truncate">{camera.name}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     {camera.enabled ? (
-                      <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-success/10 text-success border-success/30">
+                      <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-success/20 text-success border-success/50">
                         <Power className="h-2.5 w-2.5 mr-0.5" />
                         ON
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-muted text-muted-foreground border-muted-foreground/30">
+                      <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-white/10 text-white/60 border-white/20">
                         <Power className="h-2.5 w-2.5 mr-0.5" />
                         OFF
                       </Badge>
                     )}
                     {camera.enabled && camera.analysisEnabled && (
-                      <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-primary/10 text-primary border-primary/30">
+                      <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-primary/20 text-primary border-primary/50">
                         <Brain className="h-2.5 w-2.5 mr-0.5" />
                         AI
                       </Badge>
@@ -146,7 +146,7 @@ export function CCTVGrid({
               {/* 연결 상태 표시 */}
               <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
                 {camera.connected ? (
-                  <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-success/20 text-success border-success/30">
+                  <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-success/20 text-success border-success/50">
                     <span className="relative flex h-1.5 w-1.5 mr-1">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success"></span>
@@ -154,7 +154,7 @@ export function CCTVGrid({
                     Online
                   </Badge>
                 ) : (
-                  <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-muted text-muted-foreground">
+                  <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-white/10 text-white/60 border-white/20">
                     Offline
                   </Badge>
                 )}

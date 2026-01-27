@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, useLayoutEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Camera, ChevronLeft, ChevronRight, Brain, Power, ArrowLeft, Pencil, Check, X, WifiOff, Video } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,18 +20,18 @@ function StatusBadges({ camera }: { camera: ManagedCamera }) {
   return (
     <div className="flex items-center gap-1">
       {camera.enabled ? (
-        <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-black/40 text-success border-success/50 text-shadow-sm">
+        <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-white/20 backdrop-blur-sm text-success border-success/50 text-shadow-sm">
           <Power className="h-2.5 w-2.5 mr-0.5 icon-shadow" />
           ON
         </Badge>
       ) : (
-        <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-black/40 text-white border-white/30 text-shadow-sm">
+        <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-white/20 backdrop-blur-sm text-white border-white/50 text-shadow-sm">
           <Power className="h-2.5 w-2.5 mr-0.5 icon-shadow" />
           OFF
         </Badge>
       )}
       {camera.enabled && camera.analysisEnabled && (
-        <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-black/40 text-primary border-primary/50 text-shadow-sm">
+        <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-white/20 backdrop-blur-sm text-primary border-primary/50 text-shadow-sm">
           <Brain className="h-2.5 w-2.5 mr-0.5 icon-shadow" />
           AI
         </Badge>
@@ -43,16 +43,16 @@ function StatusBadges({ camera }: { camera: ManagedCamera }) {
 // 공통: 연결 상태 배지
 function ConnectionBadge({ camera }: { camera: ManagedCamera }) {
   return camera.connected ? (
-    <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-black/40 text-success border-success/50 text-shadow-sm">
+    <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-white/20 backdrop-blur-sm text-success border-success/50 text-shadow-sm">
       <span className="relative flex h-1.5 w-1.5 mr-1">
         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success"></span>
       </span>
-      Online
+      연결됨
     </Badge>
   ) : (
-    <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-black/40 text-white border-white/30 text-shadow-sm">
-      Offline
+    <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-white/20 backdrop-blur-sm text-white border-white/50 text-shadow-sm">
+      오프라인
     </Badge>
   );
 }
@@ -111,9 +111,6 @@ export function CCTVGrid({
   const [isEditingAlias, setIsEditingAlias] = useState(false);
   const [aliasInput, setAliasInput] = useState('');
 
-  const playerContainersRef = useRef<Map<string, HTMLDivElement>>(new Map());
-  const modalVideoContainerRef = useRef<HTMLDivElement>(null);
-  const originalParentRef = useRef<HTMLDivElement | null>(null);
 
   const { setActiveGridCameras } = useWebRTC();
 
@@ -143,29 +140,6 @@ export function CCTVGrid({
     }
   }, [totalPages, currentPage]);
 
-  useLayoutEffect(() => {
-    if (isModalOpen && selectedCamera) {
-      const gridContainer = playerContainersRef.current.get(selectedCamera.id);
-      const modalContainer = modalVideoContainerRef.current;
-
-      if (gridContainer && modalContainer) {
-        originalParentRef.current = gridContainer;
-        while (gridContainer.firstChild) {
-          modalContainer.appendChild(gridContainer.firstChild);
-        }
-      }
-    } else if (!isModalOpen && originalParentRef.current) {
-      const modalContainer = modalVideoContainerRef.current;
-      const gridContainer = originalParentRef.current;
-
-      if (modalContainer && gridContainer) {
-        while (modalContainer.firstChild) {
-          gridContainer.appendChild(modalContainer.firstChild);
-        }
-      }
-      originalParentRef.current = null;
-    }
-  }, [isModalOpen, selectedCamera]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -259,15 +233,14 @@ export function CCTVGrid({
               className={cn(
                 "relative overflow-hidden transition-all duration-300 cursor-pointer aspect-video",
                 "border-2 hover:ring-2 hover:ring-primary/20",
-                camera.connected && camera.enabled ? "border-border hover:border-primary/30 bg-black" : "border-muted bg-black"
+                camera.connected
+                  ? "border-border hover:border-primary/30 bg-black"
+                  : "border-muted bg-muted"
               )}
               onClick={() => handleCameraClick(camera)}
             >
               {/* WebRTC 플레이어 */}
-              <div
-                ref={(el) => { if (el) playerContainersRef.current.set(camera.id, el); }}
-                className="absolute inset-0"
-              >
+              <div className="absolute inset-0">
                 <WebRTCPlayer
                   cameraId={camera.id}
                   cameraName={camera.name}
@@ -276,18 +249,32 @@ export function CCTVGrid({
                 />
               </div>
 
-              {/* 좌상단: 카메라 정보 */}
+              {/* 좌상단: 카메라 정보 - 오프라인이면 검은 텍스트 */}
               <div className="absolute top-2 left-2 z-10">
-                <CameraInfo camera={camera} />
+                <div className="flex items-center gap-1.5">
+                  <Camera className={cn("h-3.5 w-3.5 flex-shrink-0", camera.connected ? "text-white icon-shadow" : "text-foreground")} />
+                  <div className="flex flex-col min-w-0">
+                    <span className={cn("text-xs font-medium truncate", camera.connected ? "text-white text-shadow" : "text-foreground")}>{camera.alias}</span>
+                    <span className={cn("text-[10px] font-mono truncate", camera.connected ? "text-white/80 text-shadow-sm" : "text-muted-foreground")}>{camera.name}</span>
+                  </div>
+                </div>
               </div>
 
-              {/* 우상단: 연결 + 상태 배지 */}
+              {/* 우상단: 연결 + 상태 배지 - 오프라인이면 다른 스타일 */}
               <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
-                <StatusBadges camera={camera} />
-                <ConnectionBadge camera={camera} />
+                {camera.connected ? (
+                  <>
+                    <StatusBadges camera={camera} />
+                    <ConnectionBadge camera={camera} />
+                  </>
+                ) : (
+                  <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-muted text-muted-foreground border-border">
+                    오프라인
+                  </Badge>
+                )}
               </div>
 
-              {/* OFF 오버레이 */}
+              {/* OFF 오버레이 - 연결된 상태에서만 */}
               {camera.connected && !camera.enabled && (
                 <div className="absolute inset-0 flex items-center justify-center z-[5]">
                   <span className="text-sm font-semibold text-white px-3 py-1.5 rounded-md border border-white/30 bg-black/40 text-shadow">
@@ -296,11 +283,11 @@ export function CCTVGrid({
                 </div>
               )}
 
-              {/* 오프라인 오버레이 */}
+              {/* 오프라인 오버레이 - 흰 배경에 검은 텍스트 */}
               {!camera.connected && (
                 <div className="absolute inset-0 flex items-center justify-center z-[5]">
-                  <span className="text-sm font-semibold text-white px-3 py-1.5 rounded-md border border-white/30 bg-black/40 text-shadow">
-                    카메라 신호 없음
+                  <span className="text-sm font-semibold text-foreground">
+                    신호 없음
                   </span>
                 </div>
               )}
@@ -342,11 +329,16 @@ export function CCTVGrid({
       {/* 전체화면 모달 */}
       {isModalOpen && selectedCamera && (
         <div className="fixed inset-0 z-50 bg-black">
-          {/* 비디오 영역 */}
-          <div
-            ref={modalVideoContainerRef}
-            className="absolute inset-0 flex items-center justify-center [&>*]:absolute [&>*]:inset-0 [&_video]:object-contain"
-          />
+          {/* 비디오 영역 - WebRTCPlayer 직접 렌더링 (전역 스트림 공유) */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <WebRTCPlayer
+              cameraId={selectedCamera.id}
+              cameraName={selectedCamera.name}
+              active={selectedCamera.enabled}
+              connected={selectedCamera.connected}
+              fullscreen
+            />
+          </div>
 
           {/* 좌상단: 뒤로가기 + 카메라 정보 */}
           <div className="absolute top-3 left-3 z-20 flex items-center gap-2">

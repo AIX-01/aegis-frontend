@@ -5,6 +5,7 @@ import { Video, Loader2, AlertCircle } from 'lucide-react';
 import { camerasApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { useWebRTC, useStreamSubscription } from '@/contexts/WebRTCContext';
+import { cn } from '@/lib/utils';
 
 interface WebRTCPlayerProps {
   cameraId: string;
@@ -57,7 +58,7 @@ export function WebRTCPlayer({
         break;
       case 'error':
         setLocalState('error');
-        setErrorMessage(streamInfo.errorMessage || '연결 실패');
+        setErrorMessage(streamInfo.errorMessage || '스트림 연결 실패');
         isConnectingRef.current = false;
         break;
     }
@@ -75,18 +76,61 @@ export function WebRTCPlayer({
       // 스트림 토큰 요청
       const { streamUrl, token } = await camerasApi.requestStream(cameraId);
 
-      // URL에서 path 추출 (예: http://localhost:8889/cam1/whep -> cam1)
-      const urlObj = new URL(streamUrl);
-      const pathParts = urlObj.pathname.split('/');
-      const path = pathParts[1];
-      const mediamtxUrl = `${urlObj.protocol}//${urlObj.host}`;
+      // URL 유효성 검사
+      if (!streamUrl) {
+        throw new Error('스트림 URL을 받지 못했습니다');
+      }
+
+      // URL에서 path 추출
+      // streamUrl이 상대 경로(/stream/cam1/whep)일 경우 현재 호스트 기준으로 처리
+      let fullUrl: URL;
+      try {
+        if (streamUrl.startsWith('http://') || streamUrl.startsWith('https://')) {
+          fullUrl = new URL(streamUrl);
+        } else {
+          // 상대 경로인 경우 현재 origin 사용
+          fullUrl = new URL(streamUrl, window.location.origin);
+        }
+      } catch {
+        throw new Error('잘못된 스트림 URL 형식입니다');
+      }
+
+      // 경로에서 카메라 이름 추출: /stream/cam1/whep -> cam1
+      const pathParts = fullUrl.pathname.split('/').filter(Boolean);
+      // pathParts: ['stream', 'cam1', 'whep'] 또는 ['cam1', 'whep']
+      const whepIndex = pathParts.indexOf('whep');
+      const path = whepIndex > 0 ? pathParts[whepIndex - 1] : pathParts[pathParts.length - 2];
+
+      if (!path || path === 'whep' || path === 'stream') {
+        throw new Error('스트림 경로를 찾을 수 없습니다');
+      }
+
+      const mediamtxUrl = `${fullUrl.protocol}//${fullUrl.host}`;
 
       // 전역 Context로 연결
       await connectStream(cameraId, token, mediamtxUrl, path);
     } catch (error) {
       isConnectingRef.current = false;
       setLocalState('error');
-      setErrorMessage(error instanceof Error ? error.message : '연결 실패');
+      // 에러 메시지 한글화
+      if (error instanceof Error) {
+        const msg = error.message;
+        if (msg.includes('Failed to construct') || msg.includes('Invalid URL')) {
+          setErrorMessage('스트림 URL 오류');
+        } else if (msg.includes('Network') || msg.includes('fetch')) {
+          setErrorMessage('네트워크 연결 실패');
+        } else if (msg.includes('timeout') || msg.includes('Timeout')) {
+          setErrorMessage('연결 시간 초과');
+        } else if (msg.includes('401') || msg.includes('403')) {
+          setErrorMessage('인증 실패');
+        } else if (msg.includes('400')) {
+          setErrorMessage('잘못된 요청');
+        } else {
+          setErrorMessage(msg);
+        }
+      } else {
+        setErrorMessage('스트림 연결 실패');
+      }
     }
   }, [cameraId, connectStream]);
 
@@ -107,10 +151,15 @@ export function WebRTCPlayer({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, connected]);
 
-  // 비활성화 또는 오프라인일 때
+  // 비활성화 또는 오프라인일 때 - 아무것도 렌더링하지 않음
   if (!connected || !active) {
     return null;
   }
+
+  // 오버레이 공통 스타일 (fullscreen이면 검은 배경, 그리드에서는 투명)
+  const overlayBgClass = fullscreen
+    ? "bg-black/40 border border-white/30 rounded-lg"
+    : "bg-transparent";
 
   return (
     <>
@@ -119,14 +168,16 @@ export function WebRTCPlayer({
         autoPlay
         playsInline
         muted
-        className={`absolute inset-0 w-full h-full ${
-          fullscreen ? 'object-contain' : 'object-cover'
-        } ${localState === 'playing' ? 'block' : 'hidden'}`}
+        className={cn(
+          "absolute inset-0 w-full h-full",
+          fullscreen ? 'object-contain' : 'object-cover',
+          localState === 'playing' ? 'block' : 'hidden'
+        )}
       />
 
       {localState === 'connecting' && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center px-4 py-3 rounded-lg border border-white/30 bg-black/40">
+          <div className={cn("text-center px-4 py-3", overlayBgClass)}>
             <Loader2 className="h-8 w-8 text-white animate-spin mx-auto mb-2 icon-shadow" />
             <p className="text-sm text-white font-medium text-shadow">연결 중...</p>
           </div>
@@ -135,7 +186,7 @@ export function WebRTCPlayer({
 
       {localState === 'error' && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center px-4 py-3 rounded-lg border border-white/30 bg-black/40">
+          <div className={cn("text-center px-4 py-3", overlayBgClass)}>
             <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-2 icon-shadow" />
             <p className="text-sm text-white font-medium mb-2 text-shadow">{errorMessage}</p>
             <Button
@@ -155,7 +206,7 @@ export function WebRTCPlayer({
 
       {localState === 'idle' && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center px-4 py-3 rounded-lg border border-white/30 bg-black/40">
+          <div className={cn("text-center px-4 py-3", overlayBgClass)}>
             <Video className="h-8 w-8 text-white/80 mx-auto mb-1 icon-shadow" />
             <p className="text-xs text-white/80 text-shadow-sm">{cameraName}</p>
           </div>

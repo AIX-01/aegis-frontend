@@ -139,7 +139,7 @@ export function WebRTCProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
-        throw new Error(`WHEP 요청 실패: ${response.status}`);
+        throw new Error(`스트림 서버 응답 오류 (${response.status})`);
       }
 
       const answerSdp = await response.text();

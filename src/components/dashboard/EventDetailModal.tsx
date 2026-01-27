@@ -1,22 +1,21 @@
 'use client';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Download,
-  AlertCircle, 
-  AlertTriangle, 
-  Shield, 
   Clock,
   FileText,
   Video,
   Brain,
   VideoOff,
-  Loader2
+  Loader2,
+  AlertCircle,
+  AlertTriangle,
+  Shield
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -24,6 +23,7 @@ import type { Event } from "@/types";
 import { useState, useRef, useEffect } from "react";
 import { eventsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { EventTypeBadge, EventStatusBadge } from "@/components/common/EventBadges";
 
 interface EventDetailModalProps {
   event: Event | null;
@@ -32,31 +32,6 @@ interface EventDetailModalProps {
   onStatusChange?: (eventId: string, newStatus: Event['status']) => void;
 }
 
-const getEventTypeBadge = (type: Event['type']) => {
-  switch (type) {
-    case 'assault':
-      return <Badge variant="destructive">폭행</Badge>;
-    case 'burglary':
-      return <Badge variant="destructive">절도</Badge>;
-    case 'dump':
-      return <Badge className="bg-warning text-warning-foreground">투기</Badge>;
-    case 'swoon':
-      return <Badge className="bg-warning text-warning-foreground">실신</Badge>;
-    case 'vandalism':
-      return <Badge className="bg-warning text-warning-foreground">파손</Badge>;
-    default:
-      return <Badge className="bg-muted text-muted-foreground">알 수 없음</Badge>;
-  }
-};
-
-const getStatusBadge = (status: Event['status']) => {
-  switch (status) {
-    case 'processing':
-      return <Badge variant="secondary" className="bg-primary/10 text-primary">처리중</Badge>;
-    case 'resolved':
-      return <Badge variant="outline" className="text-success border-success/30">완료</Badge>;
-  }
-};
 
 export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: EventDetailModalProps) {
   const [clipUrl, setClipUrl] = useState<string | null>(null);
@@ -167,8 +142,8 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
               <div>
                 <DialogTitle className="text-xl">{event.description}</DialogTitle>
                 <div className="flex items-center gap-2 mt-1">
-                  {getEventTypeBadge(event.type)}
-                  {getStatusBadge(event.status)}
+                  <EventTypeBadge type={event.type} />
+                  <EventStatusBadge status={event.status} />
                   <span className="text-sm text-muted-foreground">
                     {event.cameraName}
                   </span>

@@ -14,7 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 
 interface HeaderProps {
-  title?: string;
+  // 향후 확장을 위해 인터페이스 유지
 }
 
 const navItems = [
@@ -27,7 +27,7 @@ const adminNavItems = [
   { title: "멤버 관리", url: "/members", icon: Users },
 ];
 
-export function Header({ title: _title }: HeaderProps) {
+export function Header(_props: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAdmin, logout } = useAuth();

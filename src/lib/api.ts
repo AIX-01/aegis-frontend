@@ -123,16 +123,6 @@ export const eventsApi = {
     link.click();
     URL.revokeObjectURL(url);
   },
-
-  /** @deprecated getClipBlobUrl 사용 */
-  getClipStreamUrl: (id: string): string => {
-    return `/api/events/${id}/clip/stream`;
-  },
-
-  /** @deprecated downloadClip 사용 */
-  getClipUrl: (id: string): string => {
-    return `/api/events/${id}/clip`;
-  },
 };
 
 // Notifications API

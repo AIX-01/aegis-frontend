@@ -29,7 +29,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 응답 인터셉터: 401 에러 시 토큰 갱신 후 재요청
+// 응답 인터셉터: 401/403 에러 시 토큰 갱신 후 재요청
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -41,9 +41,9 @@ api.interceptors.response.use(
                           url.includes('/api/auth/signup') ||
                           url.includes('/api/auth/refresh');
 
-    // 401 에러이고, 재시도하지 않은 요청이며, 인증 관련 요청이 아닌 경우
+    // 401 또는 403 에러이고, 재시도하지 않은 요청이며, 인증 관련 요청이 아닌 경우
     if (
-      error.response?.status === 401 &&
+      (error.response?.status === 401 || error.response?.status === 403) &&
       !originalRequest._retry &&
       !isAuthEndpoint
     ) {

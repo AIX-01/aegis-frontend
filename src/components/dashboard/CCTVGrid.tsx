@@ -57,29 +57,104 @@ function ConnectionBadge({ camera }: { camera: ManagedCamera }) {
   );
 }
 
-// 공통: 카메라 정보 (아이콘 + 별명 + 실명) - 밝은 배경용
+// 공통: 카메라 정보 (아이콘 + 별명 + 실명)
 function CameraInfo({
   camera,
   showEdit = false,
-  onEditClick
+  onEditClick,
+  size = 'default',
+  noBorder = false,
+  // 편집 모드 props
+  isEditing = false,
+  editValue = '',
+  onEditChange,
+  onEditSave,
+  onEditCancel,
+  onEditKeyDown
 }: {
   camera: ManagedCamera;
   showEdit?: boolean;
   onEditClick?: () => void;
+  size?: 'sm' | 'default';
+  noBorder?: boolean;
+  // 편집 모드 props
+  isEditing?: boolean;
+  editValue?: string;
+  onEditChange?: (value: string) => void;
+  onEditSave?: () => void;
+  onEditCancel?: () => void;
+  onEditKeyDown?: (e: React.KeyboardEvent) => void;
 }) {
+  const isSmall = size === 'sm';
+  const containerClass = noBorder
+    ? "flex items-center gap-1.5"
+    : "flex items-center gap-1.5 bg-background/80 border border-border rounded-md px-2 py-1";
+
+  if (isEditing && onEditChange && onEditSave && onEditCancel && onEditKeyDown) {
+    return (
+      <div className={containerClass}>
+        <Camera className={cn("flex-shrink-0 text-foreground", isSmall ? "h-3 w-3" : "h-3.5 w-3.5")} />
+        <div className="flex flex-col">
+          <div className="flex items-center gap-1">
+            <Input
+              value={editValue}
+              onChange={(e) => onEditChange(e.target.value)}
+              onKeyDown={onEditKeyDown}
+              className="h-6 w-32 text-xs font-medium"
+              autoFocus
+            />
+            <Button size="icon" variant="ghost" className="h-6 w-6 text-foreground hover:bg-primary/10" onClick={onEditSave}>
+              <Check className="h-3 w-3 text-success" />
+            </Button>
+            <Button size="icon" variant="ghost" className="h-6 w-6 text-foreground hover:bg-primary/10" onClick={onEditCancel}>
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+          <span className={cn("font-mono text-muted-foreground", isSmall ? "text-[8px]" : "text-[10px]")}>{camera.name}</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-center gap-1.5">
-      <Camera className="h-3.5 w-3.5 text-foreground flex-shrink-0" />
+    <div className={containerClass}>
+      <Camera className={cn("flex-shrink-0 text-foreground", isSmall ? "h-3 w-3" : "h-3.5 w-3.5")} />
       <div className="flex flex-col min-w-0">
         <div className="flex items-center gap-1">
-          <span className="text-xs font-medium text-foreground truncate">{camera.alias}</span>
+          <span className={cn("font-medium text-foreground truncate", isSmall ? "text-[10px]" : "text-xs")}>{camera.alias}</span>
           {showEdit && onEditClick && (
-            <Button size="icon" variant="ghost" className="h-5 w-5 text-foreground hover:bg-accent" onClick={onEditClick}>
+            <Button size="icon" variant="ghost" className="h-5 w-5 text-foreground hover:bg-primary/10" onClick={onEditClick}>
               <Pencil className="h-2.5 w-2.5 text-foreground" />
             </Button>
           )}
         </div>
-        <span className="text-[10px] font-mono text-muted-foreground truncate">{camera.name}</span>
+        <span className={cn("font-mono text-muted-foreground truncate", isSmall ? "text-[8px]" : "text-[10px]")}>{camera.name}</span>
+      </div>
+    </div>
+  );
+}
+
+// 공통: OFF 오버레이
+function OffOverlay({ size = 'default' }: { size?: 'sm' | 'default' }) {
+  const isSmall = size === 'sm';
+  return (
+    <div className="absolute inset-0 flex items-center justify-center z-[5]">
+      <div className="text-center">
+        <Video className={cn("text-muted-foreground mx-auto", isSmall ? "h-8 w-8 mb-1" : "h-12 w-12 mb-2")} />
+        <p className={cn("text-foreground font-semibold", isSmall ? "text-sm" : "text-base")}>카메라 OFF</p>
+      </div>
+    </div>
+  );
+}
+
+// 공통: 오프라인 오버레이
+function OfflineOverlay({ size = 'default' }: { size?: 'sm' | 'default' }) {
+  const isSmall = size === 'sm';
+  return (
+    <div className="absolute inset-0 flex items-center justify-center z-[5]">
+      <div className="text-center">
+        <WifiOff className={cn("text-muted-foreground mx-auto", isSmall ? "h-8 w-8 mb-1" : "h-12 w-12 mb-2")} />
+        <p className={cn("text-foreground font-semibold", isSmall ? "text-sm" : "text-base")}>신호 없음</p>
       </div>
     </div>
   );
@@ -106,11 +181,16 @@ export function CCTVGrid({
     }
     return 0;
   });
-  const [selectedCamera, setSelectedCamera] = useState<ManagedCamera | null>(null);
+  const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditingAlias, setIsEditingAlias] = useState(false);
   const [aliasInput, setAliasInput] = useState('');
 
+  // cameras prop에서 selectedCamera 파생 (항상 최신 상태 유지)
+  const selectedCamera = useMemo(() => {
+    if (!selectedCameraId) return null;
+    return cameras.find(c => c.id === selectedCameraId) || null;
+  }, [cameras, selectedCameraId]);
 
   const { setActiveGridCameras } = useWebRTC();
 
@@ -163,7 +243,7 @@ export function CCTVGrid({
   const goToNextPage = () => setCurrentPage((prev) => (prev === totalPages - 1 ? 0 : prev + 1));
 
   const handleCameraClick = (camera: ManagedCamera) => {
-    setSelectedCamera(camera);
+    setSelectedCameraId(camera.id);
     setIsModalOpen(true);
   };
 
@@ -174,27 +254,14 @@ export function CCTVGrid({
 
   const handleUpdateAlias = (cameraId: string, alias: string) => {
     onUpdateAlias?.(cameraId, alias);
-    if (selectedCamera?.id === cameraId) {
-      setSelectedCamera({ ...selectedCamera, alias });
-    }
   };
 
   const handleToggleEnabled = (cameraId: string, enabled: boolean) => {
     onToggleEnabled?.(cameraId, enabled);
-    if (selectedCamera?.id === cameraId) {
-      setSelectedCamera({
-        ...selectedCamera,
-        enabled,
-        analysisEnabled: enabled ? selectedCamera.analysisEnabled : false
-      });
-    }
   };
 
   const handleToggleAnalysis = (cameraId: string, analysisEnabled: boolean) => {
     onToggleAnalysis?.(cameraId, analysisEnabled);
-    if (selectedCamera?.id === cameraId) {
-      setSelectedCamera({ ...selectedCamera, analysisEnabled });
-    }
   };
 
   const handleStartEdit = () => {
@@ -249,15 +316,9 @@ export function CCTVGrid({
                 />
               </div>
 
-              {/* 좌상단: 카메라 정보 - 항상 검은 텍스트 */}
+              {/* 좌상단: 카메라 정보 */}
               <div className="absolute top-2 left-2 z-10">
-                <div className="flex items-center gap-1.5">
-                  <Camera className="h-3.5 w-3.5 flex-shrink-0 text-foreground" />
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-medium truncate text-foreground">{camera.alias}</span>
-                    <span className="text-[10px] font-mono truncate text-muted-foreground">{camera.name}</span>
-                  </div>
-                </div>
+                <CameraInfo camera={camera} size="sm" />
               </div>
 
               {/* 우상단: 상태 + 연결 배지 */}
@@ -267,22 +328,10 @@ export function CCTVGrid({
               </div>
 
               {/* OFF 오버레이 - 연결된 상태에서만 */}
-              {camera.connected && !camera.enabled && (
-                <div className="absolute inset-0 flex items-center justify-center z-[5]">
-                  <span className="text-sm font-semibold text-white px-3 py-1.5 rounded-md border border-white/30 bg-black/40">
-                    카메라 OFF
-                  </span>
-                </div>
-              )}
+              {camera.connected && !camera.enabled && <OffOverlay size="sm" />}
 
-              {/* 오프라인 오버레이 - 흰 배경에 검은 텍스트 */}
-              {!camera.connected && (
-                <div className="absolute inset-0 flex items-center justify-center z-[5]">
-                  <span className="text-sm font-semibold text-foreground">
-                    신호 없음
-                  </span>
-                </div>
-              )}
+              {/* 오프라인 오버레이 */}
+              {!camera.connected && <OfflineOverlay size="sm" />}
             </Card>
           ))}
 
@@ -332,60 +381,56 @@ export function CCTVGrid({
             />
           </div>
 
-          {/* 좌상단: 뒤로가기 + 카메라 정보 */}
-          <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground hover:bg-accent" onClick={handleCloseModal}>
+          {/* 좌상단: 뒤로가기 + 카메라 정보 + 컨트롤 */}
+          <div className="absolute top-3 left-3 z-20 flex items-center gap-3 bg-background/80 border border-border rounded-md px-2 py-1.5">
+            {/* 뒤로가기 */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-foreground hover:bg-primary/10"
+              onClick={handleCloseModal}
+            >
               <ArrowLeft className="h-4 w-4" />
             </Button>
 
-            {isEditingAlias ? (
-              <div className="flex items-center gap-1.5">
-                <Camera className="h-3.5 w-3.5 text-foreground" />
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1">
-                    <Input
-                      value={aliasInput}
-                      onChange={(e) => setAliasInput(e.target.value)}
-                      onKeyDown={handleInputKeyDown}
-                      className="h-6 w-32 text-xs font-medium"
-                      autoFocus
-                    />
-                    <Button size="icon" variant="ghost" className="h-6 w-6 text-foreground hover:bg-accent" onClick={handleSaveAlias}>
-                      <Check className="h-3 w-3 text-success" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-6 w-6 text-foreground hover:bg-accent" onClick={handleCancelEdit}>
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  <span className="text-[10px] font-mono text-muted-foreground">{selectedCamera.name}</span>
-                </div>
-              </div>
-            ) : (
-              <CameraInfo camera={selectedCamera} showEdit onEditClick={handleStartEdit} />
-            )}
-          </div>
+            <div className="w-px h-5 bg-border" />
 
-          {/* 우상단: 연결 + 상태 배지 */}
-          <div className="absolute top-3 right-3 z-20 flex items-center gap-1">
-            <StatusBadges camera={selectedCamera} />
-            <ConnectionBadge camera={selectedCamera} />
-          </div>
+            {/* 카메라 정보 */}
+            <CameraInfo
+              camera={selectedCamera}
+              showEdit={!isEditingAlias}
+              onEditClick={handleStartEdit}
+              noBorder
+              isEditing={isEditingAlias}
+              editValue={aliasInput}
+              onEditChange={setAliasInput}
+              onEditSave={handleSaveAlias}
+              onEditCancel={handleCancelEdit}
+              onEditKeyDown={handleInputKeyDown}
+            />
 
-          {/* 하단 컨트롤 (중앙) */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 bg-background border border-border rounded-lg px-3 py-2">
-            <div className="flex items-center gap-2 text-xs text-foreground">
+            <div className="w-px h-5 bg-border" />
+
+            {/* 카메라 ON/OFF 컨트롤 */}
+            <div className="flex items-center gap-2">
               <Power className="h-3.5 w-3.5 text-foreground" />
-              <span className="text-foreground">카메라</span>
+              <span className="text-xs text-foreground">카메라</span>
               <Switch
                 checked={selectedCamera.enabled}
                 onCheckedChange={(checked) => handleToggleEnabled(selectedCamera.id, checked)}
                 className="scale-90"
               />
             </div>
-            <div className="w-px h-4 bg-border" />
-            <div className={cn("flex items-center gap-2 text-xs text-foreground", !selectedCamera.enabled && "opacity-50")}>
+
+            <div className="w-px h-5 bg-border" />
+
+            {/* AI 분석 컨트롤 */}
+            <div className={cn(
+              "flex items-center gap-2",
+              !selectedCamera.enabled && "opacity-50"
+            )}>
               <Brain className="h-3.5 w-3.5 text-foreground" />
-              <span className="text-foreground">AI 분석</span>
+              <span className="text-xs text-foreground">AI</span>
               <Switch
                 checked={selectedCamera.analysisEnabled}
                 onCheckedChange={(checked) => handleToggleAnalysis(selectedCamera.id, checked)}
@@ -395,27 +440,17 @@ export function CCTVGrid({
             </div>
           </div>
 
+          {/* 우상단: 상태 + 연결 배지 */}
+          <div className="absolute top-3 right-3 z-20 flex items-center gap-1">
+            <StatusBadges camera={selectedCamera} />
+            <ConnectionBadge camera={selectedCamera} />
+          </div>
 
           {/* 오프라인 오버레이 */}
-          {!selectedCamera.connected && (
-            <div className="absolute inset-0 flex items-center justify-center z-[5]">
-              <div className="text-center px-6 py-4">
-                <WifiOff className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                <p className="text-base text-foreground font-semibold">카메라 신호 없음</p>
-                <p className="text-xs text-muted-foreground mt-1">카메라가 꺼져있거나 네트워크 문제입니다</p>
-              </div>
-            </div>
-          )}
+          {!selectedCamera.connected && <OfflineOverlay />}
 
           {/* OFF 오버레이 */}
-          {selectedCamera.connected && !selectedCamera.enabled && (
-            <div className="absolute inset-0 flex items-center justify-center z-[5]">
-              <div className="text-center px-6 py-4">
-                <Video className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                <p className="text-base text-foreground font-semibold">카메라 OFF</p>
-              </div>
-            </div>
-          )}
+          {selectedCamera.connected && !selectedCamera.enabled && <OffOverlay />}
         </div>
       )}
     </>

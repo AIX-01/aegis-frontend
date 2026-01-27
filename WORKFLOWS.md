@@ -222,16 +222,16 @@ aegis-frontend/src/
 │   ├── settings/page.tsx           # 설정
 │   └── statistics/page.tsx         # 통계
 ├── components/
-│   ├── NavLink.tsx
 │   ├── auth/AuthForm.tsx
+│   ├── common/
+│   │   └── EventBadges.tsx         # 이벤트/알림 배지 공통 컴포넌트
 │   ├── dashboard/
-│   │   ├── CCTVGrid.tsx            # 카메라 그리드 (3x3, 페이지네이션)
-│   │   ├── CameraDetailModal.tsx   # 카메라 상세 (enabled, analysisEnabled)
+│   │   ├── CCTVGrid.tsx            # 카메라 그리드 + 모달 (공통 컴포넌트 포함)
 │   │   ├── DashboardContent.tsx
 │   │   ├── EventDetailModal.tsx
 │   │   ├── EventLog.tsx            # 실시간 이벤트 로그
 │   │   ├── StatsDashboard.tsx
-│   │   └── WebRTCPlayer.tsx
+│   │   └── WebRTCPlayer.tsx        # WebRTC 스트림 플레이어
 │   ├── events/EventsPageContent.tsx
 │   ├── layout/
 │   │   ├── DashboardLayout.tsx
@@ -247,13 +247,12 @@ aegis-frontend/src/
 │   ├── SseContext.tsx              # 전역 SSE 연결
 │   └── WebRTCContext.tsx           # 전역 WebRTC 연결 관리
 ├── hooks/
-│   ├── use-mobile.tsx
 │   ├── use-toast.ts
-│   ├── useMonitoring.ts            # React Query 래퍼
-│   └── useNotificationStream.ts    # SSE 연결
+│   └── useMonitoring.ts            # React Query 래퍼
 ├── lib/
 │   ├── api.ts                      # API 함수
 │   ├── axios.ts                    # Axios 인스턴스
+│   ├── logger.ts                   # 환경별 로깅 유틸리티
 │   ├── queryKeys.ts                # React Query 키
 │   └── utils.ts
 └── types/
@@ -1400,6 +1399,8 @@ SSE 스트림 연결 (인증 필요)
 - 페이지 이동 후 돌아오면 이전 페이지 복원
 - `setActiveGridCameras()` 호출로 그리드 외 카메라 연결 해제
 - SSE로 카메라 변경 감지 시 자동 그리드 갱신
+- `selectedCamera`는 `cameras` prop에서 `useMemo`로 파생 (항상 최신 상태)
+- 공통 컴포넌트: `StatusBadges`, `ConnectionBadge`, `CameraInfo`, `OffOverlay`, `OfflineOverlay`
 
 ### 8.7 API 클라이언트
 
@@ -1435,8 +1436,8 @@ SSE 스트림 연결 (인증 필요)
 | getAll | 이벤트 목록 |
 | getById | 이벤트 상세 |
 | updateStatus | 상태 변경 |
-| getClipDownloadUrl | 클립 다운로드 URL |
-| getClipStreamUrl | 클립 스트리밍 URL |
+| getClipBlobUrl | 클립 Blob URL (인증 포함) |
+| downloadClip | 클립 다운로드 (인증 포함) |
 
 
 **notificationsApi:**

@@ -126,13 +126,13 @@ export function WebRTCProvider({ children }: { children: React.ReactNode }) {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      // WHEP 요청
-      const whepUrl = `${mediamtxUrl}/${path}/whep`;
+      // WHEP 요청 (Caddy가 /stream prefix를 사용하므로 포함)
+      // MediaMTX는 query parameter로 토큰을 받으므로 URL에 포함
+      const whepUrl = `${mediamtxUrl}/stream/${path}/whep?token=${encodeURIComponent(token)}`;
       const response = await fetch(whepUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/sdp',
-          'Authorization': `Bearer ${token}`,
         },
         body: offer.sdp,
         signal: abortController.signal,
@@ -150,6 +150,9 @@ export function WebRTCProvider({ children }: { children: React.ReactNode }) {
 
     } catch (error) {
       if (abortController.signal.aborted) return;
+
+      // 에러 시에도 AbortController 정리
+      abortControllersRef.current.delete(cameraId);
 
       const info: StreamInfo = {
         pc: null as unknown as RTCPeerConnection,

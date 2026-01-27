@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Video, Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { camerasApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { useWebRTC, useStreamSubscription } from '@/contexts/WebRTCContext';
@@ -19,7 +19,7 @@ type PlayerState = 'idle' | 'connecting' | 'playing' | 'error';
 
 export function WebRTCPlayer({
   cameraId,
-  cameraName,
+  cameraName: _cameraName,
   active,
   connected,
   fullscreen = false
@@ -76,6 +76,7 @@ export function WebRTCPlayer({
       // 스트림 토큰 요청
       const { streamUrl, token } = await camerasApi.requestStream(cameraId);
 
+
       // URL 유효성 검사
       if (!streamUrl) {
         throw new Error('스트림 URL을 받지 못했습니다');
@@ -97,6 +98,7 @@ export function WebRTCPlayer({
       const pathParts = fullUrl.pathname.split('/').filter(Boolean);
       const whepIndex = pathParts.indexOf('whep');
       const path = whepIndex > 0 ? pathParts[whepIndex - 1] : pathParts[pathParts.length - 2];
+
 
       if (!path || path === 'whep' || path === 'stream') {
         throw new Error('스트림 경로를 찾을 수 없습니다');
@@ -187,7 +189,7 @@ export function WebRTCPlayer({
             <Button
               variant="outline"
               size="sm"
-              className="border-border text-foreground hover:bg-accent"
+              className="border-border text-foreground hover:bg-primary/10"
               onClick={(e) => {
                 e.stopPropagation();
                 startStream();
@@ -195,15 +197,6 @@ export function WebRTCPlayer({
             >
               다시 시도
             </Button>
-          </div>
-        </div>
-      )}
-
-      {localState === 'idle' && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center px-4 py-3">
-            <Video className="h-8 w-8 mx-auto mb-1 text-muted-foreground" />
-            <p className="text-xs text-muted-foreground">{cameraName}</p>
           </div>
         </div>
       )}

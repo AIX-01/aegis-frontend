@@ -260,16 +260,19 @@ export function CCTVGrid({
                 </div>
               </div>
 
-              {/* 우상단: 연결 + 상태 배지 */}
+              {/* 우상단: 상태 + 연결 배지 */}
               <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
                 {camera.connected ? (
-                  <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-background/80 text-success border-success/50">
-                    <span className="relative flex h-1.5 w-1.5 mr-1">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success"></span>
-                    </span>
-                    Online
-                  </Badge>
+                  <>
+                    <StatusBadges camera={camera} />
+                    <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-background/80 text-success border-success/50">
+                      <span className="relative flex h-1.5 w-1.5 mr-1">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success"></span>
+                      </span>
+                      Online
+                    </Badge>
+                  </>
                 ) : (
                   <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-muted text-muted-foreground border-border">
                     Offline

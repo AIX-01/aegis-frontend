@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Bell, Monitor, ClipboardList, BarChart3, Users, Settings, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,14 @@ export function Header(_props: HeaderProps) {
   const pathname = usePathname();
   const { user, isAdmin, logout } = useAuth();
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+
+  // 앱 로드 시 모든 페이지 prefetch (탭 전환 속도 개선)
+  useEffect(() => {
+    router.prefetch('/events');
+    router.prefetch('/statistics');
+    router.prefetch('/members');
+    router.prefetch('/settings');
+  }, [router]);
 
   // React Query로 알림 목록 조회 (SSE에서 자동 갱신)
   const { data: notifications = [] } = useQuery({

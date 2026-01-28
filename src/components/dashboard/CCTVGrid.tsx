@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { getAccessToken } from "@/lib/axios";
 import type { ManagedCamera } from "@/types";
 import { WebRTCPlayer } from "./WebRTCPlayer";
 import { useWebRTC } from "@/contexts/WebRTCContext";
@@ -311,6 +312,8 @@ export function CCTVGrid({
                 <WebRTCPlayer
                   cameraId={camera.id}
                   cameraName={camera.name}
+                  streamUrl={camera.streamUrl}
+                  accessToken={getAccessToken() || ''}
                   active={camera.enabled}
                   connected={camera.connected}
                 />
@@ -375,6 +378,8 @@ export function CCTVGrid({
             <WebRTCPlayer
               cameraId={selectedCamera.id}
               cameraName={selectedCamera.name}
+              streamUrl={selectedCamera.streamUrl}
+              accessToken={getAccessToken() || ''}
               active={selectedCamera.enabled}
               connected={selectedCamera.connected}
               fullscreen

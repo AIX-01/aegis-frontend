@@ -13,8 +13,8 @@ interface StreamInfo {
 interface WebRTCContextType {
   // 스트림 가져오기 (없으면 null)
   getStream: (cameraId: string) => StreamInfo | null;
-  // 스트림 연결 시작
-  connectStream: (cameraId: string, token: string, mediamtxUrl: string, path: string) => Promise<void>;
+  // 스트림 연결 시작 (accessToken: JWT 액세스 토큰)
+  connectStream: (cameraId: string, accessToken: string, streamUrl: string) => Promise<void>;
   // 스트림 연결 해제
   disconnectStream: (cameraId: string) => void;
   // 스트림 상태 구독
@@ -53,9 +53,8 @@ export function WebRTCProvider({ children }: { children: React.ReactNode }) {
   // 스트림 연결
   const connectStream = useCallback(async (
     cameraId: string,
-    token: string,
-    mediamtxUrl: string,
-    path: string
+    accessToken: string,
+    streamUrl: string
   ): Promise<void> => {
     // 이미 연결 중이거나 연결됨
     const existing = streamsRef.current.get(cameraId);
@@ -126,13 +125,17 @@ export function WebRTCProvider({ children }: { children: React.ReactNode }) {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      // WHEP 요청 (Caddy가 /stream prefix를 사용하므로 포함)
-      // MediaMTX는 query parameter로 토큰을 받으므로 URL에 포함
-      const whepUrl = `${mediamtxUrl}/stream/${path}/whep?token=${encodeURIComponent(token)}`;
+      // WHEP URL 생성 (streamUrl은 /stream/cam1/whep 형식)
+      const whepUrl = new URL(streamUrl, window.location.origin).href;
+
+      // Basic Auth: base64(_:accessToken)
+      const credentials = btoa(`_:${accessToken}`);
+
       const response = await fetch(whepUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/sdp',
+          'Authorization': `Basic ${credentials}`,
         },
         body: offer.sdp,
         signal: abortController.signal,

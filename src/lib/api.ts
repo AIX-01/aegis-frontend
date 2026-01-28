@@ -15,7 +15,6 @@ import type {
   SignupRequest,
   RefreshResponse,
   PasswordChangeRequest,
-  StreamAccessResponse,
 } from '@/types';
 
 // Auth API
@@ -77,11 +76,6 @@ export const camerasApi = {
 
   update: async (id: string, data: CameraUpdateRequest): Promise<ManagedCamera> => {
     const response = await api.patch<ManagedCamera>(`/api/cameras/${id}`, data);
-    return response.data;
-  },
-
-  requestStream: async (id: string): Promise<StreamAccessResponse> => {
-    const response = await api.post<StreamAccessResponse>(`/api/cameras/${id}/stream`);
     return response.data;
   },
 };

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { camerasApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { useWebRTC, useStreamSubscription } from '@/contexts/WebRTCContext';
 import { cn } from '@/lib/utils';
@@ -10,6 +9,8 @@ import { cn } from '@/lib/utils';
 interface WebRTCPlayerProps {
   cameraId: string;
   cameraName: string;
+  streamUrl: string;      // WebRTC WHEP URL
+  accessToken: string;    // JWT 액세스 토큰
   active: boolean;
   connected: boolean;
   fullscreen?: boolean;
@@ -20,6 +21,8 @@ type PlayerState = 'idle' | 'connecting' | 'playing' | 'error';
 export function WebRTCPlayer({
   cameraId,
   cameraName: _cameraName,
+  streamUrl,
+  accessToken,
   active,
   connected,
   fullscreen = false
@@ -73,59 +76,20 @@ export function WebRTCPlayer({
     setErrorMessage('');
 
     try {
-      // 스트림 토큰 요청
-      const { streamUrl, token } = await camerasApi.requestStream(cameraId);
-
-
-      // URL 유효성 검사
-      if (!streamUrl) {
-        throw new Error('스트림 URL을 받지 못했습니다');
-      }
-
-      // URL에서 path 추출
-      let fullUrl: URL;
-      try {
-        if (streamUrl.startsWith('http://') || streamUrl.startsWith('https://')) {
-          fullUrl = new URL(streamUrl);
-        } else {
-          fullUrl = new URL(streamUrl, window.location.origin);
-        }
-      } catch {
-        throw new Error('잘못된 스트림 URL 형식입니다');
-      }
-
-      // 경로에서 카메라 이름 추출: /stream/cam1/whep -> cam1
-      const pathParts = fullUrl.pathname.split('/').filter(Boolean);
-      const whepIndex = pathParts.indexOf('whep');
-      const path = whepIndex > 0 ? pathParts[whepIndex - 1] : pathParts[pathParts.length - 2];
-
-
-      if (!path || path === 'whep' || path === 'stream') {
-        throw new Error('스트림 경로를 찾을 수 없습니다');
-      }
-
-      const mediamtxUrl = `${fullUrl.protocol}//${fullUrl.host}`;
-
-      // 전역 Context로 연결
-      await connectStream(cameraId, token, mediamtxUrl, path);
+      // 전역 Context로 연결 (streamUrl, accessToken은 props로 전달받음)
+      await connectStream(cameraId, accessToken, streamUrl);
     } catch (error) {
       isConnectingRef.current = false;
       setLocalState('error');
       // 에러 메시지 한글화
       if (error instanceof Error) {
         const msg = error.message;
-        if (msg.includes('Failed to construct') || msg.includes('Invalid URL')) {
-          setErrorMessage('스트림 URL 오류');
+        if (msg.includes('401') || msg.includes('403')) {
+          setErrorMessage('인증 실패');
         } else if (msg.includes('Network') || msg.includes('fetch')) {
           setErrorMessage('네트워크 연결 실패');
         } else if (msg.includes('timeout') || msg.includes('Timeout')) {
           setErrorMessage('연결 시간 초과');
-        } else if (msg.includes('401') || msg.includes('403')) {
-          setErrorMessage('인증 실패');
-        } else if (msg.includes('400')) {
-          setErrorMessage('잘못된 요청');
-        } else if (msg.includes('404')) {
-          setErrorMessage('스트림을 찾을 수 없음');
         } else {
           setErrorMessage(msg);
         }
@@ -133,7 +97,7 @@ export function WebRTCPlayer({
         setErrorMessage('스트림 연결 실패');
       }
     }
-  }, [cameraId, connectStream]);
+  }, [cameraId, accessToken, streamUrl, connectStream]);
 
   // active/connected 상태 변경 시
   useEffect(() => {

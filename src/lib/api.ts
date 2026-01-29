@@ -69,10 +69,6 @@ export const camerasApi = {
     return response.data;
   },
 
-  getById: async (id: string): Promise<ManagedCamera> => {
-    const response = await api.get<ManagedCamera>(`/api/cameras/${id}`);
-    return response.data;
-  },
 
   update: async (id: string, data: CameraUpdateRequest): Promise<ManagedCamera> => {
     const response = await api.patch<ManagedCamera>(`/api/cameras/${id}`, data);
@@ -87,10 +83,6 @@ export const eventsApi = {
     return response.data;
   },
 
-  getById: async (id: string): Promise<Event> => {
-    const response = await api.get<Event>(`/api/events/${id}`);
-    return response.data;
-  },
 
   updateStatus: async (id: string, data: EventUpdateStatusRequest): Promise<Event> => {
     const response = await api.patch<Event>(`/api/events/${id}/status`, data);
@@ -169,11 +161,6 @@ export const statsApi = {
 export const usersApi = {
   getAll: async (): Promise<User[]> => {
     const response = await api.get<User[]>('/api/users');
-    return response.data;
-  },
-
-  getById: async (id: string): Promise<User> => {
-    const response = await api.get<User>(`/api/users/${id}`);
     return response.data;
   },
 

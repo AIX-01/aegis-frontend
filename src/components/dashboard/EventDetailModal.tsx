@@ -45,33 +45,22 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
   useEffect(() => {
     // clipUrl이 있는 경우에만 클립 로드 시도
     if (open && event?.id) {
-      console.log('[EventDetailModal] 이벤트 데이터:', {
-        id: event.id,
-        clipUrl: event.clipUrl,
-        status: event.status
-      });
-
       // clipUrl이 없으면 로딩하지 않음
       if (!event.clipUrl) {
-        console.log('[EventDetailModal] clipUrl이 없음 - 로딩 스킵');
         setClipUrl(null);
         setClipLoading(false);
         setClipError(false);
         return;
       }
 
-      console.log('[EventDetailModal] 클립 로딩 시작:', event.clipUrl);
       setClipLoading(true);
       setClipError(false);
 
       eventsApi.getClipBlobUrl(event.id)
         .then((url) => {
-          console.log('[EventDetailModal] 클립 Blob URL 생성 성공:', url);
           setClipUrl(url);
         })
-        .catch((error) => {
-          console.error('[EventDetailModal] 클립 로드 실패:', error);
-          console.error('[EventDetailModal] 에러 상세:', error.response?.status, error.response?.data);
+        .catch(() => {
           setClipError(true);
         })
         .finally(() => {
@@ -199,25 +188,8 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
                           ref={videoRef}
                           src={clipUrl}
                           className="w-full h-full object-contain bg-black"
-                          onError={(e) => {
-                            const video = e.currentTarget;
-                            console.error('[EventDetailModal] 비디오 재생 에러:', {
-                              error: video.error,
-                              errorCode: video.error?.code,
-                              errorMessage: video.error?.message,
-                              networkState: video.networkState,
-                              readyState: video.readyState,
-                              src: video.src
-                            });
+                          onError={() => {
                             setClipError(true);
-                          }}
-                          onLoadedMetadata={(e) => {
-                            const video = e.currentTarget;
-                            console.log('[EventDetailModal] 비디오 메타데이터 로드:', {
-                              duration: video.duration,
-                              videoWidth: video.videoWidth,
-                              videoHeight: video.videoHeight
-                            });
                           }}
                           controls
                         />

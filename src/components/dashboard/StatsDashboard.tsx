@@ -29,8 +29,8 @@ export function StatsDashboard() {
         setDailyStats(daily);
         setEventTypeStats(eventTypes);
         setMonthlyEventData(monthly);
-      } catch (error) {
-        console.error('Failed to fetch stats:', error);
+      } catch {
+        // 통계 로드 실패 - 빈 상태 유지
       } finally {
         setLoading(false);
       }

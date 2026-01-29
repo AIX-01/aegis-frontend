@@ -63,17 +63,11 @@ export function EventsPageContent() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
 
-  // 이벤트 상태 변경 핸들러
-  const handleStatusChange = useCallback((eventId: string, newStatus: Event['status']) => {
-    // React Query가 캐시를 자동 갱신하므로 별도 처리 불필요
-    console.log(`Event ${eventId} status changed to ${newStatus}`);
-  }, []);
-
   // 필터링된 이벤트
   const filteredEvents = events.filter((event: Event) => {
     // 기간 필터
     if (dateRange?.from) {
-      const eventDate = new Date(event.timestamp);
+      const eventDate = new Date(event.occurredAt);
       if (eventDate < dateRange.from) {
         return false;
       }
@@ -82,7 +76,7 @@ export function EventsPageContent() {
       }
     }
 
-    // 이상행동 유형 필터 (event.type과 직접 매핑)
+    // 이상행동 유형 필터
     if (selectedBehaviors.length > 0 && selectedBehaviors.length < behaviorLabels.length) {
       if (!selectedBehaviors.includes(event.type)) {
         return false;
@@ -248,7 +242,7 @@ export function EventsPageContent() {
               </div>
             </CardHeader>
             <CardContent>
-              <EventLog events={filteredEvents} onStatusChange={handleStatusChange} />
+              <EventLog events={filteredEvents} />
             </CardContent>
           </Card>
         </div>

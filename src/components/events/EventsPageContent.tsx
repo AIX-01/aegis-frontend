@@ -248,7 +248,7 @@ export function EventsPageContent() {
               </div>
             </CardHeader>
             <CardContent>
-              <EventLog events={filteredEvents} onStatusChange={handleStatusChange} />
+              <EventLog events={filteredEvents} />
             </CardContent>
           </Card>
         </div>

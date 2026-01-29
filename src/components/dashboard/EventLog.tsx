@@ -2,7 +2,6 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
-import { Shield } from "lucide-react";
 import type { Event } from "@/types";
 import { useState } from "react";
 import { EventDetailModal } from "./EventDetailModal";
@@ -10,26 +9,26 @@ import { EventTypeBadge, EventStatusBadge, EventIcon } from "@/components/common
 
 interface EventLogProps {
   events: Event[];
-  onStatusChange?: (eventId: string, newStatus: Event['status']) => void;
 }
 
+const getEventTypeKorean = (type: Event['type']) => {
+  const typeMap = {
+    assault: '폭행',
+    burglary: '절도',
+    dump: '투기',
+    swoon: '실신',
+    vandalism: '파손'
+  };
+  return typeMap[type] || '알 수 없음';
+};
 
-
-export function EventLog({ events, onStatusChange }: EventLogProps) {
+export function EventLog({ events }: EventLogProps) {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
     setModalOpen(true);
-  };
-
-  const handleStatusChange = (eventId: string, newStatus: Event['status']) => {
-    // 로컬 상태 업데이트
-    if (selectedEvent?.id === eventId) {
-      setSelectedEvent({ ...selectedEvent, status: newStatus });
-    }
-    onStatusChange?.(eventId, newStatus);
   };
 
   return (
@@ -52,16 +51,17 @@ export function EventLog({ events, onStatusChange }: EventLogProps) {
                       {event.cameraName}
                     </span>
                   </div>
-                  <p className="text-sm mt-1 font-medium">{event.description}</p>
-                  {event.agentAction && (
-                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                      <Shield className="h-3 w-3 text-primary" />
-                      Agent: {event.agentAction}
+                  <p className="text-sm mt-1 font-medium">
+                    {event.cameraName}에서 {getEventTypeKorean(event.type)} 감지
+                  </p>
+                  {event.summary && (
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                      {event.summary}
                     </p>
                   )}
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(event.timestamp), { addSuffix: true, locale: ko })}
+                      {formatDistanceToNow(new Date(event.occurredAt), { addSuffix: true, locale: ko })}
                     </span>
                     <EventStatusBadge status={event.status} size="sm" />
                   </div>
@@ -73,9 +73,8 @@ export function EventLog({ events, onStatusChange }: EventLogProps) {
 
       <EventDetailModal
         event={selectedEvent}
-        open={modalOpen} 
+        open={modalOpen}
         onOpenChange={setModalOpen}
-        onStatusChange={handleStatusChange}
       />
     </>
   );

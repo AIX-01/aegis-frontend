@@ -29,23 +29,17 @@ interface EventDetailModalProps {
   event: Event | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onStatusChange?: (eventId: string, newStatus: Event['status']) => void;
 }
 
-
-export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: EventDetailModalProps) {
+export function EventDetailModal({ event, open, onOpenChange }: EventDetailModalProps) {
   const [clipUrl, setClipUrl] = useState<string | null>(null);
   const [clipLoading, setClipLoading] = useState(false);
   const [clipError, setClipError] = useState(false);
-  const [isStatusLoading, setIsStatusLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
-  // 모달 열릴 때 클립 로드
   useEffect(() => {
-    // clipUrl이 있는 경우에만 클립 로드 시도
     if (open && event?.id) {
-      // clipUrl이 없으면 로딩하지 않음
       if (!event.clipUrl) {
         setClipUrl(null);
         setClipLoading(false);
@@ -68,7 +62,6 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
         });
     }
 
-    // cleanup: Blob URL 해제
     return () => {
       if (clipUrl) {
         URL.revokeObjectURL(clipUrl);
@@ -76,7 +69,6 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
       }
     };
   }, [open, event?.id, event?.clipUrl]);
-
 
   const handleDownload = async () => {
     if (event?.clipUrl) {
@@ -92,30 +84,18 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
     }
   };
 
-  const handleStatusChange = async () => {
-    if (!event || event.status === 'resolved') return;
-
-    setIsStatusLoading(true);
-    try {
-      await eventsApi.updateStatus(event.id, { status: 'resolved' });
-      toast({
-        title: "상태 변경 완료",
-        description: "이벤트가 완료 처리되었습니다.",
-      });
-      onStatusChange?.(event.id, 'resolved');
-    } catch (error) {
-      toast({
-        title: "상태 변경 실패",
-        description: "이벤트 상태 변경에 실패했습니다.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsStatusLoading(false);
-    }
+  const getEventTypeKorean = (type: Event['type']) => {
+    const typeMap = {
+      assault: '폭행',
+      burglary: '절도',
+      dump: '투기',
+      swoon: '실신',
+      vandalism: '파손'
+    };
+    return typeMap[type] || '알 수 없음';
   };
 
   if (!event) return null;
-
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -129,7 +109,9 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
                 <AlertTriangle className="h-6 w-6 text-warning" />
               )}
               <div>
-                <DialogTitle className="text-xl">{event.description}</DialogTitle>
+                <DialogTitle className="text-xl">
+                  {event.cameraName}에서 {getEventTypeKorean(event.type)} 감지
+                </DialogTitle>
                 <div className="flex items-center gap-2 mt-1">
                   <EventTypeBadge type={event.type} />
                   <EventStatusBadge status={event.status} />
@@ -142,10 +124,10 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
             <div className="text-right text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
-                {format(new Date(event.timestamp), 'yyyy.MM.dd HH:mm:ss', { locale: ko })}
+                {format(new Date(event.occurredAt), 'yyyy.MM.dd HH:mm:ss', { locale: ko })}
               </div>
               <div className="text-xs mt-0.5">
-                {formatDistanceToNow(new Date(event.timestamp), { addSuffix: true, locale: ko })}
+                {formatDistanceToNow(new Date(event.occurredAt), { addSuffix: true, locale: ko })}
               </div>
             </div>
           </div>
@@ -167,13 +149,10 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
 
           <ScrollArea className="h-[500px]">
             <div className="p-6">
-              {/* 영상 클립 + 요약 탭 */}
               <TabsContent value="clip" className="m-0 space-y-4">
-                {/* 비디오 플레이어 */}
                 <Card>
                   <CardContent className="p-0">
                     <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-                      {/* 로딩 중 */}
                       {clipLoading && (
                         <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
                           <div className="text-center">
@@ -182,19 +161,15 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
                           </div>
                         </div>
                       )}
-                      {/* 클립이 있는 경우 실제 비디오 표시 */}
                       {!clipLoading && clipUrl && !clipError ? (
                         <video
                           ref={videoRef}
                           src={clipUrl}
                           className="w-full h-full object-contain bg-black"
-                          onError={() => {
-                            setClipError(true);
-                          }}
+                          onError={() => setClipError(true)}
                           controls
                         />
                       ) : !clipLoading && (
-                        /* 클립이 없거나 에러인 경우 placeholder */
                         <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
                           <div className="text-center">
                             <div className="w-20 h-20 rounded-full bg-muted-foreground/10 flex items-center justify-center mx-auto mb-3">
@@ -218,7 +193,6 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
                         </div>
                       )}
                     </div>
-                    {/* 다운로드 버튼 */}
                     {clipUrl && !clipError && (
                       <div className="p-3 border-t flex justify-end">
                         <Button size="sm" variant="outline" onClick={handleDownload}>
@@ -230,7 +204,6 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
                   </CardContent>
                 </Card>
 
-                {/* Agent 자동 요약 */}
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
@@ -247,7 +220,6 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
                   </CardContent>
                 </Card>
 
-                {/* 이벤트 정보 요약 */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 bg-muted/30 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">발생 위치</p>
@@ -255,45 +227,41 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
                   </div>
                   <div className="p-3 bg-muted/30 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">이벤트 유형</p>
-                    <p className="text-sm font-medium">
-                      {event.type === 'assault' ? '폭행' : 
-                       event.type === 'burglary' ? '절도' :
-                       event.type === 'dump' ? '투기' :
-                       event.type === 'swoon' ? '실신' :
-                       event.type === 'vandalism' ? '파손' : '알 수 없음'}
-                    </p>
+                    <p className="text-sm font-medium">{getEventTypeKorean(event.type)}</p>
                   </div>
                   <div className="p-3 bg-muted/30 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">발생 시각</p>
                     <p className="text-sm font-medium">
-                      {format(new Date(event.timestamp), 'HH:mm:ss', { locale: ko })}
+                      {format(new Date(event.occurredAt), 'HH:mm:ss', { locale: ko })}
                     </p>
                   </div>
                   <div className="p-3 bg-muted/30 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">처리 상태</p>
                     <p className="text-sm font-medium">
-                      {event.status === 'processing' ? '처리중' : '완료'}
+                      {event.status === 'processing' ? '분석중' : '분석완료'}
                     </p>
                   </div>
                 </div>
 
-                {/* Agent 자동 대응 */}
-                {event.agentAction && (
+                {event.actions && event.actions.length > 0 && (
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm flex items-center gap-2">
                         <Shield className="h-4 w-4 text-primary" />
-                        Agent 자동 대응
+                        권장 조치
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">{event.agentAction}</p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        {event.actions.map((action, idx) => (
+                          <li key={idx}>• {JSON.stringify(action)}</li>
+                        ))}
+                      </ul>
                     </CardContent>
                   </Card>
                 )}
               </TabsContent>
 
-              {/* 분석 보고서 탭 */}
               <TabsContent value="report" className="m-0">
                 <Card>
                   <CardHeader>
@@ -303,10 +271,10 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {event.analysisReport ? (
+                    {event.report ? (
                       <div className="prose prose-sm dark:prose-invert max-w-none">
                         <div className="p-4 bg-muted/30 rounded-lg whitespace-pre-wrap text-sm leading-relaxed">
-                          {event.analysisReport.split('\n').map((line, index) => {
+                          {event.report.split('\n').map((line, index) => {
                             if (line.startsWith('## ')) {
                               return <h2 key={index} className="text-lg font-bold mt-4 mb-2">{line.replace('## ', '')}</h2>;
                             }
@@ -336,26 +304,17 @@ export function EventDetailModal({ event, open, onOpenChange, onStatusChange }: 
           </ScrollArea>
         </Tabs>
 
-        <div className="p-4 border-t flex justify-between">
-          <div>
-            {event.status === 'processing' && (
-              <Button
-                variant="outline"
-                onClick={handleStatusChange}
-                disabled={isStatusLoading}
-              >
-                {isStatusLoading ? '처리 중...' : '✓ 완료 처리'}
-              </Button>
-            )}
-          </div>
+        <div className="p-4 border-t flex justify-end">
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               닫기
             </Button>
-            <Button>
-              <Download className="h-4 w-4 mr-2" />
-              보고서 다운로드
-            </Button>
+            {event.report && (
+              <Button>
+                <Download className="h-4 w-4 mr-2" />
+                보고서 다운로드
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>

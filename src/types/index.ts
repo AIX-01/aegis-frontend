@@ -23,18 +23,16 @@ export interface Event {
   id: string;
   cameraId: string;
   cameraName: string;
+  risk: 'normal' | 'suspicious' | 'abnormal';
   type: 'assault' | 'burglary' | 'dump' | 'swoon' | 'vandalism';
-  timestamp: string;      // ISO8601 string (백엔드 호환)
-  status: 'processing' | 'resolved';
-  description: string;
-  agentAction?: string;
+  occurredAt: string;
+  status: 'processing' | 'analyzed';
   clipUrl?: string;
   summary?: string;
-  analysisReport?: string;
-}
-
-export interface EventUpdateStatusRequest {
-  status: 'processing' | 'resolved';
+  riskScore?: string;
+  actions?: Record<string, unknown>[];
+  ragReferences?: Record<string, unknown>[];
+  report?: string;
 }
 
 // Notification types
@@ -65,7 +63,7 @@ export interface User {
 export interface DailyStat {
   day: string;
   events: number;
-  resolved: number;
+  analyzed: number;
 }
 
 export interface EventTypeStat {

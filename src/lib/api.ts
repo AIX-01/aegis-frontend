@@ -3,7 +3,6 @@ import type {
   ManagedCamera,
   CameraUpdateRequest,
   Event,
-  EventUpdateStatusRequest,
   Notification,
   User,
   UserUpdateRequest,
@@ -80,12 +79,6 @@ export const camerasApi = {
 export const eventsApi = {
   getAll: async (): Promise<Event[]> => {
     const response = await api.get<Event[]>('/api/events');
-    return response.data;
-  },
-
-
-  updateStatus: async (id: string, data: EventUpdateStatusRequest): Promise<Event> => {
-    const response = await api.patch<Event>(`/api/events/${id}/status`, data);
     return response.data;
   },
 

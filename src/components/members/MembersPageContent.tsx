@@ -80,7 +80,7 @@ const CameraPermissionEditor: React.FC<{
               disabled={allCameras}
             />
             <Label htmlFor={`camera-${camera.id}`} className="text-sm cursor-pointer flex-1">
-              {camera.alias} <span className="text-muted-foreground">({camera.name})</span>
+              {camera.location} <span className="text-muted-foreground">({camera.name})</span>
             </Label>
           </div>
         ))}

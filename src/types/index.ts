@@ -6,14 +6,14 @@ export interface Camera {
 }
 
 export interface ManagedCamera extends Camera {
-  alias: string;          // 별칭 (수정 가능)
+  location: string;          // 장소 (수정 가능)
   enabled: boolean;       // 카메라 활성화 (메인 스위치)
   analysisEnabled: boolean; // AI 분석 활성화 (enabled=true일 때만 유효)
   streamUrl: string;      // WebRTC WHEP URL
 }
 
 export interface CameraUpdateRequest {
-  alias?: string;
+  location?: string;
   enabled?: boolean;
   analysisEnabled?: boolean;
 }

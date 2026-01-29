@@ -58,7 +58,7 @@ function ConnectionBadge({ camera }: { camera: ManagedCamera }) {
   );
 }
 
-// 공통: 카메라 정보 (아이콘 + 별명 + 실명)
+// 공통: 카메라 정보 (아이콘 + 장소 + 실명)
 function CameraInfo({
   camera,
   showEdit = false,
@@ -122,7 +122,7 @@ function CameraInfo({
       <Camera className={cn("flex-shrink-0 text-foreground", isSmall ? "h-3 w-3" : "h-3.5 w-3.5")} />
       <div className="flex flex-col min-w-0">
         <div className="flex items-center gap-1">
-          <span className={cn("font-medium text-foreground truncate", isSmall ? "text-[10px]" : "text-xs")}>{camera.alias}</span>
+          <span className={cn("font-medium text-foreground truncate", isSmall ? "text-[10px]" : "text-xs")}>{camera.location}</span>
           {showEdit && onEditClick && (
             <Button size="icon" variant="ghost" className="h-5 w-5 text-foreground hover:bg-primary/10" onClick={onEditClick}>
               <Pencil className="h-2.5 w-2.5 text-foreground" />
@@ -163,14 +163,14 @@ function OfflineOverlay({ size = 'default' }: { size?: 'sm' | 'default' }) {
 
 interface CCTVGridProps {
   cameras: ManagedCamera[];
-  onUpdateAlias?: (cameraId: string, alias: string) => void;
+  onUpdateLocation?: (cameraId: string, location: string) => void;
   onToggleEnabled?: (cameraId: string, enabled: boolean) => void;
   onToggleAnalysis?: (cameraId: string, analysisEnabled: boolean) => void;
 }
 
 export function CCTVGrid({
   cameras,
-  onUpdateAlias,
+  onUpdateLocation,
   onToggleEnabled,
   onToggleAnalysis
 }: CCTVGridProps) {
@@ -184,8 +184,8 @@ export function CCTVGrid({
   });
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditingAlias, setIsEditingAlias] = useState(false);
-  const [aliasInput, setAliasInput] = useState('');
+  const [isEditingLocation, setIsEditingLocation] = useState(false);
+  const [locationInput, setLocationInput] = useState('');
 
   // cameras prop에서 selectedCamera 파생 (항상 최신 상태 유지)
   const selectedCamera = useMemo(() => {
@@ -224,7 +224,7 @@ export function CCTVGrid({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isModalOpen && !isEditingAlias) {
+      if (e.key === 'Escape' && isModalOpen && !isEditingLocation) {
         setIsModalOpen(false);
       }
     };
@@ -238,7 +238,7 @@ export function CCTVGrid({
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [isModalOpen, isEditingAlias]);
+  }, [isModalOpen, isEditingLocation]);
 
   const goToPrevPage = () => setCurrentPage((prev) => (prev === 0 ? totalPages - 1 : prev - 1));
   const goToNextPage = () => setCurrentPage((prev) => (prev === totalPages - 1 ? 0 : prev + 1));
@@ -250,11 +250,11 @@ export function CCTVGrid({
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setIsEditingAlias(false);
+    setIsEditingLocation(false);
   };
 
-  const handleUpdateAlias = (cameraId: string, alias: string) => {
-    onUpdateAlias?.(cameraId, alias);
+  const handleUpdateLocation = (cameraId: string, location: string) => {
+    onUpdateLocation?.(cameraId, location);
   };
 
   const handleToggleEnabled = (cameraId: string, enabled: boolean) => {
@@ -267,25 +267,25 @@ export function CCTVGrid({
 
   const handleStartEdit = () => {
     if (selectedCamera) {
-      setAliasInput(selectedCamera.alias);
-      setIsEditingAlias(true);
+      setLocationInput(selectedCamera.location);
+      setIsEditingLocation(true);
     }
   };
 
-  const handleSaveAlias = () => {
-    if (selectedCamera && aliasInput.trim()) {
-      handleUpdateAlias(selectedCamera.id, aliasInput.trim());
+  const handleSaveLocation = () => {
+    if (selectedCamera && locationInput.trim()) {
+      handleUpdateLocation(selectedCamera.id, locationInput.trim());
     }
-    setIsEditingAlias(false);
+    setIsEditingLocation(false);
   };
 
   const handleCancelEdit = () => {
-    setIsEditingAlias(false);
-    setAliasInput('');
+    setIsEditingLocation(false);
+    setLocationInput('');
   };
 
   const handleInputKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSaveAlias();
+    if (e.key === 'Enter') handleSaveLocation();
     else if (e.key === 'Escape') { e.stopPropagation(); handleCancelEdit(); }
   };
 
@@ -401,13 +401,13 @@ export function CCTVGrid({
             {/* 카메라 정보 */}
             <CameraInfo
               camera={selectedCamera}
-              showEdit={!isEditingAlias}
+              showEdit={!isEditingLocation}
               onEditClick={handleStartEdit}
               noBorder
-              isEditing={isEditingAlias}
-              editValue={aliasInput}
-              onEditChange={setAliasInput}
-              onEditSave={handleSaveAlias}
+              isEditing={isEditingLocation}
+              editValue={locationInput}
+              onEditChange={setLocationInput}
+              onEditSave={handleSaveLocation}
               onEditCancel={handleCancelEdit}
               onEditKeyDown={handleInputKeyDown}
             />

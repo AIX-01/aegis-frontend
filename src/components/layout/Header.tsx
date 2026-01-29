@@ -53,8 +53,8 @@ export function Header(_props: HeaderProps) {
   const handleMarkAsRead = async (id: string) => {
     try {
       await notificationsApi.markAsRead(id);
-    } catch (error) {
-      console.error('Failed to mark as read:', error);
+    } catch {
+      // 알림 읽음 처리 실패 - 조용히 무시 (UX에 영향 없음)
     }
   };
 

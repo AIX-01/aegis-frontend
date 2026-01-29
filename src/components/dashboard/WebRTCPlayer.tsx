@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 
 interface WebRTCPlayerProps {
   cameraId: string;
-  cameraName: string;
   streamUrl: string;      // WebRTC WHEP URL
   accessToken: string;    // JWT 액세스 토큰
   active: boolean;
@@ -20,7 +19,6 @@ type PlayerState = 'idle' | 'connecting' | 'playing' | 'error';
 
 export function WebRTCPlayer({
   cameraId,
-  cameraName: _cameraName,
   streamUrl,
   accessToken,
   active,

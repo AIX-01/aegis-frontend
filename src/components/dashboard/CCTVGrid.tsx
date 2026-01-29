@@ -311,7 +311,6 @@ export function CCTVGrid({
               <div className="absolute inset-0">
                 <WebRTCPlayer
                   cameraId={camera.id}
-                  cameraName={camera.name}
                   streamUrl={camera.streamUrl}
                   accessToken={getAccessToken() || ''}
                   active={camera.enabled}
@@ -377,7 +376,6 @@ export function CCTVGrid({
           <div className="absolute inset-0 flex items-center justify-center">
             <WebRTCPlayer
               cameraId={selectedCamera.id}
-              cameraName={selectedCamera.name}
               streamUrl={selectedCamera.streamUrl}
               accessToken={getAccessToken() || ''}
               active={selectedCamera.enabled}

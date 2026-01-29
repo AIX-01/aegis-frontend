@@ -48,14 +48,14 @@ export function EventStatusBadge({ status, size = 'default' }: EventStatusBadgeP
     case 'processing':
       return (
         <Badge variant="secondary" className={`bg-primary/10 text-primary ${sizeClass}`}>
-          처리중
+          분석중
         </Badge>
       );
-    case 'resolved':
+    case 'analyzed':
       return (
         <Badge className={`bg-success/10 text-success gap-1 ${sizeClass}`}>
           <CheckCircle2 className={iconSize} />
-          완료
+          분석완료
         </Badge>
       );
   }
@@ -125,8 +125,8 @@ export function getEventTypeLabel(type: Event['type']): string {
 // 이벤트 상태 한글 변환
 export function getEventStatusLabel(status: Event['status']): string {
   switch (status) {
-    case 'processing': return '처리중';
-    case 'resolved': return '완료';
+    case 'processing': return '분석중';
+    case 'analyzed': return '분석완료';
     default: return '알 수 없음';
   }
 }

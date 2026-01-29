@@ -35,25 +35,25 @@ export function DashboardContent() {
 
   const displayCameras = cameras.length > 0 ? cameras : (fetchedCameras ?? []);
 
-  const handleUpdateAlias = async (cameraId: string, alias: string) => {
+  const handleUpdateLocation = async (cameraId: string, location: string) => {
     // 낙관적 UI 업데이트
     const prevCameras = [...cameras];
     setCameras(prev => prev.map(cam =>
-      cam.id === cameraId ? { ...cam, alias } : cam
+      cam.id === cameraId ? { ...cam, location } : cam
     ));
 
     try {
-      await camerasApi.update(cameraId, { alias });
+      await camerasApi.update(cameraId, { location });
       toast({
-        title: "별칭 수정 완료",
-        description: `카메라 별칭이 "${alias}"(으)로 변경되었습니다.`,
+        title: "장소 수정 완료",
+        description: `카메라 장소가 "${location}"(으)로 변경되었습니다.`,
       });
     } catch {
       // 실패 시 롤백
       setCameras(prevCameras);
       toast({
-        title: "별칭 수정 실패",
-        description: "카메라 별칭 변경에 실패했습니다.",
+        title: "장소 수정 실패",
+        description: "카메라 장소 변경에 실패했습니다.",
         variant: "destructive",
       });
     }
@@ -131,7 +131,7 @@ export function DashboardContent() {
             ) : (
               <CCTVGrid
                 cameras={displayCameras}
-                onUpdateAlias={handleUpdateAlias}
+                onUpdateLocation={handleUpdateLocation}
                 onToggleEnabled={handleToggleEnabled}
                 onToggleAnalysis={handleToggleAnalysis}
               />

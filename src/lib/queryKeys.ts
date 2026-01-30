@@ -19,5 +19,10 @@ export const queryKeys = {
     unreadCount: ['notifications', 'unreadCount'] as const,
     detail: (id: string) => ['notifications', id] as const,
   },
+  stats: {
+    daily: ['stats', 'daily'] as const,
+    eventTypes: ['stats', 'eventTypes'] as const,
+    monthly: ['stats', 'monthly'] as const,
+  },
 } as const;
 

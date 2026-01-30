@@ -1,43 +1,36 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { CalendarDays } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { statsApi } from "@/lib/api";
+import { queryKeys } from "@/lib/queryKeys";
 import type { DailyStat, EventTypeStat, MonthlyEventData } from "@/types";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
 export function StatsDashboard() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [dailyStats, setDailyStats] = useState<DailyStat[]>([]);
-  const [eventTypeStats, setEventTypeStats] = useState<EventTypeStat[]>([]);
-  const [monthlyEventData, setMonthlyEventData] = useState<MonthlyEventData>({});
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [daily, eventTypes, monthly] = await Promise.all([
-          statsApi.getDaily(),
-          statsApi.getEventTypes(),
-          statsApi.getMonthly(),
-        ]);
-        setDailyStats(daily);
-        setEventTypeStats(eventTypes);
-        setMonthlyEventData(monthly);
-      } catch {
-        // 통계 로드 실패 - 빈 상태 유지
-      } finally {
-        setLoading(false);
-      }
-    };
+  // React Query로 통계 데이터 조회
+  const { data: dailyStats = [] } = useQuery<DailyStat[]>({
+    queryKey: queryKeys.stats.daily,
+    queryFn: statsApi.getDaily,
+  });
 
-    fetchStats();
-  }, []);
+  const { data: eventTypeStats = [] } = useQuery<EventTypeStat[]>({
+    queryKey: queryKeys.stats.eventTypes,
+    queryFn: statsApi.getEventTypes,
+  });
+
+  const { data: monthlyEventData = {} } = useQuery<MonthlyEventData>({
+    queryKey: queryKeys.stats.monthly,
+    queryFn: statsApi.getMonthly,
+  });
 
   // 선택된 날짜의 통계 가져오기
   const getDateStats = (date: Date | undefined) => {

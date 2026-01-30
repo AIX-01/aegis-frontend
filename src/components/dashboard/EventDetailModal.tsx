@@ -36,6 +36,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
   const [clipLoading, setClipLoading] = useState(false);
   const [clipError, setClipError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const clipUrlRef = useRef<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -52,6 +53,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
 
       eventsApi.getClipBlobUrl(event.id)
         .then((url) => {
+          clipUrlRef.current = url;
           setClipUrl(url);
         })
         .catch(() => {
@@ -63,8 +65,10 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
     }
 
     return () => {
-      if (clipUrl) {
-        URL.revokeObjectURL(clipUrl);
+      // ref를 사용하여 stale closure 문제 해결
+      if (clipUrlRef.current) {
+        URL.revokeObjectURL(clipUrlRef.current);
+        clipUrlRef.current = null;
         setClipUrl(null);
       }
     };
@@ -310,7 +314,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
               닫기
             </Button>
             {event.report && (
-              <Button>
+              <Button disabled title="준비 중인 기능입니다">
                 <Download className="h-4 w-4 mr-2" />
                 보고서 다운로드
               </Button>

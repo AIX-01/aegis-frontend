@@ -64,7 +64,7 @@ export const authApi = {
 
 // Cameras API
 export const camerasApi = {
-  getAll: async (page = 0, size = 9): Promise<PageResponse<ManagedCamera>> => {
+  getAll: async (page = 0, size = 6): Promise<PageResponse<ManagedCamera>> => {
     const response = await api.get<PageResponse<ManagedCamera>>(`/api/cameras?page=${page}&size=${size}`);
     return response.data;
   },

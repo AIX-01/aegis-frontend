@@ -13,8 +13,6 @@ import type { ManagedCamera } from "@/types";
 import { WebRTCPlayer } from "./WebRTCPlayer";
 import { useWebRTC } from "@/contexts/WebRTCContext";
 
-const CAMERAS_PER_PAGE = 9;
-const GRID_PAGE_STORAGE_KEY = 'aegis_cctv_grid_page';
 
 // 공통: 상태 배지 (ON/OFF + AI) - 밝은 배경용
 function StatusBadges({ camera }: { camera: ManagedCamera }) {
@@ -163,6 +161,9 @@ function OfflineOverlay({ size = 'default' }: { size?: 'sm' | 'default' }) {
 
 interface CCTVGridProps {
   cameras: ManagedCamera[];
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
   onUpdateLocation?: (cameraId: string, location: string) => void;
   onToggleEnabled?: (cameraId: string, enabled: boolean) => void;
   onToggleAnalysis?: (cameraId: string, analysisEnabled: boolean) => void;
@@ -170,18 +171,13 @@ interface CCTVGridProps {
 
 export function CCTVGrid({
   cameras,
+  currentPage,
+  totalPages,
+  onPageChange,
   onUpdateLocation,
   onToggleEnabled,
   onToggleAnalysis
 }: CCTVGridProps) {
-  // localStorage에서 페이지 상태 복원
-  const [currentPage, setCurrentPage] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(GRID_PAGE_STORAGE_KEY);
-      return saved ? parseInt(saved, 10) : 0;
-    }
-    return 0;
-  });
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditingLocation, setIsEditingLocation] = useState(false);
@@ -195,31 +191,13 @@ export function CCTVGrid({
 
   const { setActiveGridCameras } = useWebRTC();
 
-  const totalPages = Math.max(1, Math.ceil(cameras.length / CAMERAS_PER_PAGE));
-
-  const currentCameras = useMemo(() => {
-    const start = currentPage * CAMERAS_PER_PAGE;
-    return cameras.slice(start, start + CAMERAS_PER_PAGE);
-  }, [cameras, currentPage]);
-
-  // 페이지 변경 시 localStorage에 저장
-  useEffect(() => {
-    localStorage.setItem(GRID_PAGE_STORAGE_KEY, currentPage.toString());
-  }, [currentPage]);
-
   // 현재 그리드 카메라 변경 시 WebRTC Context에 알림
   useEffect(() => {
-    const activeIds = currentCameras
+    const activeIds = cameras
       .filter(cam => cam.enabled && cam.connected)
       .map(cam => cam.id);
     setActiveGridCameras(activeIds);
-  }, [currentCameras, setActiveGridCameras]);
-
-  useEffect(() => {
-    if (currentPage >= totalPages) {
-      setCurrentPage(Math.max(0, totalPages - 1));
-    }
-  }, [totalPages, currentPage]);
+  }, [cameras, setActiveGridCameras]);
 
 
   useEffect(() => {
@@ -240,8 +218,8 @@ export function CCTVGrid({
     };
   }, [isModalOpen, isEditingLocation]);
 
-  const goToPrevPage = () => setCurrentPage((prev) => (prev === 0 ? totalPages - 1 : prev - 1));
-  const goToNextPage = () => setCurrentPage((prev) => (prev === totalPages - 1 ? 0 : prev + 1));
+  const goToPrevPage = () => onPageChange(currentPage === 0 ? totalPages - 1 : currentPage - 1);
+  const goToNextPage = () => onPageChange(currentPage === totalPages - 1 ? 0 : currentPage + 1);
 
   const handleCameraClick = (camera: ManagedCamera) => {
     setSelectedCameraId(camera.id);
@@ -295,7 +273,7 @@ export function CCTVGrid({
       <div className="flex flex-col h-full overflow-hidden">
         {/* 3x3 그리드 */}
         <div className="flex-1 min-h-0 grid grid-cols-3 gap-2 p-1 content-start overflow-auto">
-          {currentCameras.map((camera) => (
+          {cameras.map((camera) => (
             <Card
               key={camera.id}
               className={cn(

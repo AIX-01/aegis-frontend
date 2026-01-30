@@ -64,11 +64,16 @@ export const authApi = {
 
 // Cameras API
 export const camerasApi = {
-  getAll: async (): Promise<ManagedCamera[]> => {
-    const response = await api.get<ManagedCamera[]>('/api/cameras');
+  getAll: async (page = 0, size = 9): Promise<PageResponse<ManagedCamera>> => {
+    const response = await api.get<PageResponse<ManagedCamera>>(`/api/cameras?page=${page}&size=${size}`);
     return response.data;
   },
 
+  // 전체 목록 조회 (멤버 관리 - 카메라 할당용)
+  getAllList: async (): Promise<ManagedCamera[]> => {
+    const response = await api.get<ManagedCamera[]>('/api/cameras/all');
+    return response.data;
+  },
 
   update: async (id: string, data: CameraUpdateRequest): Promise<ManagedCamera> => {
     const response = await api.patch<ManagedCamera>(`/api/cameras/${id}`, data);

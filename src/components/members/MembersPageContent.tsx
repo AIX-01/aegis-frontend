@@ -113,10 +113,10 @@ export function MembersPageContent() {
   const users = usersPage?.content ?? [];
   const totalPages = usersPage?.totalPages ?? 0;
 
-  // React Query로 카메라 목록 조회
+  // React Query로 카메라 전체 목록 조회 (카메라 할당용)
   const { data: cameras = [] } = useQuery({
-    queryKey: queryKeys.cameras.all,
-    queryFn: () => camerasApi.getAll(),
+    queryKey: queryKeys.cameras.managed,
+    queryFn: () => camerasApi.getAllList(),
     enabled: isAdmin,
   });
 

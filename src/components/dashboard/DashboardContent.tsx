@@ -11,10 +11,23 @@ import { useToast } from "@/hooks/use-toast";
 import { camerasApi } from "@/lib/api";
 import type { ManagedCamera } from "@/types";
 
+const CAMERAS_PER_PAGE = 9;
+const GRID_PAGE_STORAGE_KEY = 'aegis_cctv_grid_page';
+
 export function DashboardContent() {
-  const { data: fetchedCameras, isLoading } = useStreams();
   const { toast } = useToast();
 
+  // 페이지 상태 (localStorage에서 복원)
+  const [currentPage, setCurrentPage] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(GRID_PAGE_STORAGE_KEY);
+      return saved ? parseInt(saved, 10) : 0;
+    }
+    return 0;
+  });
+
+  // 서버 페이지네이션으로 카메라 조회
+  const { data: cameraPage, isLoading } = useStreams(currentPage, CAMERAS_PER_PAGE);
 
   // 로컬 상태 (낙관적 UI 업데이트용)
   const [cameras, setCameras] = useState<ManagedCamera[]>([]);
@@ -24,17 +37,33 @@ export function DashboardContent() {
 
   // 서버 데이터와 동기화 (SSE에서 캐시 무효화 시 자동 갱신)
   useEffect(() => {
-    if (!fetchedCameras) return;
+    if (!cameraPage?.content) return;
 
-    const currentJson = JSON.stringify(fetchedCameras);
+    const currentJson = JSON.stringify(cameraPage.content);
     if (prevFetchedRef.current !== currentJson) {
       prevFetchedRef.current = currentJson;
-      setCameras(fetchedCameras);
+      setCameras(cameraPage.content);
     }
-  }, [fetchedCameras]);
+  }, [cameraPage]);
 
+  // 페이지 변경 시 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem(GRID_PAGE_STORAGE_KEY, currentPage.toString());
+  }, [currentPage]);
 
-  const displayCameras = cameras.length > 0 ? cameras : (fetchedCameras ?? []);
+  // 페이지 범위 초과 시 조정
+  useEffect(() => {
+    if (cameraPage && currentPage >= cameraPage.totalPages && cameraPage.totalPages > 0) {
+      setCurrentPage(cameraPage.totalPages - 1);
+    }
+  }, [cameraPage, currentPage]);
+
+  const displayCameras = cameras.length > 0 ? cameras : (cameraPage?.content ?? []);
+  const totalPages = cameraPage?.totalPages ?? 1;
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const handleUpdateLocation = async (cameraId: string, location: string) => {
     // 낙관적 UI 업데이트
@@ -132,6 +161,9 @@ export function DashboardContent() {
             ) : (
               <CCTVGrid
                 cameras={displayCameras}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
                 onUpdateLocation={handleUpdateLocation}
                 onToggleEnabled={handleToggleEnabled}
                 onToggleAnalysis={handleToggleAnalysis}

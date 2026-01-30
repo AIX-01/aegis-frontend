@@ -63,9 +63,8 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       if (isDev) console.log('[SSE] 카메라 업데이트:', data);
 
-      // 카메라 목록 갱신 (fire-and-forget)
+      // 카메라 관련 모든 쿼리 갱신 (페이지네이션 포함)
       void queryClient.invalidateQueries({ queryKey: queryKeys.cameras.all });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.cameras.managed });
     } catch (error) {
       if (isDev) console.error('[SSE] 카메라 업데이트 처리 오류:', error);
     }

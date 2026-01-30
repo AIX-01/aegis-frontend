@@ -1,13 +1,11 @@
 'use client';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, ExternalLink, X } from "lucide-react";
+import { Bell } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
-import { useRouter } from "next/navigation";
 import type { Notification } from "@/types";
 import { NotificationTypeBadge, NotificationIcon } from "@/components/common/EventBadges";
 import { notificationsApi } from "@/lib/api";
@@ -18,7 +16,6 @@ interface NotificationModalProps {
   notifications: Notification[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onDismiss: (id: string) => void;
 }
 
 
@@ -26,28 +23,25 @@ export function NotificationModal({
   notifications, 
   open, 
   onOpenChange, 
-  onDismiss
 }: NotificationModalProps) {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const notificationCount = notifications.length;
 
-  const handleViewAll = () => {
-    onOpenChange(false);
-    router.push('/events');
-  };
-
-  const handleDeleteAll = async () => {
-    try {
-      await notificationsApi.deleteAll();
-      await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
-    } catch {
-      // 전체 삭제 실패 무시
+  // 모달이 닫힐 때 전체 삭제
+  const handleOpenChange = async (isOpen: boolean) => {
+    if (!isOpen && notificationCount > 0) {
+      try {
+        await notificationsApi.deleteAll();
+        await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+      } catch {
+        // 전체 삭제 실패 무시
+      }
     }
+    onOpenChange(isOpen);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md p-0 gap-0">
         <DialogHeader className="p-4 pb-3 border-b">
           <div className="flex items-center justify-between">
@@ -60,11 +54,6 @@ export function NotificationModal({
                 </Badge>
               )}
             </DialogTitle>
-            {notificationCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={handleDeleteAll}>
-                전체 삭제
-              </Button>
-            )}
           </div>
         </DialogHeader>
 
@@ -77,10 +66,10 @@ export function NotificationModal({
               </div>
             ) : (
               <div className="space-y-1">
-                {notifications.slice(0, 5).map((notification) => (
+                {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className="p-3 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors relative group"
+                    className="p-3 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors"
                   >
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5">
@@ -98,17 +87,6 @@ export function NotificationModal({
                           {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true, locale: ko })}
                         </p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDismiss(notification.id);
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
                     </div>
                   </div>
                 ))}
@@ -116,17 +94,6 @@ export function NotificationModal({
             )}
           </div>
         </ScrollArea>
-
-        <div className="p-3 border-t">
-          <Button 
-            variant="outline" 
-            className="w-full gap-2" 
-            onClick={handleViewAll}
-          >
-            알림 더보기
-            <ExternalLink className="h-4 w-4" />
-          </Button>
-        </div>
       </DialogContent>
     </Dialog>
   );

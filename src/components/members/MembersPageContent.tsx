@@ -243,7 +243,7 @@ export function MembersPageContent() {
   return (
     <ProtectedRoute requireAdmin>
     <DashboardLayout title="멤버 관리">
-      <Card className="soft-shadow h-[calc(100vh-8rem)] flex flex-col">
+      <Card className="soft-shadow h-[calc(100vh-6.5rem)] flex flex-col">
         <Tabs defaultValue="members" className="flex-1 flex flex-col overflow-hidden">
           <CardHeader className="pb-3 flex-shrink-0">
             <div className="flex items-center justify-between">

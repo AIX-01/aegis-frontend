@@ -127,7 +127,7 @@ export function EventsPageContent() {
   return (
     <ProtectedRoute>
       <DashboardLayout title="이벤트">
-        <Card className="soft-shadow h-[calc(100vh-8rem)] flex flex-col">
+        <Card className="soft-shadow h-[calc(100vh-6.5rem)] flex flex-col">
           <CardHeader className="pb-3 flex-shrink-0">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">

@@ -42,7 +42,6 @@ export interface Notification {
   title: string;
   message: string;
   timestamp: string;      // ISO8601 string (백엔드 호환)
-  read: boolean;
   eventId?: string;
 }
 
@@ -111,5 +110,16 @@ export interface UserUpdateRequest {
   name?: string;
   role?: UserRole;
   assignedCameras?: string[];
+}
+
+// 페이지네이션 응답 타입
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
 }
 

@@ -14,6 +14,7 @@ import type {
   SignupRequest,
   RefreshResponse,
   PasswordChangeRequest,
+  PageResponse,
 } from '@/types';
 
 // Auth API
@@ -77,8 +78,8 @@ export const camerasApi = {
 
 // Events API
 export const eventsApi = {
-  getAll: async (): Promise<Event[]> => {
-    const response = await api.get<Event[]>('/api/events');
+  getAll: async (page = 0, size = 20): Promise<PageResponse<Event>> => {
+    const response = await api.get<PageResponse<Event>>(`/api/events?page=${page}&size=${size}`);
     return response.data;
   },
 
@@ -111,23 +112,18 @@ export const notificationsApi = {
     return response.data;
   },
 
-  getUnreadCount: async (): Promise<{ count: number }> => {
+  getCount: async (): Promise<{ count: number }> => {
     const response = await api.get<{ count: number }>('/api/notifications/unread-count');
-    return response.data;
-  },
-
-  markAsRead: async (id: string): Promise<Notification> => {
-    const response = await api.patch<Notification>(`/api/notifications/${id}/read`);
-    return response.data;
-  },
-
-  markAllAsRead: async (): Promise<{ success: boolean }> => {
-    const response = await api.post<{ success: boolean }>('/api/notifications/read-all');
     return response.data;
   },
 
   delete: async (id: string): Promise<{ success: boolean }> => {
     const response = await api.delete<{ success: boolean }>(`/api/notifications/${id}`);
+    return response.data;
+  },
+
+  deleteAll: async (): Promise<{ success: boolean }> => {
+    const response = await api.delete<{ success: boolean }>('/api/notifications');
     return response.data;
   },
 };
@@ -152,8 +148,8 @@ export const statsApi = {
 
 // Users API (Admin)
 export const usersApi = {
-  getAll: async (): Promise<User[]> => {
-    const response = await api.get<User[]>('/api/users');
+  getAll: async (page = 0, size = 20): Promise<PageResponse<User>> => {
+    const response = await api.get<PageResponse<User>>(`/api/users?page=${page}&size=${size}`);
     return response.data;
   },
 

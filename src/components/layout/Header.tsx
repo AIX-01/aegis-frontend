@@ -6,7 +6,6 @@ import { Bell, Monitor, ClipboardList, BarChart3, Users, Settings, LogOut, Shiel
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { notificationsApi } from "@/lib/api";
-import type { Notification } from "@/types";
 import { NotificationModal } from "@/components/notifications/NotificationModal";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,13 +47,15 @@ export function Header(_props: HeaderProps) {
     enabled: !!user,
   });
 
-  const unreadCount = notifications.filter((n: Notification) => !n.read).length;
+  // 알림 개수 = 목록 길이 (read 필드 없음)
+  const notificationCount = notifications.length;
 
-  const handleMarkAsRead = async (id: string) => {
+  // 알림 읽음 처리 = 삭제
+  const handleDismissNotification = async (id: string) => {
     try {
-      await notificationsApi.markAsRead(id);
+      await notificationsApi.delete(id);
     } catch {
-      // 알림 읽음 처리 실패 - 조용히 무시 (UX에 영향 없음)
+      // 알림 삭제 실패 - 조용히 무시
     }
   };
 
@@ -136,12 +137,12 @@ export function Header(_props: HeaderProps) {
               onClick={() => setNotificationModalOpen(true)}
             >
               <Bell className="h-5 w-5" />
-              {unreadCount > 0 && (
-                <Badge 
+              {notificationCount > 0 && (
+                <Badge
                   variant="destructive" 
                   className="absolute -top-0.5 -right-0.5 h-4 min-w-4 text-[10px] px-1"
                 >
-                  {unreadCount}
+                  {notificationCount}
                 </Badge>
               )}
             </Button>
@@ -172,7 +173,7 @@ export function Header(_props: HeaderProps) {
         notifications={notifications}
         open={notificationModalOpen}
         onOpenChange={setNotificationModalOpen}
-        onMarkAsRead={handleMarkAsRead}
+        onDismiss={handleDismissNotification}
       />
     </>
   );

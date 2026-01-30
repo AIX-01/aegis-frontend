@@ -16,7 +16,6 @@ export const queryKeys = {
   },
   notifications: {
     all: ['notifications'] as const,
-    unreadCount: ['notifications', 'unreadCount'] as const,
     detail: (id: string) => ['notifications', id] as const,
   },
   stats: {

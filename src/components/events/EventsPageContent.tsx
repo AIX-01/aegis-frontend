@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from "react";
+import React, { useState, useRef } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { EventLog } from "@/components/dashboard/EventLog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,6 +55,9 @@ export function EventsPageContent() {
   const [page, setPage] = useState(0);
   const pageSize = 20;
 
+  // 스크롤 컨테이너 참조
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   // React Query로 이벤트 목록 조회 (SSE에서 자동 갱신)
   const { data: eventsPage } = useQuery({
     queryKey: [...queryKeys.events.all, page, pageSize],
@@ -63,6 +66,12 @@ export function EventsPageContent() {
 
   const events = eventsPage?.content ?? [];
   const totalPages = eventsPage?.totalPages ?? 0;
+
+  // 페이지 변경 핸들러 (스크롤 상단 이동)
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Filter states
   const [selectedBehaviors, setSelectedBehaviors] = useState<string[]>(
@@ -248,7 +257,7 @@ export function EventsPageContent() {
               </div>
             </CardHeader>
             <CardContent className="flex-1 overflow-auto flex flex-col">
-              <div className="flex-1 overflow-auto">
+              <div ref={scrollContainerRef} className="flex-1 overflow-auto">
                 <EventLog events={filteredEvents} />
               </div>
 
@@ -257,7 +266,7 @@ export function EventsPageContent() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  onClick={() => handlePageChange(Math.max(0, page - 1))}
                   className="h-8 w-8"
                   disabled={page === 0}
                 >
@@ -269,7 +278,7 @@ export function EventsPageContent() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  onClick={() => handlePageChange(Math.min(totalPages - 1, page + 1))}
                   className="h-8 w-8"
                   disabled={totalPages <= 1 || page >= totalPages - 1}
                 >

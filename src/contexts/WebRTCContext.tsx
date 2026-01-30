@@ -3,8 +3,8 @@
 import React, { createContext, useContext, useRef, useCallback, useEffect, useState } from 'react';
 
 interface StreamInfo {
-  pc: RTCPeerConnection;
-  stream: MediaStream;
+  pc: RTCPeerConnection | null;
+  stream: MediaStream | null;
   cameraId: string;
   state: 'connecting' | 'playing' | 'error';
   errorMessage?: string;
@@ -73,8 +73,8 @@ export function WebRTCProvider({ children }: { children: React.ReactNode }) {
 
     // 임시 상태 설정
     const tempInfo: StreamInfo = {
-      pc: null as unknown as RTCPeerConnection,
-      stream: null as unknown as MediaStream,
+      pc: null,
+      stream: null,
       cameraId,
       state: 'connecting',
     };
@@ -107,7 +107,7 @@ export function WebRTCProvider({ children }: { children: React.ReactNode }) {
         if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
           const info: StreamInfo = {
             pc,
-            stream: streamsRef.current.get(cameraId)?.stream || null as unknown as MediaStream,
+            stream: streamsRef.current.get(cameraId)?.stream || null,
             cameraId,
             state: 'error',
             errorMessage: '영상 수신 중단',
@@ -158,8 +158,8 @@ export function WebRTCProvider({ children }: { children: React.ReactNode }) {
       abortControllersRef.current.delete(cameraId);
 
       const info: StreamInfo = {
-        pc: null as unknown as RTCPeerConnection,
-        stream: null as unknown as MediaStream,
+        pc: null,
+        stream: null,
         cameraId,
         state: 'error',
         errorMessage: error instanceof Error ? error.message : '연결 실패',

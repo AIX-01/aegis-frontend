@@ -112,15 +112,6 @@ export const notificationsApi = {
     return response.data;
   },
 
-  getCount: async (): Promise<{ count: number }> => {
-    const response = await api.get<{ count: number }>('/api/notifications/unread-count');
-    return response.data;
-  },
-
-  delete: async (id: string): Promise<{ success: boolean }> => {
-    const response = await api.delete<{ success: boolean }>(`/api/notifications/${id}`);
-    return response.data;
-  },
 
   deleteAll: async (): Promise<{ success: boolean }> => {
     const response = await api.delete<{ success: boolean }>('/api/notifications');

@@ -339,7 +339,7 @@ export function CCTVGrid({
         </div>
 
         {/* 페이지네이션 - 항상 표시 */}
-        <div className="flex justify-center items-center gap-4 mt-4 pb-2 flex-shrink-0">
+        <div className="flex justify-center items-center gap-4 pt-4 border-t flex-shrink-0">
           <Button
             variant="outline"
             size="icon"

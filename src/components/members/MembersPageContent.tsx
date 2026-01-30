@@ -235,38 +235,39 @@ export function MembersPageContent() {
     <ProtectedRoute requireAdmin>
     <DashboardLayout title="멤버 관리">
       <Card className="soft-shadow h-[calc(100vh-8rem)] flex flex-col">
-        <CardHeader className="pb-3 flex-shrink-0">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
-            멤버 관리
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-hidden flex flex-col">
-          <Tabs defaultValue="members" className="flex-1 flex flex-col overflow-hidden">
-            <TabsList className="flex-shrink-0">
-              <TabsTrigger value="members">멤버 목록</TabsTrigger>
-              <TabsTrigger value="pending" className="relative">
-                승인 대기
-                {pendingUsers.length > 0 && (
-                  <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                  {pendingUsers.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="members" className="flex-1 overflow-auto mt-4">
-            {/* Members Table */}
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>이름</TableHead>
-                  <TableHead>이메일</TableHead>
-                  <TableHead>역할</TableHead>
-                  <TableHead>카메라 권한</TableHead>
-                  <TableHead>가입일</TableHead>
-                  <TableHead className="text-right">관리</TableHead>
-                </TableRow>
+        <Tabs defaultValue="members" className="flex-1 flex flex-col overflow-hidden">
+          <CardHeader className="pb-3 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                멤버 관리
+              </CardTitle>
+              <TabsList>
+                <TabsTrigger value="members">멤버 목록</TabsTrigger>
+                <TabsTrigger value="pending" className="relative">
+                  승인 대기
+                  {pendingUsers.length > 0 && (
+                    <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                      {pendingUsers.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-hidden flex flex-col">
+            <TabsContent value="members" className="flex-1 overflow-auto m-0">
+              {/* Members Table */}
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>이름</TableHead>
+                    <TableHead>이메일</TableHead>
+                    <TableHead>역할</TableHead>
+                    <TableHead>카메라 권한</TableHead>
+                    <TableHead>가입일</TableHead>
+                    <TableHead className="text-right">관리</TableHead>
+                  </TableRow>
                 </TableHeader>
                 <TableBody>
                   {approvedUsers.map((member) => (
@@ -338,85 +339,82 @@ export function MembersPageContent() {
                   ))}
                 </TableBody>
               </Table>
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="pending" className="flex-1 overflow-auto mt-4">
-            {pendingUsers.length === 0 ? (
-              <Card className="glass-card">
-                <CardContent className="pt-6 text-center py-12">
-                  <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <TabsContent value="pending" className="flex-1 overflow-auto m-0">
+              {pendingUsers.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center py-12">
+                  <CheckCircle className="h-12 w-12 text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">승인 대기 중인 요청이 없습니다</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4">
-                {pendingUsers.map((pending) => (
-                  <Card key={pending.id} className="glass-card">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-lg font-semibold text-primary">
-                              {pending.name.charAt(0)}
-                            </span>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>이름</TableHead>
+                      <TableHead>이메일</TableHead>
+                      <TableHead>신청일</TableHead>
+                      <TableHead className="text-right">관리</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingUsers.map((pending) => (
+                      <TableRow key={pending.id}>
+                        <TableCell className="font-medium">{pending.name}</TableCell>
+                        <TableCell>{pending.email}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {new Date(pending.createdAt).toLocaleDateString('ko-KR')}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleReject(pending.id)}
+                            >
+                              거절
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleApprove(pending.id)}
+                            >
+                              승인
+                            </Button>
                           </div>
-                          <div>
-                            <p className="font-medium">{pending.name}</p>
-                            <p className="text-sm text-muted-foreground">{pending.email}</p>
-                            <p className="text-xs text-muted-foreground">
-                              신청일: {new Date(pending.createdAt).toLocaleDateString('ko-KR')}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleReject(pending.id)}
-                          >
-                            거절
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleApprove(pending.id)}
-                          >
-                            승인
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </TabsContent>
 
-          {/* 페이지네이션 */}
-          <div className="flex justify-center items-center gap-4 pt-4 border-t flex-shrink-0">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setPage(p => Math.max(0, p - 1))}
-              className="h-8 w-8"
-              disabled={page === 0}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-sm text-muted-foreground min-w-[60px] text-center">
-              {page + 1} / {Math.max(1, totalPages)}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-              className="h-8 w-8"
-              disabled={totalPages <= 1 || page >= totalPages - 1}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardContent>
+            {/* 페이지네이션 */}
+            <div className="flex justify-center items-center gap-4 pt-4 border-t flex-shrink-0">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                className="h-8 w-8"
+                disabled={page === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm text-muted-foreground min-w-[60px] text-center">
+                {page + 1} / {Math.max(1, totalPages)}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                className="h-8 w-8"
+                disabled={totalPages <= 1 || page >= totalPages - 1}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Tabs>
       </Card>
     </DashboardLayout>
     </ProtectedRoute>

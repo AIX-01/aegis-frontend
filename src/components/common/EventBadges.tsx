@@ -110,23 +110,3 @@ export function EventIcon({ type, className }: { type: Event['type']; className?
   }
 }
 
-// 이벤트 타입 한글 변환
-export function getEventTypeLabel(type: Event['type']): string {
-  switch (type) {
-    case 'assault': return '폭행';
-    case 'burglary': return '절도';
-    case 'dump': return '투기';
-    case 'swoon': return '실신';
-    case 'vandalism': return '파손';
-    default: return '알 수 없음';
-  }
-}
-
-// 이벤트 상태 한글 변환
-export function getEventStatusLabel(status: Event['status']): string {
-  switch (status) {
-    case 'processing': return '분석중';
-    case 'analyzed': return '분석완료';
-    default: return '알 수 없음';
-  }
-}

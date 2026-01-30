@@ -100,13 +100,18 @@ export function MembersPageContent() {
   const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [page, setPage] = useState(0);
+  const pageSize = 20;
 
   // React Query로 사용자 목록 조회 (SSE에서 자동 갱신)
-  const { data: users = [] } = useQuery({
-    queryKey: queryKeys.users.all,
-    queryFn: () => usersApi.getAll(),
+  const { data: usersPage } = useQuery({
+    queryKey: [...queryKeys.users.all, page, pageSize],
+    queryFn: () => usersApi.getAll(page, pageSize),
     enabled: isAdmin,
   });
+
+  const users = usersPage?.content ?? [];
+  const totalPages = usersPage?.totalPages ?? 0;
 
   // React Query로 카메라 목록 조회
   const { data: cameras = [] } = useQuery({

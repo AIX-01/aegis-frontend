@@ -49,11 +49,18 @@ const behaviorLabels = [
 
 
 export function EventsPageContent() {
+  // 페이지네이션 상태
+  const [page, setPage] = useState(0);
+  const pageSize = 20;
+
   // React Query로 이벤트 목록 조회 (SSE에서 자동 갱신)
-  const { data: events = [] } = useQuery({
-    queryKey: queryKeys.events.all,
-    queryFn: () => eventsApi.getAll(),
+  const { data: eventsPage } = useQuery({
+    queryKey: [...queryKeys.events.all, page, pageSize],
+    queryFn: () => eventsApi.getAll(page, pageSize),
   });
+
+  const events = eventsPage?.content ?? [];
+  const totalPages = eventsPage?.totalPages ?? 0;
 
   // Filter states
   const [selectedBehaviors, setSelectedBehaviors] = useState<string[]>(
@@ -243,6 +250,31 @@ export function EventsPageContent() {
             </CardHeader>
             <CardContent>
               <EventLog events={filteredEvents} />
+
+              {/* 페이지네이션 */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.max(0, p - 1))}
+                    disabled={page === 0}
+                  >
+                    이전
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {page + 1} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                    disabled={page >= totalPages - 1}
+                  >
+                    다음
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -46,7 +46,6 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       // 알림 목록 갱신
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount });
 
       // 토스트 표시
       toastRef.current({

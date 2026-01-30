@@ -124,7 +124,7 @@ export function DashboardContent() {
               실시간 카메라 모니터링
             </CardTitle>
           </CardHeader>
-          <CardContent className="h-[calc(100%-4rem)]">
+          <CardContent className="h-[calc(100%-4rem)] overflow-hidden">
             {isLoading ? (
               <div className="flex items-center justify-center h-64">
                 <p className="text-muted-foreground">로딩 중...</p>

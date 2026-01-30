@@ -292,9 +292,9 @@ export function CCTVGrid({
 
   return (
     <>
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full overflow-hidden">
         {/* 3x3 그리드 */}
-        <div className="flex-1 grid grid-cols-3 gap-2 auto-rows-fr">
+        <div className="flex-1 min-h-0 grid grid-cols-3 gap-2 auto-rows-fr p-1">
           {currentCameras.map((camera) => (
             <Card
               key={camera.id}
@@ -344,7 +344,7 @@ export function CCTVGrid({
         </div>
 
         {/* 페이지네이션 - 항상 표시 */}
-        <div className="flex justify-center items-center gap-4 mt-4">
+        <div className="flex justify-center items-center gap-4 mt-4 pb-2">
           <Button
             variant="outline"
             size="icon"

@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { camerasApi } from "@/lib/api";
 import type { ManagedCamera } from "@/types";
 
-const CAMERAS_PER_PAGE = 9;
+const CAMERAS_PER_PAGE = 6;
 const GRID_PAGE_STORAGE_KEY = 'aegis_cctv_grid_page';
 
 export function DashboardContent() {

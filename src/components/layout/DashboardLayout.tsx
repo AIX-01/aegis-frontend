@@ -12,7 +12,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col w-full bg-background">
       <Header />
-      <main className="flex-1 p-4 lg:p-6 overflow-auto">
+      <main className="flex-1 p-4 pb-0 lg:p-6 lg:pb-0 overflow-auto">
         {children}
       </main>
     </div>

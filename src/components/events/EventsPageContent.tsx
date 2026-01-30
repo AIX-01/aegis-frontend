@@ -118,21 +118,18 @@ export function EventsPageContent() {
   return (
     <ProtectedRoute>
       <DashboardLayout title="이벤트">
-        <div className="space-y-6">
-
-          {/* Event Log Card */}
-          <Card className="soft-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <ClipboardList className="h-5 w-5 text-primary" />
-                  이벤트 목록
-                </CardTitle>
-                {/* Filter button */}
-                <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Filter className="h-4 w-4" />
+        <Card className="soft-shadow h-[calc(100vh-8rem)] flex flex-col">
+          <CardHeader className="pb-3 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ClipboardList className="h-5 w-5 text-primary" />
+                이벤트 목록
+              </CardTitle>
+              {/* Filter button */}
+              <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Filter className="h-4 w-4" />
                       필터
                       {activeFiltersCount > 0 && (
                         <Badge variant="destructive" className="h-5 min-w-5 text-xs">
@@ -250,11 +247,13 @@ export function EventsPageContent() {
                 </Sheet>
               </div>
             </CardHeader>
-            <CardContent>
-              <EventLog events={filteredEvents} />
+            <CardContent className="flex-1 overflow-auto flex flex-col">
+              <div className="flex-1 overflow-auto">
+                <EventLog events={filteredEvents} />
+              </div>
 
-              {/* 페이지네이션 - 항상 표시 */}
-              <div className="flex justify-center items-center gap-4 mt-4 pt-4 border-t pb-2">
+              {/* 페이지네이션 */}
+              <div className="flex justify-center items-center gap-4 pt-4 border-t flex-shrink-0">
                 <Button
                   variant="outline"
                   size="icon"
@@ -279,7 +278,6 @@ export function EventsPageContent() {
               </div>
             </CardContent>
           </Card>
-        </div>
       </DashboardLayout>
     </ProtectedRoute>
   );

@@ -14,6 +14,8 @@ import {
   Filter,
   X,
   Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -252,31 +254,28 @@ export function EventsPageContent() {
               <EventLog events={filteredEvents} />
 
               {/* 페이지네이션 - 항상 표시 */}
-              <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                <span className="text-sm text-muted-foreground">
-                  총 {eventsPage?.totalElements ?? 0}건
+              <div className="flex justify-center items-center gap-4 mt-4 pt-4 border-t pb-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  className="h-8 w-8"
+                  disabled={page === 0}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-muted-foreground min-w-[60px] text-center">
+                  {page + 1} / {Math.max(1, totalPages)}
                 </span>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(p => Math.max(0, p - 1))}
-                    disabled={page === 0}
-                  >
-                    이전
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    {page + 1} / {Math.max(1, totalPages)}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                    disabled={totalPages <= 1 || page >= totalPages - 1}
-                  >
-                    다음
-                  </Button>
-                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  className="h-8 w-8"
+                  disabled={totalPages <= 1 || page >= totalPages - 1}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
             </CardContent>
           </Card>

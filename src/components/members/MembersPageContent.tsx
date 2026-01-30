@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trash2, Camera as CameraIcon, CheckCircle } from 'lucide-react';
+import { Trash2, Camera as CameraIcon, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Camera Permission Editor Component
@@ -389,31 +389,28 @@ export function MembersPageContent() {
         </Tabs>
 
         {/* 페이지네이션 - 항상 표시 */}
-        <div className="flex items-center justify-between pt-4 border-t">
-          <span className="text-sm text-muted-foreground">
-            총 {usersPage?.totalElements ?? 0}명
+        <div className="flex justify-center items-center gap-4 pt-4 border-t pb-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setPage(p => Math.max(0, p - 1))}
+            className="h-8 w-8"
+            disabled={page === 0}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm text-muted-foreground min-w-[60px] text-center">
+            {page + 1} / {Math.max(1, totalPages)}
           </span>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(p => Math.max(0, p - 1))}
-              disabled={page === 0}
-            >
-              이전
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              {page + 1} / {Math.max(1, totalPages)}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-              disabled={totalPages <= 1 || page >= totalPages - 1}
-            >
-              다음
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+            className="h-8 w-8"
+            disabled={totalPages <= 1 || page >= totalPages - 1}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </DashboardLayout>

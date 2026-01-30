@@ -44,8 +44,8 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const notification: Notification = JSON.parse(data);
       if (isDev) console.log('[SSE] 알림:', notification);
 
-      // 알림 목록 갱신
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+      // 알림 목록 갱신 (fire-and-forget)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
 
       // 토스트 표시
       toastRef.current({
@@ -63,9 +63,9 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       if (isDev) console.log('[SSE] 카메라 업데이트:', data);
 
-      // 카메라 목록 갱신
-      queryClient.invalidateQueries({ queryKey: queryKeys.cameras.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.cameras.managed });
+      // 카메라 목록 갱신 (fire-and-forget)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.cameras.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.cameras.managed });
     } catch (error) {
       if (isDev) console.error('[SSE] 카메라 업데이트 처리 오류:', error);
     }
@@ -76,8 +76,8 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       if (isDev) console.log('[SSE] 이벤트 업데이트:', data);
 
-      // 이벤트 목록 갱신
-      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      // 이벤트 목록 갱신 (fire-and-forget)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
     } catch (error) {
       if (isDev) console.error('[SSE] 이벤트 업데이트 처리 오류:', error);
     }
@@ -88,8 +88,8 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       if (isDev) console.log('[SSE] 이벤트 삭제:', data);
 
-      // 이벤트 목록 갱신
-      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      // 이벤트 목록 갱신 (fire-and-forget)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
     } catch (error) {
       if (isDev) console.error('[SSE] 이벤트 삭제 처리 오류:', error);
     }
@@ -100,9 +100,9 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       if (isDev) console.log('[SSE] 멤버 업데이트:', data);
 
-      // 멤버 목록 갱신
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.pending });
+      // 멤버 목록 갱신 (fire-and-forget)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.users.pending });
     } catch (error) {
       if (isDev) console.error('[SSE] 멤버 업데이트 처리 오류:', error);
     }

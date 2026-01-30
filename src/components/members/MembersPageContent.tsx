@@ -127,15 +127,15 @@ export function MembersPageContent() {
     }
   }, [isAdmin, router]);
 
-  const refreshData = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-    queryClient.invalidateQueries({ queryKey: queryKeys.cameras.all });
+  const refreshData = async () => {
+    await queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.cameras.all });
   };
 
   const handleApprove = async (userId: string) => {
     try {
       await usersApi.approve(userId);
-      refreshData();
+      await refreshData();
       toast({
         title: '승인 완료',
         description: '멤버가 승인되었습니다.',
@@ -152,7 +152,7 @@ export function MembersPageContent() {
   const handleReject = async (userId: string) => {
     try {
       await usersApi.delete(userId);
-      refreshData();
+      await refreshData();
       toast({
         title: '거절 완료',
         description: '가입 요청이 거절되었습니다.',
@@ -177,7 +177,7 @@ export function MembersPageContent() {
     }
     try {
       await usersApi.delete(userId);
-      refreshData();
+      await refreshData();
       toast({
         title: '삭제 완료',
         description: '멤버가 삭제되었습니다.',
@@ -194,7 +194,7 @@ export function MembersPageContent() {
   const handleUpdateRole = async (userId: string, role: 'user' | 'admin') => {
     try {
       await usersApi.update(userId, { role });
-      refreshData();
+      await refreshData();
       toast({
         title: '역할 변경',
         description: `역할이 ${role === 'admin' ? '관리자' : '일반 사용자'}로 변경되었습니다.`,
@@ -211,7 +211,7 @@ export function MembersPageContent() {
   const handleUpdateCameras = async (userId: string, cameraIds: string[]) => {
     try {
       await usersApi.update(userId, { assignedCameras: cameraIds });
-      refreshData();
+      await refreshData();
       setIsEditDialogOpen(false);
       toast({
         title: '카메라 권한 변경',

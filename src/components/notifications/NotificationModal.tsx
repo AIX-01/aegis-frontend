@@ -40,7 +40,7 @@ export function NotificationModal({
   const handleDeleteAll = async () => {
     try {
       await notificationsApi.deleteAll();
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
     } catch {
       // 전체 삭제 실패 무시
     }

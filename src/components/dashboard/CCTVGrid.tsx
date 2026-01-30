@@ -336,15 +336,10 @@ export function CCTVGrid({
               {!camera.connected && <OfflineOverlay size="sm" />}
             </Card>
           ))}
-
-          {/* 빈 셀 */}
-          {Array.from({ length: CAMERAS_PER_PAGE - currentCameras.length }).map((_, i) => (
-            <Card key={`empty-${i}`} className="border-2 border-dashed border-muted bg-muted/20 aspect-video" />
-          ))}
         </div>
 
         {/* 페이지네이션 - 항상 표시 */}
-        <div className="flex justify-center items-center gap-4 mt-4 pb-2">
+        <div className="flex justify-center items-center gap-4 mt-4 pb-2 flex-shrink-0">
           <Button
             variant="outline"
             size="icon"

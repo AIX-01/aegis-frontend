@@ -9,7 +9,7 @@ import { usersApi, camerasApi } from '@/lib/api';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import type { User, ManagedCamera as CameraType } from '@/types';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trash2, Camera as CameraIcon, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, Camera as CameraIcon, CheckCircle, ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Camera Permission Editor Component
@@ -234,34 +234,39 @@ export function MembersPageContent() {
   return (
     <ProtectedRoute requireAdmin>
     <DashboardLayout title="멤버 관리">
-      <div className="space-y-6">
-
-        <Tabs defaultValue="members" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="members">멤버 목록</TabsTrigger>
-            <TabsTrigger value="pending" className="relative">
-              승인 대기
-              {pendingUsers.length > 0 && (
-                <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+      <Card className="soft-shadow h-[calc(100vh-8rem)] flex flex-col">
+        <CardHeader className="pb-3 flex-shrink-0">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            멤버 관리
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 overflow-hidden flex flex-col">
+          <Tabs defaultValue="members" className="flex-1 flex flex-col overflow-hidden">
+            <TabsList className="flex-shrink-0">
+              <TabsTrigger value="members">멤버 목록</TabsTrigger>
+              <TabsTrigger value="pending" className="relative">
+                승인 대기
+                {pendingUsers.length > 0 && (
+                  <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
                   {pendingUsers.length}
                 </Badge>
               )}
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="members" className="space-y-4">
+          <TabsContent value="members" className="flex-1 overflow-auto mt-4">
             {/* Members Table */}
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>이름</TableHead>
-                    <TableHead>이메일</TableHead>
-                    <TableHead>역할</TableHead>
-                    <TableHead>카메라 권한</TableHead>
-                    <TableHead>가입일</TableHead>
-                    <TableHead className="text-right">관리</TableHead>
-                  </TableRow>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>이름</TableHead>
+                  <TableHead>이메일</TableHead>
+                  <TableHead>역할</TableHead>
+                  <TableHead>카메라 권한</TableHead>
+                  <TableHead>가입일</TableHead>
+                  <TableHead className="text-right">관리</TableHead>
+                </TableRow>
                 </TableHeader>
                 <TableBody>
                   {approvedUsers.map((member) => (
@@ -333,10 +338,9 @@ export function MembersPageContent() {
                   ))}
                 </TableBody>
               </Table>
-            </Card>
           </TabsContent>
 
-          <TabsContent value="pending" className="space-y-4">
+          <TabsContent value="pending" className="flex-1 overflow-auto mt-4">
             {pendingUsers.length === 0 ? (
               <Card className="glass-card">
                 <CardContent className="pt-6 text-center py-12">
@@ -388,31 +392,32 @@ export function MembersPageContent() {
           </TabsContent>
         </Tabs>
 
-        {/* 페이지네이션 - 항상 표시 */}
-        <div className="flex justify-center items-center gap-4 pt-4 border-t pb-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setPage(p => Math.max(0, p - 1))}
-            className="h-8 w-8"
-            disabled={page === 0}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm text-muted-foreground min-w-[60px] text-center">
-            {page + 1} / {Math.max(1, totalPages)}
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-            className="h-8 w-8"
-            disabled={totalPages <= 1 || page >= totalPages - 1}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+          {/* 페이지네이션 */}
+          <div className="flex justify-center items-center gap-4 pt-4 border-t flex-shrink-0">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              className="h-8 w-8"
+              disabled={page === 0}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm text-muted-foreground min-w-[60px] text-center">
+              {page + 1} / {Math.max(1, totalPages)}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+              className="h-8 w-8"
+              disabled={totalPages <= 1 || page >= totalPages - 1}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </DashboardLayout>
     </ProtectedRoute>
   );

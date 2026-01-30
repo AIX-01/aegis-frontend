@@ -117,16 +117,16 @@ export function DashboardContent() {
   return (
     <ProtectedRoute>
       <DashboardLayout title="카메라">
-        <Card className="soft-shadow h-[calc(100vh-8rem)]">
-          <CardHeader className="pb-3">
+        <Card className="soft-shadow h-[calc(100vh-8rem)] flex flex-col">
+          <CardHeader className="pb-3 flex-shrink-0">
             <CardTitle className="text-base flex items-center gap-2">
               <Monitor className="h-5 w-5 text-primary" />
               실시간 카메라 모니터링
             </CardTitle>
           </CardHeader>
-          <CardContent className="h-[calc(100%-4rem)] overflow-hidden">
+          <CardContent className="flex-1 overflow-hidden">
             {isLoading ? (
-              <div className="flex items-center justify-center h-64">
+              <div className="flex items-center justify-center h-full">
                 <p className="text-muted-foreground">로딩 중...</p>
               </div>
             ) : (

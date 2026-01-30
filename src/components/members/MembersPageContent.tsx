@@ -103,6 +103,15 @@ export function MembersPageContent() {
   const [page, setPage] = useState(0);
   const pageSize = 20;
 
+  // 스크롤 컨테이너 참조
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+  // 페이지 변경 핸들러 (스크롤 상단 이동)
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // React Query로 사용자 목록 조회 (SSE에서 자동 갱신)
   const { data: usersPage } = useQuery({
     queryKey: [...queryKeys.users.all, page, pageSize],
@@ -256,7 +265,7 @@ export function MembersPageContent() {
             </div>
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden flex flex-col">
-            <TabsContent value="members" className="flex-1 overflow-auto m-0">
+            <TabsContent value="members" ref={scrollContainerRef} className="flex-1 overflow-auto m-0">
               {/* Members Table */}
               <Table>
                 <TableHeader>
@@ -394,7 +403,7 @@ export function MembersPageContent() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setPage(p => Math.max(0, p - 1))}
+                onClick={() => handlePageChange(Math.max(0, page - 1))}
                 className="h-8 w-8"
                 disabled={page === 0}
               >
@@ -406,7 +415,7 @@ export function MembersPageContent() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                onClick={() => handlePageChange(Math.min(totalPages - 1, page + 1))}
                 className="h-8 w-8"
                 disabled={totalPages <= 1 || page >= totalPages - 1}
               >

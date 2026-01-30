@@ -2,6 +2,7 @@
 export const queryKeys = {
   cameras: {
     all: ['cameras'] as const,
+    page: (page: number, size: number) => ['cameras', { page, size }] as const,
     managed: ['cameras', 'managed'] as const,
     detail: (id: string) => ['cameras', id] as const,
   },

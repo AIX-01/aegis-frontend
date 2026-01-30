@@ -251,9 +251,12 @@ export function EventsPageContent() {
             <CardContent>
               <EventLog events={filteredEvents} />
 
-              {/* 페이지네이션 */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t">
+              {/* 페이지네이션 - 항상 표시 */}
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <span className="text-sm text-muted-foreground">
+                  총 {eventsPage?.totalElements ?? 0}건
+                </span>
+                <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -263,18 +266,18 @@ export function EventsPageContent() {
                     이전
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    {page + 1} / {totalPages}
+                    {page + 1} / {Math.max(1, totalPages)}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                    disabled={page >= totalPages - 1}
+                    disabled={totalPages <= 1 || page >= totalPages - 1}
                   >
                     다음
                   </Button>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
         </div>

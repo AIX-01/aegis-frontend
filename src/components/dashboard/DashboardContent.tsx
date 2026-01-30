@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { CCTVGrid } from "@/components/dashboard/CCTVGrid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Monitor } from "lucide-react";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { useStreams } from "@/hooks/useMonitoring";
@@ -12,8 +13,15 @@ import { camerasApi } from "@/lib/api";
 import type { ManagedCamera } from "@/types";
 
 export function DashboardContent() {
-  const { data: fetchedCameras, isLoading } = useStreams();
+  // 페이지네이션 상태
+  const [page, setPage] = useState(0);
+  const pageSize = 9;
+
+  const { data: camerasPage, isLoading } = useStreams(page, pageSize);
   const { toast } = useToast();
+
+  const fetchedCameras = camerasPage?.content ?? [];
+  const totalPages = camerasPage?.totalPages ?? 0;
 
   // 로컬 상태 (낙관적 UI 업데이트용)
   const [cameras, setCameras] = useState<ManagedCamera[]>([]);
@@ -118,23 +126,54 @@ export function DashboardContent() {
       <DashboardLayout title="카메라">
         <Card className="soft-shadow h-[calc(100vh-8rem)]">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Monitor className="h-5 w-5 text-primary" />
-              실시간 카메라 모니터링
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Monitor className="h-5 w-5 text-primary" />
+                실시간 카메라 모니터링
+              </CardTitle>
+              <span className="text-sm text-muted-foreground">
+                총 {camerasPage?.totalElements ?? 0}대
+              </span>
+            </div>
           </CardHeader>
-          <CardContent className="h-[calc(100%-4rem)]">
+          <CardContent className="h-[calc(100%-4rem)] flex flex-col">
             {isLoading ? (
               <div className="flex items-center justify-center h-64">
                 <p className="text-muted-foreground">로딩 중...</p>
               </div>
             ) : (
-              <CCTVGrid
-                cameras={displayCameras}
-                onUpdateLocation={handleUpdateLocation}
-                onToggleEnabled={handleToggleEnabled}
-                onToggleAnalysis={handleToggleAnalysis}
-              />
+              <>
+                <div className="flex-1 overflow-auto">
+                  <CCTVGrid
+                    cameras={displayCameras}
+                    onUpdateLocation={handleUpdateLocation}
+                    onToggleEnabled={handleToggleEnabled}
+                    onToggleAnalysis={handleToggleAnalysis}
+                  />
+                </div>
+                {/* 페이지네이션 - 항상 표시 */}
+                <div className="flex items-center justify-center gap-2 pt-4 border-t mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.max(0, p - 1))}
+                    disabled={page === 0}
+                  >
+                    이전
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {page + 1} / {Math.max(1, totalPages)}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                    disabled={totalPages <= 1 || page >= totalPages - 1}
+                  >
+                    다음
+                  </Button>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

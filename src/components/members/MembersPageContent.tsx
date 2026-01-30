@@ -113,12 +113,14 @@ export function MembersPageContent() {
   const users = usersPage?.content ?? [];
   const totalPages = usersPage?.totalPages ?? 0;
 
-  // React Query로 카메라 목록 조회
-  const { data: cameras = [] } = useQuery({
+  // React Query로 카메라 목록 조회 (전체 목록 필요 - 할당용)
+  const { data: camerasPage } = useQuery({
     queryKey: queryKeys.cameras.all,
-    queryFn: () => camerasApi.getAll(),
+    queryFn: () => camerasApi.getAll(0, 100), // 할당용으로 최대 100개
     enabled: isAdmin,
   });
+
+  const cameras = camerasPage?.content ?? [];
 
   useEffect(() => {
     if (!isAdmin) {
@@ -386,6 +388,34 @@ export function MembersPageContent() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* 페이지네이션 - 항상 표시 */}
+        <div className="flex items-center justify-between pt-4 border-t">
+          <span className="text-sm text-muted-foreground">
+            총 {usersPage?.totalElements ?? 0}명
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+            >
+              이전
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {page + 1} / {Math.max(1, totalPages)}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={totalPages <= 1 || page >= totalPages - 1}
+            >
+              다음
+            </Button>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
     </ProtectedRoute>

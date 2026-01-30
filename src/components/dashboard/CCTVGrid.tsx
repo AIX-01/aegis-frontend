@@ -294,7 +294,7 @@ export function CCTVGrid({
     <>
       <div className="flex flex-col h-full overflow-hidden">
         {/* 3x3 그리드 */}
-        <div className="flex-1 min-h-0 grid grid-cols-3 gap-2 auto-rows-fr p-1">
+        <div className="flex-1 min-h-0 grid grid-cols-3 gap-2 p-1 content-start overflow-auto">
           {currentCameras.map((camera) => (
             <Card
               key={camera.id}

@@ -50,14 +50,6 @@ export function Header(_props: HeaderProps) {
   // 알림 개수 = 목록 길이 (read 필드 없음)
   const notificationCount = notifications.length;
 
-  // 알림 읽음 처리 = 삭제
-  const handleDismissNotification = async (id: string) => {
-    try {
-      await notificationsApi.delete(id);
-    } catch {
-      // 알림 삭제 실패 - 조용히 무시
-    }
-  };
 
 
   const isActive = (url: string) => {
@@ -173,7 +165,6 @@ export function Header(_props: HeaderProps) {
         notifications={notifications}
         open={notificationModalOpen}
         onOpenChange={setNotificationModalOpen}
-        onDismiss={handleDismissNotification}
       />
     </>
   );

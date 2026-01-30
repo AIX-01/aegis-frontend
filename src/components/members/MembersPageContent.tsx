@@ -113,14 +113,13 @@ export function MembersPageContent() {
   const users = usersPage?.content ?? [];
   const totalPages = usersPage?.totalPages ?? 0;
 
-  // React Query로 카메라 목록 조회 (전체 목록 필요 - 할당용)
-  const { data: camerasPage } = useQuery({
+  // React Query로 카메라 목록 조회
+  const { data: cameras = [] } = useQuery({
     queryKey: queryKeys.cameras.all,
-    queryFn: () => camerasApi.getAll(0, 100), // 할당용으로 최대 100개
+    queryFn: () => camerasApi.getAll(),
     enabled: isAdmin,
   });
 
-  const cameras = camerasPage?.content ?? [];
 
   useEffect(() => {
     if (!isAdmin) {

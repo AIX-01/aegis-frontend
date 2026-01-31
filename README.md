@@ -436,3 +436,31 @@ Caddy 리버스 프록시를 통해 `/` 경로로 서비스됩니다.
 - 개발: `host.docker.internal:3000`
 - API: `/api/*` → Backend
 - 스트림: `/stream/*` → MediaMTX
+
+---
+
+## 🔧 알려진 이슈
+
+### 중복 코드
+
+#### 낙관적 UI 업데이트 패턴 중복
+**파일들**: `DashboardContent.tsx`, `MembersPageContent.tsx`
+
+카메라 설정 변경 시 낙관적 UI 업데이트 로직이 여러 컴포넌트에 중복되어 있음.
+
+**해결 방안**: 커스텀 훅으로 추출
+
+#### ProtectedRoute 래핑 패턴
+**파일들**: 모든 페이지 컴포넌트
+
+각 페이지에서 `ProtectedRoute`로 래핑하는 패턴이 반복됨.
+
+**해결 방안**: Next.js middleware 또는 layout에서 처리
+
+### 구조 개선
+
+#### 타입 동기화
+Backend API 변경 시 Frontend 타입을 수동으로 동기화해야 함.
+
+**해결 방안**: OpenAPI Generator 도입 또는 동기화 스크립트 작성
+

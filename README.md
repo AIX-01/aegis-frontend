@@ -276,14 +276,23 @@ QueryClientProvider
 ### Camera
 
 ```typescript
-interface ManagedCamera {
+interface Camera {
   id: string;
   name: string;           // 미디어서버 원본 이름
-  location: string;       // 장소 (수정 가능)
   connected: boolean;     // 온라인/오프라인
+}
+
+interface ManagedCamera extends Camera {
+  location: string;       // 장소 (수정 가능)
   enabled: boolean;       // 카메라 ON/OFF
   analysisEnabled: boolean; // AI 분석 ON/OFF
   streamUrl: string;      // WebRTC WHEP URL
+}
+
+interface CameraUpdateRequest {
+  location?: string;
+  enabled?: boolean;
+  analysisEnabled?: boolean;
 }
 ```
 
@@ -307,17 +316,90 @@ interface Event {
 }
 ```
 
+### Notification
+
+```typescript
+interface Notification {
+  id: string;
+  type: 'alert' | 'warning' | 'info' | 'success';
+  title: string;
+  message: string;
+  timestamp: string;      // ISO8601 string
+  eventId?: string;
+}
+```
+
 ### User
 
 ```typescript
+type UserRole = 'user' | 'admin';
+
 interface User {
   id: string;
   email: string;
   name: string;
-  role: 'user' | 'admin';
+  role: UserRole;
   assignedCameras: string[];
   createdAt: string;
   approved: boolean;
+}
+
+interface UserUpdateRequest {
+  name?: string;
+  role?: UserRole;
+  assignedCameras?: string[];
+}
+```
+
+### Stats
+
+```typescript
+interface DailyStat {
+  day: string;
+  events: number;
+  analyzed: number;
+}
+
+interface EventTypeStat {
+  type: string;
+  count: number;
+  color: string;
+}
+
+interface MonthlyEventData {
+  [date: string]: {
+    events: number;
+    alerts: number;
+  };
+}
+```
+
+### Auth
+
+```typescript
+interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+interface LoginResponse {
+  accessToken: string;
+  user: User;
+}
+
+interface SignupRequest {
+  email: string;
+  password: string;
+  name: string;
+}
+
+interface RefreshResponse {
+  accessToken: string;
+}
+
+interface PasswordChangeRequest {
+  currentPassword: string;
+  newPassword: string;
 }
 ```
 

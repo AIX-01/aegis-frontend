@@ -27,6 +27,7 @@ src/
 ├── app/                    # Next.js App Router 페이지
 │   ├── layout.tsx          # 루트 레이아웃
 │   ├── providers.tsx       # 전역 Provider 구성
+│   ├── globals.css         # 전역 스타일
 │   ├── page.tsx            # 메인 (카메라 모니터링)
 │   ├── auth/               # 로그인/회원가입
 │   ├── events/             # 이벤트 목록

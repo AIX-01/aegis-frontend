@@ -71,6 +71,7 @@ src/
 │       ├── card.tsx
 │       ├── checkbox.tsx
 │       ├── dialog.tsx
+│       ├── dropdown-menu.tsx
 │       ├── input.tsx
 │       ├── label.tsx
 │       ├── popover.tsx
@@ -205,6 +206,10 @@ QueryClientProvider
 | 메서드 | 설명 |
 |--------|------|
 | `getAll(page, size)` | 이벤트 목록 (페이지네이션, 기본 size=20) |
+| `getById(id)` | 이벤트 상세 조회 |
+| `getClipBlobUrl(id)` | 클립 Blob URL 조회 |
+| `downloadClip(id, filename)` | 클립 다운로드 |
+| `getReportHtml(id)` | 보고서 HTML 조회 (새 창 렌더링용) |
 | `getClipBlobUrl(id)` | 클립 Blob URL (인증 포함) |
 | `downloadClip(id, filename)` | 클립 다운로드 |
 

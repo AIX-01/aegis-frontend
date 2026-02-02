@@ -43,12 +43,12 @@ export function StatsDashboard() {
   // 컴포넌트 마운트 시점의 날짜
   const today = useMemo(() => new Date(), []);
 
-  // 주차 옵션 생성 (현재 주 + 지난 8주)
+  // 주차 옵션 생성 (현재 주 + 지난 8주, 일요일 시작)
   const weekOptions: WeekOption[] = useMemo(() => {
     const options: WeekOption[] = [];
     for (let i = 0; i < 9; i++) {
-      const weekStart = startOfWeek(subWeeks(today, i), { weekStartsOn: 1 });
-      const weekEnd = endOfWeek(subWeeks(today, i), { weekStartsOn: 1 });
+      const weekStart = startOfWeek(subWeeks(today, i), { weekStartsOn: 0 });
+      const weekEnd = endOfWeek(subWeeks(today, i), { weekStartsOn: 0 });
       options.push({
         value: format(weekStart, 'yyyy-MM-dd'),
         label: i === 0
@@ -258,11 +258,11 @@ export function StatsDashboard() {
               className="rounded-md border pointer-events-auto"
             />
             {selectedDate && (
-              <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                <p className="text-sm font-medium">
+              <div className="mt-4 p-3 bg-muted/50 rounded-lg flex items-center gap-2">
+                <span className="text-sm font-medium">
                   {format(selectedDate, 'yyyy년 M월 d일 (EEEE)', { locale: ko })}
-                  {isSameDay(selectedDate, today) && <Badge variant="default" className="ml-2 text-xs">오늘</Badge>}
-                </p>
+                </span>
+                {isSameDay(selectedDate, today) && <Badge variant="default" className="text-xs">오늘</Badge>}
               </div>
             )}
           </CardContent>
@@ -445,7 +445,10 @@ export function StatsDashboard() {
         {/* 주간 이벤트 유형 분포 */}
         <Card className="soft-shadow">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">주간 이벤트 유형 분포</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-primary" />
+              주간 이벤트 유형 분포
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[280px]">

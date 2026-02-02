@@ -379,6 +379,46 @@ interface MonthlyEventData {
     alerts: number;
   };
 }
+
+// 카메라별 통계
+interface CameraStat {
+  cameraId: string;
+  cameraName: string;
+  totalEvents: number;
+  resolvedEvents: number;
+  pendingEvents: number;
+  lastEventTime?: string;
+}
+
+// 일일 상세 통계
+interface DailyDetailStat {
+  date: string;
+  totalEvents: number;
+  byType: {
+    assault: number;
+    burglary: number;
+    dump: number;
+    swoon: number;
+    vandalism: number;
+  };
+  resolvedCount: number;
+  avgResponseTime: number;
+}
+
+// 일일 보고서 요약
+interface DailyReportSummary {
+  date: string;
+  totalEvents: number;
+  resolvedEvents: number;
+  pendingEvents: number;
+  criticalCount: number;
+  highCount: number;
+  avgResponseTime: number;
+  topCamera: string;
+  topEventType: string;
+  highlights: string[];
+  overallStatus: 'safe' | 'caution' | 'warning' | 'critical';
+}
 ```
 
 ### Auth

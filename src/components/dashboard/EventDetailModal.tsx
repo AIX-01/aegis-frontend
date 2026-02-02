@@ -256,9 +256,14 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <ul className="text-sm text-muted-foreground space-y-1">
-                        {event.actions.map((action, idx) => (
-                          <li key={idx}>• {JSON.stringify(action)}</li>
+                      <ul className="text-sm text-muted-foreground space-y-2">
+                        {event.actions.map((action) => (
+                          <li key={action.id} className="flex flex-col gap-0.5">
+                            <span>• {action.log}</span>
+                            <span className="text-xs text-muted-foreground/70 ml-3">
+                              {new Date(action.triggeredAt).toLocaleString('ko-KR')}
+                            </span>
+                          </li>
                         ))}
                       </ul>
                     </CardContent>

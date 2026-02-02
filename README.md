@@ -300,6 +300,12 @@ interface CameraUpdateRequest {
 ### Event
 
 ```typescript
+interface EventAction {
+  id: string;
+  log: string;
+  triggeredAt: string;
+}
+
 interface Event {
   id: string;
   cameraId: string;
@@ -311,7 +317,7 @@ interface Event {
   clipUrl?: string;
   summary?: string;
   riskScore?: string;
-  actions?: Record<string, unknown>[];
+  actions?: EventAction[];
   ragReferences?: Record<string, unknown>[];
   report?: string;
 }

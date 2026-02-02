@@ -93,12 +93,11 @@ export function StatsDashboard() {
     }
 
     const totalEvents = dayData.events || 0;
-    const resolvedEvents = Math.floor(totalEvents * 0.91);
 
     return {
       date: dateKey,
       totalEvents,
-      resolvedEvents,
+      resolvedEvents: 0, // API 미구현
       cameraStats: [],
       eventTypeStats: eventTypeStats.length > 0 ? eventTypeStats : [],
     };
@@ -109,7 +108,7 @@ export function StatsDashboard() {
     if (dailyStats.length > 0) {
       return dailyStats;
     }
-    const dayNames = ['월', '화', '수', '목', '금', '토', '일'];
+    const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
     return dayNames.map(day => ({ day, events: 0, analyzed: 0 }));
   }, [dailyStats]);
 
@@ -127,20 +126,19 @@ export function StatsDashboard() {
       const dateKey = format(date, 'yyyy-MM-dd');
       const dayData = monthlyEventData[dateKey];
       const totalEvents = dayData?.events || 0;
-      const resolvedCount = Math.floor(totalEvents * 0.91);
 
       stats.push({
         date: dateKey,
         totalEvents,
         byType: {
-          assault: Math.floor(totalEvents * 0.25),
-          burglary: Math.floor(totalEvents * 0.2),
-          dump: Math.floor(totalEvents * 0.25),
-          swoon: Math.floor(totalEvents * 0.1),
-          vandalism: Math.floor(totalEvents * 0.2),
+          assault: 0,
+          burglary: 0,
+          dump: 0,
+          swoon: 0,
+          vandalism: 0,
         },
-        resolvedCount,
-        avgResponseTime: totalEvents > 0 ? 3.5 : 0,
+        resolvedCount: 0, // API 미구현
+        avgResponseTime: 0, // API 미구현
       });
     }
     return stats;
@@ -157,8 +155,6 @@ export function StatsDashboard() {
       const dayData = monthlyEventData[dateKey];
       const totalEvents = dayData?.events || 0;
       const alerts = dayData?.alerts || 0;
-      const resolvedEvents = Math.floor(totalEvents * 0.91);
-      const pendingEvents = totalEvents - resolvedEvents;
 
       // 상태 결정
       let overallStatus: 'safe' | 'caution' | 'warning' | 'critical' = 'safe';
@@ -169,18 +165,16 @@ export function StatsDashboard() {
       reports.push({
         date: dateKey,
         totalEvents,
-        resolvedEvents,
-        pendingEvents,
-        criticalCount: alerts >= 5 ? Math.floor(alerts / 2) : 0,
+        resolvedEvents: 0, // API 미구현
+        pendingEvents: totalEvents,
+        criticalCount: 0, // API 미구현
         highCount: alerts,
-        avgResponseTime: totalEvents > 0 ? 3.5 : 0,
-        topCamera: totalEvents > 0 ? '정문 CCTV' : '-',
-        topEventType: totalEvents > 0 ? (eventTypeStats[0]?.type || '폭행') : '-',
-        highlights: totalEvents > 0 ? [
-          `총 ${totalEvents}건의 이벤트 발생`,
-          `대응률 91%`,
-          alerts > 0 ? `긴급 알림 ${alerts}건` : '긴급 상황 없음',
-        ] : ['이벤트 없음'],
+        avgResponseTime: 0, // API 미구현
+        topCamera: '-', // API 미구현
+        topEventType: eventTypeStats[0]?.type || '-',
+        highlights: totalEvents > 0
+          ? [`총 ${totalEvents}건의 이벤트 발생`, alerts > 0 ? `긴급 알림 ${alerts}건` : '긴급 상황 없음']
+          : ['이벤트 없음'],
         overallStatus,
       });
     }
@@ -408,13 +402,11 @@ export function StatsDashboard() {
                 <p className="text-xs text-muted-foreground">총 이벤트</p>
               </div>
               <div className="p-3 bg-muted/30 rounded-lg text-center">
-                <p className="text-2xl font-bold text-green-500">91%</p>
+                <p className="text-2xl font-bold text-muted-foreground">-</p>
                 <p className="text-xs text-muted-foreground">대응률</p>
               </div>
               <div className="p-3 bg-muted/30 rounded-lg text-center">
-                <p className="text-2xl font-bold text-orange-500">
-                  {(weeklyDetailStats.reduce((acc, d) => acc + d.avgResponseTime, 0) / Math.max(weeklyDetailStats.length, 1)).toFixed(1)}분
-                </p>
+                <p className="text-2xl font-bold text-muted-foreground">-</p>
                 <p className="text-xs text-muted-foreground">평균 대응</p>
               </div>
             </div>

@@ -374,29 +374,29 @@ export function StatsDashboard() {
         </Card>
       </div>
 
-      {/* 섹션 2: 주간 리포트 헤더 + 주 선택 */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">주간 리포트</h2>
-        <Select value={selectedWeek} onValueChange={setSelectedWeek}>
-          <SelectTrigger className="w-[220px]">
-            <SelectValue placeholder="주 선택" />
-          </SelectTrigger>
-          <SelectContent>
-            {weekOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* 섹션 3: 주간 이벤트 추이 + 주간 이벤트 유형 분포 */}
+      {/* 섹션 2: 주간 이벤트 추이 + 주간 이벤트 유형 분포 */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* 주간 이벤트 추이 + 요약 통계 */}
         <Card className="soft-shadow">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">주간 이벤트 추이</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                주간 이벤트 추이
+              </CardTitle>
+              <Select value={selectedWeek} onValueChange={setSelectedWeek}>
+                <SelectTrigger className="w-[180px] h-8 text-xs">
+                  <SelectValue placeholder="주 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {weekOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             {/* 요약 통계 */}

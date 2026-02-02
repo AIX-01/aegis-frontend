@@ -2,20 +2,21 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
   Download,
   Clock,
   FileText,
-  Video,
   Brain,
   VideoOff,
   Loader2,
   AlertCircle,
   AlertTriangle,
-  Shield
+  Shield,
+  ExternalLink,
+  ChevronDown
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -65,7 +66,6 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
     }
 
     return () => {
-      // ref를 사용하여 stale closure 문제 해결
       if (clipUrlRef.current) {
         URL.revokeObjectURL(clipUrlRef.current);
         clipUrlRef.current = null;
@@ -74,7 +74,8 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
     };
   }, [open, event?.id, event?.clipUrl]);
 
-  const handleDownload = async () => {
+  // 클립 다운로드
+  const handleClipDownload = async () => {
     if (event?.clipUrl) {
       try {
         await eventsApi.downloadClip(event.id, `event-${event.id}.mp4`);
@@ -85,6 +86,66 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
           variant: "destructive",
         });
       }
+    }
+  };
+
+  // 보고서 새 창에서 열기
+  const handleOpenReport = () => {
+    if (event?.id) {
+      window.open(`/api/events/${event.id}/report`, '_blank');
+    }
+  };
+
+  // 보고서 다운로드 (PDF/DOCX)
+  const handleDownloadReport = async (format: 'pdf' | 'docx') => {
+    if (!event?.id) return;
+
+    try {
+      const response = await fetch(`/api/events/${event.id}/report`);
+      if (!response.ok) throw new Error('보고서를 불러올 수 없습니다');
+      const html = await response.text();
+
+      if (format === 'pdf') {
+        // html2pdf.js 동적 로드
+        const html2pdf = (await import('html2pdf.js')).default;
+        const element = document.createElement('div');
+        element.innerHTML = html;
+        html2pdf()
+          .set({
+            margin: 10,
+            filename: `report-${event.id}.pdf`,
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          })
+          .from(element)
+          .save();
+      } else if (format === 'docx') {
+        // Word 호환 HTML로 저장
+        const blob = new Blob([`
+          <html xmlns:o="urn:schemas-microsoft-com:office:office" 
+                xmlns:w="urn:schemas-microsoft-com:office:word">
+          <head><meta charset="utf-8"><title>분석 보고서</title></head>
+          <body>${html}</body>
+          </html>
+        `], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `report-${event.id}.doc`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      toast({
+        title: "다운로드 완료",
+        description: `보고서가 ${format.toUpperCase()} 형식으로 다운로드되었습니다.`,
+      });
+    } catch (error) {
+      toast({
+        title: "다운로드 실패",
+        description: "보고서 다운로드에 실패했습니다.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -103,7 +164,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0 gap-0">
+      <DialogContent className="max-w-6xl max-h-[90vh] p-0 gap-0">
         <DialogHeader className="p-6 pb-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -137,77 +198,59 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
           </div>
         </DialogHeader>
 
-        <Tabs defaultValue="clip" className="flex-1">
-          <div className="px-6 pt-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="clip" className="gap-2">
-                <Video className="h-4 w-4" />
-                영상 클립 + 요약
-              </TabsTrigger>
-              <TabsTrigger value="report" className="gap-2">
-                <FileText className="h-4 w-4" />
-                분석 보고서
-              </TabsTrigger>
-            </TabsList>
+        {/* 좌측: 영상 (고정) / 우측: 요약 (스크롤) */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* 좌측: 영상 영역 */}
+          <div className="w-1/2 p-6 border-r flex flex-col">
+            <div className="relative aspect-video bg-muted rounded-lg overflow-hidden flex-shrink-0">
+              {clipLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                  <div className="text-center">
+                    <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">클립 로딩 중...</p>
+                  </div>
+                </div>
+              )}
+              {!clipLoading && clipUrl && !clipError ? (
+                <video
+                  ref={videoRef}
+                  src={clipUrl}
+                  className="w-full h-full object-contain bg-black"
+                  onError={() => setClipError(true)}
+                  controls
+                />
+              ) : !clipLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                  <div className="text-center">
+                    <div className="w-16 h-16 rounded-full bg-muted-foreground/10 flex items-center justify-center mx-auto mb-3">
+                      <VideoOff className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {clipError
+                        ? '클립을 불러올 수 없습니다'
+                        : !event.clipUrl
+                          ? '클립이 저장되지 않았습니다'
+                          : '클립이 아직 준비되지 않았습니다'}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+            {clipUrl && !clipError && (
+              <div className="mt-3 flex justify-end">
+                <Button size="sm" variant="outline" onClick={handleClipDownload}>
+                  <Download className="h-4 w-4 mr-2" />
+                  클립 다운로드
+                </Button>
+              </div>
+            )}
           </div>
 
-          <ScrollArea className="h-[500px]">
-            <div className="p-6">
-              <TabsContent value="clip" className="m-0 space-y-4">
-                <Card>
-                  <CardContent className="p-0">
-                    <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-                      {clipLoading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-                          <div className="text-center">
-                            <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-3" />
-                            <p className="text-sm text-muted-foreground">클립 로딩 중...</p>
-                          </div>
-                        </div>
-                      )}
-                      {!clipLoading && clipUrl && !clipError ? (
-                        <video
-                          ref={videoRef}
-                          src={clipUrl}
-                          className="w-full h-full object-contain bg-black"
-                          onError={() => setClipError(true)}
-                          controls
-                        />
-                      ) : !clipLoading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-                          <div className="text-center">
-                            <div className="w-20 h-20 rounded-full bg-muted-foreground/10 flex items-center justify-center mx-auto mb-3">
-                              <VideoOff className="h-10 w-10 text-muted-foreground" />
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              {clipError
-                                ? '클립을 불러올 수 없습니다'
-                                : !event.clipUrl
-                                  ? '클립이 저장되지 않았습니다'
-                                  : '클립이 아직 준비되지 않았습니다'}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {!event.clipUrl
-                                ? '클립 추출에 실패했거나 저장되지 않았습니다'
-                                : event.status === 'processing'
-                                  ? '클립 추출 중...'
-                                  : '클립 없음'}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    {clipUrl && !clipError && (
-                      <div className="p-3 border-t flex justify-end">
-                        <Button size="sm" variant="outline" onClick={handleDownload}>
-                          <Download className="h-4 w-4 mr-2" />
-                          클립 다운로드
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
+          {/* 우측: 요약 영역 (스크롤) */}
+          <div className="w-1/2 flex flex-col">
+            <ScrollArea className="flex-1 h-[450px]">
+              <div className="p-6 space-y-4">
+                {/* Agent 자동 요약 */}
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
@@ -224,7 +267,8 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                   </CardContent>
                 </Card>
 
-                <div className="grid grid-cols-2 gap-4">
+                {/* 이벤트 정보 그리드 */}
+                <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 bg-muted/30 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">발생 위치</p>
                     <p className="text-sm font-medium">{event.cameraName}</p>
@@ -247,6 +291,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                   </div>
                 </div>
 
+                {/* 권장 조치 */}
                 {event.actions && event.actions.length > 0 && (
                   <Card>
                     <CardHeader className="pb-2">
@@ -269,62 +314,45 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                     </CardContent>
                   </Card>
                 )}
-              </TabsContent>
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
 
-              <TabsContent value="report" className="m-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-primary" />
-                      LLM 상황 분석 보고서
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {event.report ? (
-                      <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <div className="p-4 bg-muted/30 rounded-lg whitespace-pre-wrap text-sm leading-relaxed">
-                          {event.report.split('\n').map((line, index) => {
-                            if (line.startsWith('## ')) {
-                              return <h2 key={index} className="text-lg font-bold mt-4 mb-2">{line.replace('## ', '')}</h2>;
-                            }
-                            if (line.startsWith('### ')) {
-                              return <h3 key={index} className="text-base font-semibold mt-3 mb-1">{line.replace('### ', '')}</h3>;
-                            }
-                            if (line.startsWith('- ')) {
-                              return <p key={index} className="ml-4">{line}</p>;
-                            }
-                            if (line.match(/^\d+\./)) {
-                              return <p key={index} className="ml-4">{line}</p>;
-                            }
-                            return <p key={index}>{line}</p>;
-                          })}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                        <p>이 이벤트에 대한 분석 보고서가 없습니다.</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </div>
-          </ScrollArea>
-        </Tabs>
-
-        <div className="p-4 border-t flex justify-end">
+        {/* 하단 버튼 영역 */}
+        <div className="p-4 border-t flex justify-between items-center">
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              닫기
-            </Button>
             {event.report && (
-              <Button disabled title="준비 중인 기능입니다">
-                <Download className="h-4 w-4 mr-2" />
-                보고서 다운로드
-              </Button>
+              <>
+                <Button variant="outline" onClick={handleOpenReport}>
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  보고서 보기
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      <Download className="h-4 w-4 mr-2" />
+                      보고서 다운로드
+                      <ChevronDown className="h-4 w-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => handleDownloadReport('pdf')}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      PDF 형식
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownloadReport('docx')}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      DOCX 형식 (Word/한글 호환)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             )}
           </div>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            닫기
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

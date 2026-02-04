@@ -21,10 +21,11 @@ import {
 import { formatDistanceToNow, format } from "date-fns";
 import { ko } from "date-fns/locale";
 import type { Event } from "@/types";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { eventsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { EventTypeBadge, EventStatusBadge } from "@/components/common/EventBadges";
+import { VideoPlayer } from "@/components/common/VideoPlayer";
 
 interface EventDetailModalProps {
   event: Event | null;
@@ -37,7 +38,6 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
   const [clipError, setClipError] = useState(false);
   const [clipReady, setClipReady] = useState(false);
   const [clipUrl, setClipUrl] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -65,25 +65,6 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
       });
   }, [open, event?.id, event?.clipUrl]);
 
-  // 비디오 로드 이벤트 핸들러
-  useEffect(() => {
-    if (!clipUrl || !videoRef.current) return;
-
-    const video = videoRef.current;
-    video.src = clipUrl;
-    video.load();
-
-    const handleCanPlay = () => setClipReady(true);
-    const handleError = () => setClipError(true);
-
-    video.addEventListener('canplay', handleCanPlay);
-    video.addEventListener('error', handleError);
-
-    return () => {
-      video.removeEventListener('canplay', handleCanPlay);
-      video.removeEventListener('error', handleError);
-    };
-  }, [clipUrl]);
 
   // 클립 다운로드
   const handleClipDownload = async () => {
@@ -224,12 +205,13 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                 </div>
               )}
 
-              {/* 비디오 플레이어 - 항상 렌더링, clipUrl이 있을 때만 표시 */}
-              {event.clipUrl && (
-                <video
-                  ref={videoRef}
-                  className={`w-full h-full object-contain bg-black ${!clipReady || clipError ? 'hidden' : ''}`}
-                  controls
+              {/* Video.js 기반 플레이어 - fMP4 재생 지원 */}
+              {clipUrl && !clipError && (
+                <VideoPlayer
+                  src={clipUrl}
+                  onReady={() => setClipReady(true)}
+                  onError={() => setClipError(true)}
+                  className={`w-full h-full ${!clipReady ? 'hidden' : ''}`}
                 />
               )}
 

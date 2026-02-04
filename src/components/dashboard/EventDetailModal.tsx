@@ -25,6 +25,7 @@ import { useState, useRef, useEffect } from "react";
 import { eventsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { EventTypeBadge, EventStatusBadge } from "@/components/common/EventBadges";
+import Hls from "hls.js";
 
 interface EventDetailModalProps {
   event: Event | null;
@@ -33,45 +34,85 @@ interface EventDetailModalProps {
 }
 
 export function EventDetailModal({ event, open, onOpenChange }: EventDetailModalProps) {
-  const [clipUrl, setClipUrl] = useState<string | null>(null);
   const [clipLoading, setClipLoading] = useState(false);
   const [clipError, setClipError] = useState(false);
+  const [clipReady, setClipReady] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const clipUrlRef = useRef<string | null>(null);
+  const hlsRef = useRef<Hls | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (open && event?.id) {
-      if (!event.clipUrl) {
-        setClipUrl(null);
-        setClipLoading(false);
-        setClipError(false);
-        return;
-      }
-
+    if (open && event?.id && event?.clipUrl && videoRef.current) {
       setClipLoading(true);
       setClipError(false);
+      setClipReady(false);
 
-      eventsApi.getClipBlobUrl(event.id)
-        .then((url) => {
-          clipUrlRef.current = url;
-          setClipUrl(url);
-        })
-        .catch(() => {
-          setClipError(true);
-        })
-        .finally(() => {
-          setClipLoading(false);
+      const video = videoRef.current;
+      const streamUrl = `/api/events/${event.id}/clip/stream`;
+
+      // HLS.js 지원 여부 확인
+      if (Hls.isSupported()) {
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: false,
         });
-    }
 
-    return () => {
-      if (clipUrlRef.current) {
-        URL.revokeObjectURL(clipUrlRef.current);
-        clipUrlRef.current = null;
-        setClipUrl(null);
+        hlsRef.current = hls;
+        hls.loadSource(streamUrl);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          setClipLoading(false);
+          setClipReady(true);
+        });
+
+        hls.on(Hls.Events.ERROR, (_event, data) => {
+          // fMP4는 HLS manifest가 아니므로 fallback
+          if (data.fatal) {
+            hls.destroy();
+            hlsRef.current = null;
+            // 직접 src로 시도
+            video.src = streamUrl;
+            video.load();
+          }
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Safari 네이티브 HLS
+        video.src = streamUrl;
+        video.load();
+      } else {
+        // 일반 MP4로 시도
+        video.src = streamUrl;
+        video.load();
       }
-    };
+
+      // 비디오 이벤트 핸들러
+      const handleCanPlay = () => {
+        setClipLoading(false);
+        setClipReady(true);
+      };
+
+      const handleError = () => {
+        setClipLoading(false);
+        setClipError(true);
+      };
+
+      video.addEventListener('canplay', handleCanPlay);
+      video.addEventListener('error', handleError);
+
+      return () => {
+        video.removeEventListener('canplay', handleCanPlay);
+        video.removeEventListener('error', handleError);
+        if (hlsRef.current) {
+          hlsRef.current.destroy();
+          hlsRef.current = null;
+        }
+      };
+    } else if (!event?.clipUrl) {
+      setClipLoading(false);
+      setClipError(false);
+      setClipReady(false);
+    }
   }, [open, event?.id, event?.clipUrl]);
 
   // 클립 다운로드
@@ -203,23 +244,27 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
           {/* 좌측: 영상 영역 */}
           <div className="w-1/2 p-6 border-r flex flex-col">
             <div className="relative aspect-video bg-muted rounded-lg overflow-hidden flex-shrink-0">
+              {/* 로딩 오버레이 */}
               {clipLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50 z-10">
                   <div className="text-center">
                     <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground">클립 로딩 중...</p>
                   </div>
                 </div>
               )}
-              {!clipLoading && clipUrl && !clipError ? (
+
+              {/* 비디오 플레이어 - 항상 렌더링, clipUrl이 있을 때만 표시 */}
+              {event.clipUrl && (
                 <video
                   ref={videoRef}
-                  src={clipUrl}
-                  className="w-full h-full object-contain bg-black"
-                  onError={() => setClipError(true)}
+                  className={`w-full h-full object-contain bg-black ${!clipReady || clipError ? 'hidden' : ''}`}
                   controls
                 />
-              ) : !clipLoading && (
+              )}
+
+              {/* 에러/없음 상태 */}
+              {!clipLoading && (!clipReady || clipError || !event.clipUrl) && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
                   <div className="text-center">
                     <div className="w-16 h-16 rounded-full bg-muted-foreground/10 flex items-center justify-center mx-auto mb-3">
@@ -236,7 +281,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                 </div>
               )}
             </div>
-            {clipUrl && !clipError && (
+            {clipReady && !clipError && (
               <div className="mt-3 flex justify-end">
                 <Button size="sm" variant="outline" onClick={handleClipDownload}>
                   <Download className="h-4 w-4 mr-2" />

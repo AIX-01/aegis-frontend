@@ -104,7 +104,7 @@ export const eventsApi = {
     const url = URL.createObjectURL(response.data);
     const link = document.createElement('a');
     link.href = url;
-    link.download = filename || `event-${id}.ts`;
+    link.download = filename || `event-${id}.mp4`;
     link.click();
     URL.revokeObjectURL(url);
   },

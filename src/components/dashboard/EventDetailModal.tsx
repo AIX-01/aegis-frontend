@@ -25,7 +25,6 @@ import { useState, useRef, useEffect } from "react";
 import { eventsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { EventTypeBadge, EventStatusBadge } from "@/components/common/EventBadges";
-import Hls from "hls.js";
 
 interface EventDetailModalProps {
   event: Event | null;
@@ -37,83 +36,54 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
   const [clipLoading, setClipLoading] = useState(false);
   const [clipError, setClipError] = useState(false);
   const [clipReady, setClipReady] = useState(false);
+  const [clipUrl, setClipUrl] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<Hls | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (open && event?.id && event?.clipUrl && videoRef.current) {
-      setClipLoading(true);
-      setClipError(false);
-      setClipReady(false);
-
-      const video = videoRef.current;
-      const streamUrl = `/api/events/${event.id}/clip/stream`;
-
-      // HLS.js 지원 여부 확인
-      if (Hls.isSupported()) {
-        const hls = new Hls({
-          enableWorker: true,
-          lowLatencyMode: false,
-        });
-
-        hlsRef.current = hls;
-        hls.loadSource(streamUrl);
-        hls.attachMedia(video);
-
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          setClipLoading(false);
-          setClipReady(true);
-        });
-
-        hls.on(Hls.Events.ERROR, (_event, data) => {
-          // fMP4는 HLS manifest가 아니므로 fallback
-          if (data.fatal) {
-            hls.destroy();
-            hlsRef.current = null;
-            // 직접 src로 시도
-            video.src = streamUrl;
-            video.load();
-          }
-        });
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        // Safari 네이티브 HLS
-        video.src = streamUrl;
-        video.load();
-      } else {
-        // 일반 MP4로 시도
-        video.src = streamUrl;
-        video.load();
-      }
-
-      // 비디오 이벤트 핸들러
-      const handleCanPlay = () => {
-        setClipLoading(false);
-        setClipReady(true);
-      };
-
-      const handleError = () => {
-        setClipLoading(false);
-        setClipError(true);
-      };
-
-      video.addEventListener('canplay', handleCanPlay);
-      video.addEventListener('error', handleError);
-
-      return () => {
-        video.removeEventListener('canplay', handleCanPlay);
-        video.removeEventListener('error', handleError);
-        if (hlsRef.current) {
-          hlsRef.current.destroy();
-          hlsRef.current = null;
-        }
-      };
-    } else if (!event?.clipUrl) {
+    if (!open || !event?.id || !event?.clipUrl) {
       setClipLoading(false);
       setClipError(false);
       setClipReady(false);
+      setClipUrl(null);
+      return;
     }
+
+    setClipLoading(true);
+    setClipError(false);
+    setClipReady(false);
+
+    // presigned URL 요청
+    eventsApi.getClipUrl(event.id)
+      .then((url) => {
+        setClipUrl(url);
+        setClipLoading(false);
+      })
+      .catch(() => {
+        setClipError(true);
+        setClipLoading(false);
+      });
   }, [open, event?.id, event?.clipUrl]);
+
+  // 비디오 로드 이벤트 핸들러
+  useEffect(() => {
+    if (!clipUrl || !videoRef.current) return;
+
+    const video = videoRef.current;
+    video.src = clipUrl;
+    video.load();
+
+    const handleCanPlay = () => setClipReady(true);
+    const handleError = () => setClipError(true);
+
+    video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('error', handleError);
+
+    return () => {
+      video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('error', handleError);
+    };
+  }, [clipUrl]);
 
   // 클립 다운로드
   const handleClipDownload = async () => {

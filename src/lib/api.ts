@@ -88,25 +88,19 @@ export const eventsApi = {
     return response.data;
   },
 
-  /** 클립 Blob URL 가져오기 (인증 토큰 포함) */
-  getClipBlobUrl: async (id: string): Promise<string> => {
-    const response = await api.get(`/api/events/${id}/clip/stream`, {
-      responseType: 'blob',
-    });
-    return URL.createObjectURL(response.data);
+  /** 클립 재생용 presigned URL 가져오기 */
+  getClipUrl: async (id: string): Promise<string> => {
+    const response = await api.get<{ url: string }>(`/api/events/${id}/clip-url`);
+    return response.data.url;
   },
 
-  /** 클립 다운로드 (인증 토큰 포함) */
+  /** 클립 다운로드용 presigned URL 가져오기 */
   downloadClip: async (id: string, filename?: string): Promise<void> => {
-    const response = await api.get(`/api/events/${id}/clip`, {
-      responseType: 'blob',
-    });
-    const url = URL.createObjectURL(response.data);
+    const response = await api.get<{ url: string; filename: string }>(`/api/events/${id}/clip/download-url`);
     const link = document.createElement('a');
-    link.href = url;
-    link.download = filename || `event-${id}.mp4`;
+    link.href = response.data.url;
+    link.download = filename || response.data.filename;
     link.click();
-    URL.revokeObjectURL(url);
   },
 };
 

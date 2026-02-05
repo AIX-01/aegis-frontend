@@ -102,6 +102,198 @@ src/
     └── index.ts            # TypeScript 타입 정의
 ```
 
+---
+
+## 핵심 워크플로우
+
+### 시스템 아키텍처 다이어그램
+
+```mermaid
+graph TD
+    subgraph Browser["브라우저"]
+        App[Next.js App]
+        
+        subgraph Contexts["전역 Context"]
+            AuthCtx[AuthContext]
+            SseCtx[SseContext]
+            WebRTCCtx[WebRTCContext]
+        end
+        
+        subgraph Pages["페이지"]
+            Dashboard[/ 대시보드]
+            Events[/events 이벤트]
+            Stats[/statistics 통계]
+            Members[/members 멤버관리]
+            Settings[/settings 설정]
+        end
+        
+        QueryClient[React Query]
+    end
+
+    subgraph External["외부"]
+        Backend[Backend API]
+        MediaMTX[MediaMTX WebRTC]
+        SSE[SSE Stream]
+    end
+
+    App --> AuthCtx
+    AuthCtx --> SseCtx
+    SseCtx --> WebRTCCtx
+    
+    Pages --> QueryClient
+    QueryClient --> Backend
+    
+    SseCtx --> SSE
+    SSE --> QueryClient
+    
+    WebRTCCtx --> MediaMTX
+```
+
+### 1. 앱 초기화 및 인증 복원 흐름
+
+```
+1. App 로드 → AuthProvider 마운트
+2. AuthContext.useEffect:
+   - POST /api/auth/refresh (Cookie의 Refresh Token 사용)
+   - 성공: Access Token 저장 → GET /api/auth/me → user 상태 설정
+   - 실패: user=null, 로그인 필요 상태
+3. ProtectedRoute:
+   - isLoading: 로딩 스피너
+   - !user: /auth로 리다이렉트
+   - user: children 렌더링
+```
+
+### 2. SSE 실시간 업데이트 흐름
+
+```
+1. 로그인 성공 → SseProvider 연결 시작
+2. GET /api/notifications/stream (fetchEventSource)
+   - Authorization: Bearer {accessToken}
+3. 이벤트 수신 시:
+   - notification: queryClient.invalidateQueries(notifications) + 토스트
+   - camera: queryClient.invalidateQueries(cameras)
+   - event: queryClient.invalidateQueries(events)
+   - event-deleted: queryClient.invalidateQueries(events)
+   - member: queryClient.invalidateQueries(users)
+4. 연결 오류 시: 5초 후 자동 재연결
+5. 로그아웃 시: AbortController로 연결 종료
+```
+
+### 3. WebRTC 스트리밍 흐름
+
+```
+1. CCTVGrid 렌더링 → setActiveGridCameras([카메라IDs])
+2. WebRTCPlayer 마운트:
+   - subscribeToStream(cameraId) → 상태 구독
+   - connectStream(cameraId, accessToken, streamUrl) 호출
+3. WebRTCContext.connectStream:
+   - RTCPeerConnection 생성
+   - addTransceiver('video', 'audio')
+   - createOffer() → POST /stream/{camera}/whep
+     - Authorization: Basic base64("_:" + accessToken)
+   - SDP Answer 수신 → setRemoteDescription
+   - ontrack → MediaStream 저장 → 구독자에게 알림
+4. WebRTCPlayer:
+   - stream 수신 → video.srcObject = stream
+   - state=error → 에러 메시지 표시
+5. 페이지 이동 시:
+   - setActiveGridCameras([새 카메라IDs])
+   - 이전 페이지 카메라 자동 disconnectStream
+```
+
+### 4. API 요청/응답 및 에러 처리 흐름
+
+```
+1. API 요청 (lib/axios.ts):
+   - 요청 인터셉터: Authorization 헤더 주입
+   - 응답 인터셉터:
+     - 401/403 에러 → refresh 시도 → 재요청
+     - refresh 실패 → /auth로 리다이렉트
+
+2. React Query 패턴:
+   - useQuery: 데이터 조회 (캐싱, staleTime: 30초)
+   - useMutation: 데이터 변경 → onSuccess에서 invalidateQueries
+
+3. 낙관적 업데이트 (카메라 설정 등):
+   - onMutate: 캐시 즉시 업데이트
+   - onError: 롤백
+   - onSettled: invalidateQueries로 서버 상태 동기화
+```
+
+---
+
+## 핵심 컴포넌트 상세
+
+### AuthContext
+
+```typescript
+interface AuthContextType {
+  user: User | null;          // 현재 로그인 사용자
+  isLoading: boolean;         // 인증 상태 로딩 중
+  login: (email, password) => Promise<{success, error?}>;
+  signup: (email, password, name) => Promise<{success, error?}>;
+  logout: () => Promise<void>;
+  isAdmin: boolean;           // user?.role === 'admin'
+}
+```
+
+### SseContext
+
+- **연결 관리**: 로그인 시 자동 연결, 로그아웃 시 자동 해제
+- **이벤트 핸들링**: 5가지 이벤트 타입별 React Query 캐시 무효화
+- **재연결**: 연결 오류 시 5초 후 자동 재연결
+- **토스트**: notification 이벤트 수신 시 자동 표시
+
+### WebRTCContext
+
+```typescript
+interface WebRTCContextType {
+  getStream: (cameraId) => StreamInfo | null;
+  connectStream: (cameraId, accessToken, streamUrl) => Promise<void>;
+  disconnectStream: (cameraId) => void;
+  subscribeToStream: (cameraId, callback) => () => void;  // cleanup 함수 반환
+  setActiveGridCameras: (cameraIds) => void;  // 페이지별 활성 카메라 설정
+  cleanupAll: () => void;
+}
+
+interface StreamInfo {
+  pc: RTCPeerConnection | null;
+  stream: MediaStream | null;
+  cameraId: string;
+  state: 'connecting' | 'playing' | 'error';
+  errorMessage?: string;
+}
+```
+
+### WebRTCPlayer
+
+- **Props**: `camera: ManagedCamera`
+- **기능**: 
+  - 카메라 연결 상태(connected)에 따른 UI 분기
+  - 스트림 상태(connecting/playing/error)별 UI
+  - 재연결 버튼
+- **최적화**: subscribeToStream으로 필요한 카메라만 구독
+
+### CCTVGrid
+
+- **Props**: `cameras: ManagedCamera[]`
+- **기능**:
+  - 3x2 그리드 레이아웃
+  - 페이지네이션 (6개씩)
+  - 페이지 변경 시 setActiveGridCameras 호출
+- **최적화**: 현재 페이지 카메라만 WebRTC 연결
+
+### EventDetailModal
+
+- **Props**: `event: Event, open: boolean, onClose: () => void`
+- **기능**:
+  - 이벤트 상세 정보 표시
+  - 클립 재생 (presigned URL)
+  - 클립 다운로드
+  - 위험도/유형 배지
+
+---
+
 ## 설치 및 실행
 
 ```bash

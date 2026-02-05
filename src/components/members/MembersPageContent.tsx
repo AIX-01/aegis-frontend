@@ -315,7 +315,12 @@ export function MembersPageContent() {
                             if (open) setSelectedUser(member);
                           }}>
                             <DialogTrigger asChild>
-                              <Button variant="ghost" size="icon">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled={member.role === 'admin'}
+                                title={member.role === 'admin' ? '관리자는 전체 카메라 접근 권한을 가집니다' : '카메라 권한 설정'}
+                              >
                                 <CameraIcon className="h-4 w-4" />
                               </Button>
                             </DialogTrigger>

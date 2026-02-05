@@ -27,46 +27,24 @@ const CameraPermissionEditor: React.FC<{
   cameras: CameraType[];
   onSave: (cameraIds: string[]) => void;
 }> = ({ user, cameras, onSave }) => {
-  const [allCameras, setAllCameras] = useState(user.assignedCameras.includes('all'));
   const [selectedCameras, setSelectedCameras] = useState<string[]>(
     user.assignedCameras.includes('all') ? cameras.map(c => c.id) : user.assignedCameras
   );
-
-  const handleToggleAll = (checked: boolean) => {
-    setAllCameras(checked);
-    if (checked) {
-      setSelectedCameras(cameras.map(c => c.id));
-    }
-  };
 
   const handleToggleCamera = (cameraId: string, checked: boolean) => {
     if (checked) {
       setSelectedCameras([...selectedCameras, cameraId]);
     } else {
       setSelectedCameras(selectedCameras.filter(id => id !== cameraId));
-      setAllCameras(false);
     }
   };
 
   const handleSave = () => {
-    if (allCameras) {
-      onSave(['all']);
-    } else {
-      onSave(selectedCameras);
-    }
+    onSave(selectedCameras);
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-        <Label htmlFor="all-cameras" className="font-medium">전체 카메라 접근</Label>
-        <Switch
-          id="all-cameras"
-          checked={allCameras}
-          onCheckedChange={handleToggleAll}
-        />
-      </div>
-
       <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
         {cameras.map((camera) => (
           <div
@@ -77,7 +55,6 @@ const CameraPermissionEditor: React.FC<{
               id={`camera-${camera.id}`}
               checked={selectedCameras.includes(camera.id)}
               onCheckedChange={(checked) => handleToggleCamera(camera.id, checked)}
-              disabled={allCameras}
             />
             <Label htmlFor={`camera-${camera.id}`} className="text-sm cursor-pointer flex-1">
               {camera.location} <span className="text-muted-foreground">({camera.name})</span>

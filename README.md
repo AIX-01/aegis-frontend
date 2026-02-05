@@ -659,7 +659,6 @@ Caddy 리버스 프록시를 통해 `/` 경로로 서비스됩니다.
 
 | 파일 | 문제 | 권장 조치 |
 |------|------|----------|
-| `DashboardContent.tsx`, `MembersPageContent.tsx` | 낙관적 UI 업데이트 패턴 중복 | 커스텀 훅으로 추출 |
 | 모든 페이지 컴포넌트 | `ProtectedRoute` 래핑 패턴 반복 | Next.js middleware 또는 layout에서 처리 |
 
 ### 미사용 코드

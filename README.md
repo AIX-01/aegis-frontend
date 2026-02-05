@@ -126,6 +126,7 @@ src/
 3. ProtectedRoute:
    - isLoading: 로딩 스피너
    - !user: /auth로 리다이렉트
+   - requireAdmin && !isAdmin: /로 리다이렉트
    - user: children 렌더링
 ```
 
@@ -287,7 +288,7 @@ pnpm lint
 | `/auth` | 로그인/회원가입 | 인증 페이지 | 공개 |
 | `/events` | 이벤트 목록 | 감지된 이벤트 목록 및 상세 | 로그인 |
 | `/statistics` | 통계 대시보드 | 주간 추이, 유형별 분포, 캘린더 | 로그인 |
-| `/members` | 멤버 관리 | 사용자 승인, 권한 관리 | Admin |
+| `/members` | 멤버 관리 | 멤버 목록(관리자→일반순, 이메일순), 승인 대기(신청순) 탭, 카메라 권한 관리 | Admin |
 | `/settings` | 설정 | 프로필, 비밀번호, 계정 삭제 | 로그인 |
 
 ## 상태 관리
@@ -390,7 +391,9 @@ QueryClientProvider
 
 | 메서드 | 설명 |
 |--------|------|
-| `getAll(page, size)` | 사용자 목록 (페이지네이션) |
+| `getApproved(page, size)` | 승인된 사용자 목록 (관리자→일반 순, 이메일순) |
+| `getPending(page, size)` | 미승인 사용자 목록 (최신 가입순) |
+| `getPendingCount()` | 미승인 사용자 수 |
 | `update(id, data)` | 사용자 정보 수정 |
 | `delete(id)` | 사용자 삭제 |
 | `approve(id)` | 사용자 승인 |
@@ -509,7 +512,7 @@ interface User {
   email: string;
   name: string;
   role: UserRole;
-  assignedCameras: string[];
+  assignedCameras: string[];  // 어드민은 자동으로 전체 카메라 접근 권한
   createdAt: string;
   approved: boolean;
 }
@@ -517,7 +520,7 @@ interface User {
 interface UserUpdateRequest {
   name?: string;
   role?: UserRole;
-  assignedCameras?: string[];
+  assignedCameras?: string[];  // 어드민은 수정 불가 (전체 접근)
 }
 ```
 
@@ -656,7 +659,6 @@ Caddy 리버스 프록시를 통해 `/` 경로로 서비스됩니다.
 
 | 파일 | 문제 | 권장 조치 |
 |------|------|----------|
-| `DashboardContent.tsx`, `MembersPageContent.tsx` | 낙관적 UI 업데이트 패턴 중복 | 커스텀 훅으로 추출 |
 | 모든 페이지 컴포넌트 | `ProtectedRoute` 래핑 패턴 반복 | Next.js middleware 또는 layout에서 처리 |
 
 ### 미사용 코드

@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Bell, Monitor, ClipboardList, BarChart3, Users, Settings, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { notificationsApi } from "@/lib/api";
+import { notificationsApi, usersApi } from "@/lib/api";
 import { NotificationModal } from "@/components/notifications/NotificationModal";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,6 +45,13 @@ export function Header(_props: HeaderProps) {
     queryKey: queryKeys.notifications.all,
     queryFn: () => notificationsApi.getAll(),
     enabled: !!user,
+  });
+
+  // 승인 대기 사용자 수 조회 (관리자만)
+  const { data: pendingCount = 0 } = useQuery({
+    queryKey: [...queryKeys.users.all, 'pending', 'count'],
+    queryFn: () => usersApi.getPendingCount(),
+    enabled: isAdmin,
   });
 
   // 알림 개수 = 목록 길이 (read 필드 없음)
@@ -97,13 +104,21 @@ export function Header(_props: HeaderProps) {
                   variant={isActive(item.url) ? "secondary" : "ghost"}
                   size="sm"
                   className={cn(
-                    "gap-2",
+                    "gap-2 relative",
                     isActive(item.url) && "bg-secondary"
                   )}
                   onClick={() => router.push(item.url)}
                 >
                   <item.icon className="h-4 w-4" />
                   <span className="hidden md:inline">{item.title}</span>
+                  {item.url === '/members' && pendingCount > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px]"
+                    >
+                      {pendingCount > 9 ? '9+' : pendingCount}
+                    </Badge>
+                  )}
                 </Button>
               ))}
             </nav>

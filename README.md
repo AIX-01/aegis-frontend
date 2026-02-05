@@ -527,7 +527,7 @@ interface UserUpdateRequest {
 interface DailyStat {
   day: string;
   events: number;
-  analyzed: number;
+  resolved: number;
 }
 
 interface EventTypeStat {
@@ -665,12 +665,6 @@ Caddy 리버스 프록시를 통해 `/` 경로로 서비스됩니다.
 |------|------|------|
 | `types/index.ts` | `CameraStat`, `DailyDetailStat`, `DailyReportSummary` 타입 미사용 | 정의만 있고 실제 사용처 없음 |
 
-### 타입 불일치 (버그)
-
-| 파일 | 문제 | 상세 |
-|------|------|------|
-| `StatsDashboard.tsx:112` | `analyzed` vs `resolved` | 초기값에 `analyzed: 0` 사용하나 차트는 `dataKey="resolved"` 사용. 백엔드도 `resolved` 반환 |
-| `types/index.ts:71` | `DailyStat.analyzed` | 백엔드 `StatsDto.DailyStats`는 `resolved` 필드 사용 |
 
 ### 보안 이슈
 

@@ -68,7 +68,7 @@ export interface User {
 export interface DailyStat {
   day: string;
   events: number;
-  analyzed: number;
+  resolved: number;
 }
 
 export interface EventTypeStat {

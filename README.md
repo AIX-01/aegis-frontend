@@ -102,6 +102,164 @@ src/
     └── index.ts            # TypeScript 타입 정의
 ```
 
+---
+
+## 핵심 워크플로우
+
+### Context 계층
+
+| Context | 역할 | 주요 기능 |
+|---------|------|----------|
+| `AuthContext` | 인증 상태 | user, login, logout, isAdmin |
+| `SseContext` | SSE 실시간 연결 | 알림 수신, React Query 캐시 무효화 |
+| `WebRTCContext` | WebRTC 스트림 | 카메라별 연결/해제, 상태 구독 |
+
+
+### 1. 앱 초기화 및 인증 복원 흐름
+
+```
+1. App 로드 → AuthProvider 마운트
+2. AuthContext.useEffect:
+   - POST /api/auth/refresh (Cookie의 Refresh Token 사용)
+   - 성공: Access Token 저장 → GET /api/auth/me → user 상태 설정
+   - 실패: user=null, 로그인 필요 상태
+3. ProtectedRoute:
+   - isLoading: 로딩 스피너
+   - !user: /auth로 리다이렉트
+   - user: children 렌더링
+```
+
+### 2. SSE 실시간 업데이트 흐름
+
+```
+1. 로그인 성공 → SseProvider 연결 시작
+2. GET /api/notifications/stream (fetchEventSource)
+   - Authorization: Bearer {accessToken}
+3. 이벤트 수신 시:
+   - notification: queryClient.invalidateQueries(notifications) + 토스트
+   - camera: queryClient.invalidateQueries(cameras)
+   - event: queryClient.invalidateQueries(events)
+   - event-deleted: queryClient.invalidateQueries(events)
+   - member: queryClient.invalidateQueries(users)
+4. 연결 오류 시: 5초 후 자동 재연결
+5. 로그아웃 시: AbortController로 연결 종료
+```
+
+### 3. WebRTC 스트리밍 흐름
+
+```
+1. CCTVGrid 렌더링 → setActiveGridCameras([카메라IDs])
+2. WebRTCPlayer 마운트:
+   - subscribeToStream(cameraId) → 상태 구독
+   - connectStream(cameraId, accessToken, streamUrl) 호출
+3. WebRTCContext.connectStream:
+   - RTCPeerConnection 생성
+   - addTransceiver('video', 'audio')
+   - createOffer() → POST /stream/{camera}/whep
+     - Authorization: Basic base64("_:" + accessToken)
+   - SDP Answer 수신 → setRemoteDescription
+   - ontrack → MediaStream 저장 → 구독자에게 알림
+4. WebRTCPlayer:
+   - stream 수신 → video.srcObject = stream
+   - state=error → 에러 메시지 표시
+5. 페이지 이동 시:
+   - setActiveGridCameras([새 카메라IDs])
+   - 이전 페이지 카메라 자동 disconnectStream
+```
+
+### 4. API 요청/응답 및 에러 처리 흐름
+
+```
+1. API 요청 (lib/axios.ts):
+   - 요청 인터셉터: Authorization 헤더 주입
+   - 응답 인터셉터:
+     - 401/403 에러 → refresh 시도 → 재요청
+     - refresh 실패 → /auth로 리다이렉트
+
+2. React Query 패턴:
+   - useQuery: 데이터 조회 (캐싱, staleTime: 30초)
+   - useMutation: 데이터 변경 → onSuccess에서 invalidateQueries
+
+3. 낙관적 업데이트 (카메라 설정 등):
+   - onMutate: 캐시 즉시 업데이트
+   - onError: 롤백
+   - onSettled: invalidateQueries로 서버 상태 동기화
+```
+
+---
+
+## 핵심 컴포넌트 상세
+
+### AuthContext
+
+```typescript
+interface AuthContextType {
+  user: User | null;          // 현재 로그인 사용자
+  isLoading: boolean;         // 인증 상태 로딩 중
+  login: (email, password) => Promise<{success, error?}>;
+  signup: (email, password, name) => Promise<{success, error?}>;
+  logout: () => Promise<void>;
+  isAdmin: boolean;           // user?.role === 'admin'
+}
+```
+
+### SseContext
+
+- **연결 관리**: 로그인 시 자동 연결, 로그아웃 시 자동 해제
+- **이벤트 핸들링**: 5가지 이벤트 타입별 React Query 캐시 무효화
+- **재연결**: 연결 오류 시 5초 후 자동 재연결
+- **토스트**: notification 이벤트 수신 시 자동 표시
+
+### WebRTCContext
+
+```typescript
+interface WebRTCContextType {
+  getStream: (cameraId) => StreamInfo | null;
+  connectStream: (cameraId, accessToken, streamUrl) => Promise<void>;
+  disconnectStream: (cameraId) => void;
+  subscribeToStream: (cameraId, callback) => () => void;  // cleanup 함수 반환
+  setActiveGridCameras: (cameraIds) => void;  // 페이지별 활성 카메라 설정
+  cleanupAll: () => void;
+}
+
+interface StreamInfo {
+  pc: RTCPeerConnection | null;
+  stream: MediaStream | null;
+  cameraId: string;
+  state: 'connecting' | 'playing' | 'error';
+  errorMessage?: string;
+}
+```
+
+### WebRTCPlayer
+
+- **Props**: `camera: ManagedCamera`
+- **기능**: 
+  - 카메라 연결 상태(connected)에 따른 UI 분기
+  - 스트림 상태(connecting/playing/error)별 UI
+  - 재연결 버튼
+- **최적화**: subscribeToStream으로 필요한 카메라만 구독
+
+### CCTVGrid
+
+- **Props**: `cameras: ManagedCamera[]`
+- **기능**:
+  - 3x2 그리드 레이아웃
+  - 페이지네이션 (6개씩)
+  - 페이지 변경 시 setActiveGridCameras 호출
+- **최적화**: 현재 페이지 카메라만 WebRTC 연결
+
+### EventDetailModal
+
+- **Props**: `event: Event, open: boolean, onClose: () => void`
+- **기능**:
+  - 이벤트 상세 정보 표시
+  - 클립 재생 (presigned URL)
+  - 클립 다운로드
+  - 위험도/유형 배지
+
+---
+
 ## 설치 및 실행
 
 ```bash
@@ -369,7 +527,7 @@ interface UserUpdateRequest {
 interface DailyStat {
   day: string;
   events: number;
-  analyzed: number;
+  resolved: number;
 }
 
 interface EventTypeStat {
@@ -490,28 +648,35 @@ Caddy 리버스 프록시를 통해 `/` 경로로 서비스됩니다.
 
 ---
 
-## 🔧 알려진 이슈
+## 🐛 Known Issues
+
+> 최종 감사일: 2026-02-05
 
 ### 중복 코드
 
-#### 낙관적 UI 업데이트 패턴 중복
-**파일들**: `DashboardContent.tsx`, `MembersPageContent.tsx`
+| 파일 | 문제 | 권장 조치 |
+|------|------|----------|
+| `DashboardContent.tsx`, `MembersPageContent.tsx` | 낙관적 UI 업데이트 패턴 중복 | 커스텀 훅으로 추출 |
+| 모든 페이지 컴포넌트 | `ProtectedRoute` 래핑 패턴 반복 | Next.js middleware 또는 layout에서 처리 |
 
-카메라 설정 변경 시 낙관적 UI 업데이트 로직이 여러 컴포넌트에 중복되어 있음.
+### 미사용 코드
 
-**해결 방안**: 커스텀 훅으로 추출
+| 파일 | 문제 | 상세 |
+|------|------|------|
+| `types/index.ts` | `CameraStat`, `DailyDetailStat`, `DailyReportSummary` 타입 미사용 | 정의만 있고 실제 사용처 없음 |
 
-#### ProtectedRoute 래핑 패턴
-**파일들**: 모든 페이지 컴포넌트
 
-각 페이지에서 `ProtectedRoute`로 래핑하는 패턴이 반복됨.
+### 보안 이슈
 
-**해결 방안**: Next.js middleware 또는 layout에서 처리
+| 파일 | 문제 | 심각도 | 권장 조치 |
+|------|------|--------|----------|
+| `lib/axios.ts` | Access Token 메모리 저장 | 🟢 낮음 | XSS 취약점 시 노출 가능, CSP 헤더 강화 권장 |
 
-### 구조 개선
+### 구조 개선 필요
 
-#### 타입 동기화
-Backend API 변경 시 Frontend 타입을 수동으로 동기화해야 함.
+| 항목 | 설명 |
+|------|------|
+| 타입 동기화 | Backend API 변경 시 Frontend 타입을 수동 동기화해야 함. OpenAPI Generator 도입 권장 |
+| 에러 핸들링 | API 에러 응답 형식이 통일되지 않음. 공통 에러 핸들러 필요 |
 
-**해결 방안**: OpenAPI Generator 도입 또는 동기화 스크립트 작성
 

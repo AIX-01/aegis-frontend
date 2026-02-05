@@ -33,46 +33,58 @@ interface EventDetailModalProps {
 }
 
 export function EventDetailModal({ event, open, onOpenChange }: EventDetailModalProps) {
-  const [clipUrl, setClipUrl] = useState<string | null>(null);
   const [clipLoading, setClipLoading] = useState(false);
   const [clipError, setClipError] = useState(false);
+  const [clipReady, setClipReady] = useState(false);
+  const [clipUrl, setClipUrl] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const clipUrlRef = useRef<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (open && event?.id) {
-      if (!event.clipUrl) {
-        setClipUrl(null);
-        setClipLoading(false);
-        setClipError(false);
-        return;
-      }
-
-      setClipLoading(true);
+    if (!open || !event?.id || !event?.clipUrl) {
+      setClipLoading(false);
       setClipError(false);
-
-      eventsApi.getClipBlobUrl(event.id)
-        .then((url) => {
-          clipUrlRef.current = url;
-          setClipUrl(url);
-        })
-        .catch(() => {
-          setClipError(true);
-        })
-        .finally(() => {
-          setClipLoading(false);
-        });
+      setClipReady(false);
+      setClipUrl(null);
+      return;
     }
 
-    return () => {
-      if (clipUrlRef.current) {
-        URL.revokeObjectURL(clipUrlRef.current);
-        clipUrlRef.current = null;
-        setClipUrl(null);
-      }
-    };
+    setClipLoading(true);
+    setClipError(false);
+    setClipReady(false);
+
+    // presigned URL 요청
+    eventsApi.getClipUrl(event.id)
+      .then((url) => {
+        setClipUrl(url);
+        setClipLoading(false);
+      })
+      .catch(() => {
+        setClipError(true);
+        setClipLoading(false);
+      });
   }, [open, event?.id, event?.clipUrl]);
+
+  // 비디오 로드 이벤트 핸들러
+  useEffect(() => {
+    if (!clipUrl || !videoRef.current) return;
+
+    const video = videoRef.current;
+    video.src = clipUrl;
+    video.load();
+
+    const handleCanPlay = () => setClipReady(true);
+    const handleError = () => setClipError(true);
+
+    video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('error', handleError);
+
+    return () => {
+      video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('error', handleError);
+    };
+  }, [clipUrl]);
+
 
   // 클립 다운로드
   const handleClipDownload = async () => {
@@ -203,23 +215,27 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
           {/* 좌측: 영상 영역 */}
           <div className="w-1/2 p-6 border-r flex flex-col">
             <div className="relative aspect-video bg-muted rounded-lg overflow-hidden flex-shrink-0">
+              {/* 로딩 오버레이 */}
               {clipLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50 z-10">
                   <div className="text-center">
                     <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground">클립 로딩 중...</p>
                   </div>
                 </div>
               )}
-              {!clipLoading && clipUrl && !clipError ? (
+
+              {/* 비디오 플레이어 */}
+              {event.clipUrl && (
                 <video
                   ref={videoRef}
-                  src={clipUrl}
-                  className="w-full h-full object-contain bg-black"
-                  onError={() => setClipError(true)}
+                  className={`w-full h-full object-contain bg-black ${!clipReady || clipError ? 'hidden' : ''}`}
                   controls
                 />
-              ) : !clipLoading && (
+              )}
+
+              {/* 에러/없음 상태 */}
+              {!clipLoading && (!clipReady || clipError || !event.clipUrl) && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
                   <div className="text-center">
                     <div className="w-16 h-16 rounded-full bg-muted-foreground/10 flex items-center justify-center mx-auto mb-3">
@@ -236,7 +252,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                 </div>
               )}
             </div>
-            {clipUrl && !clipError && (
+            {clipReady && !clipError && (
               <div className="mt-3 flex justify-end">
                 <Button size="sm" variant="outline" onClick={handleClipDownload}>
                   <Download className="h-4 w-4 mr-2" />

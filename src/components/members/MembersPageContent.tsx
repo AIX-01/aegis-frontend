@@ -77,27 +77,45 @@ export function MembersPageContent() {
   const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [page, setPage] = useState(0);
+
+  // 각 탭별 페이지 상태
+  const [approvedPage, setApprovedPage] = useState(0);
+  const [pendingPage, setPendingPage] = useState(0);
   const pageSize = 20;
 
   // 스크롤 컨테이너 참조
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
   // 페이지 변경 핸들러 (스크롤 상단 이동)
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
+  const handleApprovedPageChange = (newPage: number) => {
+    setApprovedPage(newPage);
     scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // React Query로 사용자 목록 조회 (SSE에서 자동 갱신)
-  const { data: usersPage } = useQuery({
-    queryKey: [...queryKeys.users.all, page, pageSize],
-    queryFn: () => usersApi.getAll(page, pageSize),
+  const handlePendingPageChange = (newPage: number) => {
+    setPendingPage(newPage);
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // 승인된 사용자 목록 조회 (관리자→일반 순, 이메일순)
+  const { data: approvedUsersPage } = useQuery({
+    queryKey: [...queryKeys.users.all, 'approved', approvedPage, pageSize],
+    queryFn: () => usersApi.getApproved(approvedPage, pageSize),
     enabled: isAdmin,
   });
 
-  const users = usersPage?.content ?? [];
-  const totalPages = usersPage?.totalPages ?? 0;
+  // 미승인 사용자 목록 조회 (최신 가입순)
+  const { data: pendingUsersPage } = useQuery({
+    queryKey: [...queryKeys.users.all, 'pending', pendingPage, pageSize],
+    queryFn: () => usersApi.getPending(pendingPage, pageSize),
+    enabled: isAdmin,
+  });
+
+  const approvedUsers = approvedUsersPage?.content ?? [];
+  const approvedTotalPages = approvedUsersPage?.totalPages ?? 0;
+
+  const pendingUsers = pendingUsersPage?.content ?? [];
+  const pendingTotalPages = pendingUsersPage?.totalPages ?? 0;
 
   // React Query로 카메라 전체 목록 조회 (카메라 할당용)
   const { data: cameras = [] } = useQuery({
@@ -213,8 +231,6 @@ export function MembersPageContent() {
     }
   };
 
-  const pendingUsers = users.filter((u: User) => !u.approved);
-  const approvedUsers = users.filter((u: User) => u.approved);
 
 
   return (
@@ -232,9 +248,9 @@ export function MembersPageContent() {
                 <TabsTrigger value="members">멤버 목록</TabsTrigger>
                 <TabsTrigger value="pending" className="relative">
                   승인 대기
-                  {pendingUsers.length > 0 && (
+                  {(pendingUsersPage?.totalElements ?? 0) > 0 && (
                     <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                      {pendingUsers.length}
+                      {pendingUsersPage?.totalElements}
                     </Badge>
                   )}
                 </TabsTrigger>
@@ -330,80 +346,109 @@ export function MembersPageContent() {
                   ))}
                 </TableBody>
               </Table>
+              {/* 승인된 사용자 페이지네이션 */}
+              {approvedTotalPages > 1 && (
+                <div className="flex justify-center items-center gap-4 pt-4 border-t flex-shrink-0 mt-4">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleApprovedPageChange(Math.max(0, approvedPage - 1))}
+                    className="h-8 w-8"
+                    disabled={approvedPage === 0}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm text-muted-foreground min-w-[60px] text-center">
+                    {approvedPage + 1} / {approvedTotalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleApprovedPageChange(Math.min(approvedTotalPages - 1, approvedPage + 1))}
+                    className="h-8 w-8"
+                    disabled={approvedPage >= approvedTotalPages - 1}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </TabsContent>
 
-            <TabsContent value="pending" className="flex-1 overflow-auto m-0">
+            <TabsContent value="pending" className="flex-1 overflow-auto m-0 flex flex-col">
               {pendingUsers.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center py-12">
                   <CheckCircle className="h-12 w-12 text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">승인 대기 중인 요청이 없습니다</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>이름</TableHead>
-                      <TableHead>이메일</TableHead>
-                      <TableHead>신청일</TableHead>
-                      <TableHead className="text-right">관리</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pendingUsers.map((pending) => (
-                      <TableRow key={pending.id}>
-                        <TableCell className="font-medium">{pending.name}</TableCell>
-                        <TableCell>{pending.email}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {new Date(pending.createdAt).toLocaleDateString('ko-KR')}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleReject(pending.id)}
-                            >
-                              거절
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => handleApprove(pending.id)}
-                            >
-                              승인
-                            </Button>
-                          </div>
-                        </TableCell>
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>이름</TableHead>
+                        <TableHead>이메일</TableHead>
+                        <TableHead>신청일</TableHead>
+                        <TableHead className="text-right">관리</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {pendingUsers.map((pending) => (
+                        <TableRow key={pending.id}>
+                          <TableCell className="font-medium">{pending.name}</TableCell>
+                          <TableCell>{pending.email}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {new Date(pending.createdAt).toLocaleDateString('ko-KR')}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleReject(pending.id)}
+                              >
+                                거절
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleApprove(pending.id)}
+                              >
+                                승인
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  {/* 미승인 사용자 페이지네이션 */}
+                  {pendingTotalPages > 1 && (
+                    <div className="flex justify-center items-center gap-4 pt-4 border-t flex-shrink-0 mt-auto">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePendingPageChange(Math.max(0, pendingPage - 1))}
+                        className="h-8 w-8"
+                        disabled={pendingPage === 0}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm text-muted-foreground min-w-[60px] text-center">
+                        {pendingPage + 1} / {pendingTotalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePendingPageChange(Math.min(pendingTotalPages - 1, pendingPage + 1))}
+                        className="h-8 w-8"
+                        disabled={pendingPage >= pendingTotalPages - 1}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </TabsContent>
-
-            {/* 페이지네이션 */}
-            <div className="flex justify-center items-center gap-4 pt-4 border-t flex-shrink-0">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(Math.max(0, page - 1))}
-                className="h-8 w-8"
-                disabled={page === 0}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm text-muted-foreground min-w-[60px] text-center">
-                {page + 1} / {Math.max(1, totalPages)}
-              </span>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(Math.min(totalPages - 1, page + 1))}
-                className="h-8 w-8"
-                disabled={totalPages <= 1 || page >= totalPages - 1}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
           </CardContent>
         </Tabs>
       </Card>

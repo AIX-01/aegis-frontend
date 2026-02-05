@@ -138,6 +138,25 @@ export const statsApi = {
 
 // Users API (Admin)
 export const usersApi = {
+  // 승인된 사용자 목록 (관리자→일반 순, 이메일순)
+  getApproved: async (page = 0, size = 20): Promise<PageResponse<User>> => {
+    const response = await api.get<PageResponse<User>>(`/api/users?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  // 미승인 사용자 목록 (최신 가입순)
+  getPending: async (page = 0, size = 20): Promise<PageResponse<User>> => {
+    const response = await api.get<PageResponse<User>>(`/api/users/pending?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  // 미승인 사용자 수
+  getPendingCount: async (): Promise<number> => {
+    const response = await api.get<{ count: number }>('/api/users/pending/count');
+    return response.data.count;
+  },
+
+  // 기존 getAll은 getApproved로 대체 (하위 호환)
   getAll: async (page = 0, size = 20): Promise<PageResponse<User>> => {
     const response = await api.get<PageResponse<User>>(`/api/users?page=${page}&size=${size}`);
     return response.data;

@@ -72,7 +72,7 @@ const CameraPermissionEditor: React.FC<{
 
 export function MembersPageContent() {
   const router = useRouter();
-  const { user: currentUser, isAdmin } = useAuth();
+  const { user: currentUser, isAdmin, isLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -117,6 +117,19 @@ export function MembersPageContent() {
   const pendingUsers = pendingUsersPage?.content ?? [];
   const pendingTotalPages = pendingUsersPage?.totalPages ?? 0;
 
+  // SSE 업데이트로 totalPages가 변경되면 현재 페이지 범위 조정
+  useEffect(() => {
+    if (approvedTotalPages > 0 && approvedPage >= approvedTotalPages) {
+      setApprovedPage(approvedTotalPages - 1);
+    }
+  }, [approvedTotalPages, approvedPage]);
+
+  useEffect(() => {
+    if (pendingTotalPages > 0 && pendingPage >= pendingTotalPages) {
+      setPendingPage(pendingTotalPages - 1);
+    }
+  }, [pendingTotalPages, pendingPage]);
+
   // React Query로 카메라 전체 목록 조회 (카메라 할당용)
   const { data: cameras = [] } = useQuery({
     queryKey: queryKeys.cameras.managed,
@@ -126,11 +139,12 @@ export function MembersPageContent() {
 
 
   useEffect(() => {
+    if (isLoading) return;
     if (!isAdmin) {
       router.push('/');
       return;
     }
-  }, [isAdmin, router]);
+  }, [isAdmin, isLoading, router]);
 
   const refreshData = async () => {
     await queryClient.invalidateQueries({ queryKey: queryKeys.users.all });

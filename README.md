@@ -106,48 +106,14 @@ src/
 
 ## 핵심 워크플로우
 
-### 시스템 아키텍처 다이어그램
+### Context 계층
 
-```mermaid
-graph TD
-    subgraph Browser["브라우저"]
-        App[Next.js App]
-        
-        subgraph Contexts["전역 Context"]
-            AuthCtx[AuthContext]
-            SseCtx[SseContext]
-            WebRTCCtx[WebRTCContext]
-        end
-        
-        subgraph Pages["페이지"]
-            Dashboard[/ 대시보드]
-            Events[/events 이벤트]
-            Stats[/statistics 통계]
-            Members[/members 멤버관리]
-            Settings[/settings 설정]
-        end
-        
-        QueryClient[React Query]
-    end
+| Context | 역할 | 주요 기능 |
+|---------|------|----------|
+| `AuthContext` | 인증 상태 | user, login, logout, isAdmin |
+| `SseContext` | SSE 실시간 연결 | 알림 수신, React Query 캐시 무효화 |
+| `WebRTCContext` | WebRTC 스트림 | 카메라별 연결/해제, 상태 구독 |
 
-    subgraph External["외부"]
-        Backend[Backend API]
-        MediaMTX[MediaMTX WebRTC]
-        SSE[SSE Stream]
-    end
-
-    App --> AuthCtx
-    AuthCtx --> SseCtx
-    SseCtx --> WebRTCCtx
-    
-    Pages --> QueryClient
-    QueryClient --> Backend
-    
-    SseCtx --> SSE
-    SSE --> QueryClient
-    
-    WebRTCCtx --> MediaMTX
-```
 
 ### 1. 앱 초기화 및 인증 복원 흐름
 
@@ -699,6 +665,12 @@ Caddy 리버스 프록시를 통해 `/` 경로로 서비스됩니다.
 |------|------|------|
 | `types/index.ts` | `CameraStat`, `DailyDetailStat`, `DailyReportSummary` 타입 미사용 | 정의만 있고 실제 사용처 없음 |
 
+### 타입 불일치 (버그)
+
+| 파일 | 문제 | 상세 |
+|------|------|------|
+| `StatsDashboard.tsx:112` | `analyzed` vs `resolved` | 초기값에 `analyzed: 0` 사용하나 차트는 `dataKey="resolved"` 사용. 백엔드도 `resolved` 반환 |
+| `types/index.ts:71` | `DailyStat.analyzed` | 백엔드 `StatsDto.DailyStats`는 `resolved` 필드 사용 |
 
 ### 보안 이슈
 

@@ -490,28 +490,42 @@ Caddy 리버스 프록시를 통해 `/` 경로로 서비스됩니다.
 
 ---
 
-## 🔧 알려진 이슈
+## 🐛 Known Issues
+
+> 최종 감사일: 2026-02-05
 
 ### 중복 코드
 
-#### 낙관적 UI 업데이트 패턴 중복
-**파일들**: `DashboardContent.tsx`, `MembersPageContent.tsx`
+| 파일 | 문제 | 권장 조치 |
+|------|------|----------|
+| `DashboardContent.tsx`, `MembersPageContent.tsx` | 낙관적 UI 업데이트 패턴 중복 | 커스텀 훅으로 추출 |
+| 모든 페이지 컴포넌트 | `ProtectedRoute` 래핑 패턴 반복 | Next.js middleware 또는 layout에서 처리 |
 
-카메라 설정 변경 시 낙관적 UI 업데이트 로직이 여러 컴포넌트에 중복되어 있음.
+### 미사용 코드
 
-**해결 방안**: 커스텀 훅으로 추출
+| 파일 | 문제 | 상세 |
+|------|------|------|
+| `types/index.ts` | `CameraStat`, `DailyDetailStat`, `DailyReportSummary` 타입 미사용 | 정의만 있고 실제 사용처 없음 |
+| `lib/api.ts:88-89` | `eventsApi.getClipUrl` | 백엔드에 해당 엔드포인트 없음 (`/api/events/{id}/clip-url`) |
 
-#### ProtectedRoute 래핑 패턴
-**파일들**: 모든 페이지 컴포넌트
+### 논리적 불일치
 
-각 페이지에서 `ProtectedRoute`로 래핑하는 패턴이 반복됨.
+| 파일 | 문제 | 상세 |
+|------|------|------|
+| `lib/api.ts` | 클립 관련 API 불일치 | `getClipUrl`, `downloadClip`이 백엔드 실제 API와 다름 |
+| `types/index.ts:68` | `DailyStat.analyzed` 필드 | 백엔드 응답은 `resolved`이나 타입은 `analyzed` |
 
-**해결 방안**: Next.js middleware 또는 layout에서 처리
+### 보안 이슈
 
-### 구조 개선
+| 파일 | 문제 | 심각도 | 권장 조치 |
+|------|------|--------|----------|
+| `lib/axios.ts` | Access Token 메모리 저장 | 🟢 낮음 | XSS 취약점 시 노출 가능, CSP 헤더 강화 권장 |
 
-#### 타입 동기화
-Backend API 변경 시 Frontend 타입을 수동으로 동기화해야 함.
+### 구조 개선 필요
 
-**해결 방안**: OpenAPI Generator 도입 또는 동기화 스크립트 작성
+| 항목 | 설명 |
+|------|------|
+| 타입 동기화 | Backend API 변경 시 Frontend 타입을 수동 동기화해야 함. OpenAPI Generator 도입 권장 |
+| 에러 핸들링 | API 에러 응답 형식이 통일되지 않음. 공통 에러 핸들러 필요 |
+
 

@@ -427,7 +427,7 @@ export function StatsDashboard() {
                   />
                   <Legend />
                   <Bar dataKey="events" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="발생" />
-                  <Bar dataKey="analyzed" fill="hsl(142 76% 36%)" radius={[4, 4, 0, 0]} name="분석완료" />
+                  <Bar dataKey="resolved" fill="hsl(142 76% 36%)" radius={[4, 4, 0, 0]} name="분석완료" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

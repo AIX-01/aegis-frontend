@@ -698,14 +698,7 @@ Caddy 리버스 프록시를 통해 `/` 경로로 서비스됩니다.
 | 파일 | 문제 | 상세 |
 |------|------|------|
 | `types/index.ts` | `CameraStat`, `DailyDetailStat`, `DailyReportSummary` 타입 미사용 | 정의만 있고 실제 사용처 없음 |
-| `lib/api.ts:88-89` | `eventsApi.getClipUrl` | 백엔드에 해당 엔드포인트 없음 (`/api/events/{id}/clip-url`) |
 
-### 논리적 불일치
-
-| 파일 | 문제 | 상세 |
-|------|------|------|
-| `lib/api.ts` | 클립 관련 API 불일치 | `getClipUrl`, `downloadClip`이 백엔드 실제 API와 다름 |
-| `types/index.ts:68` | `DailyStat.analyzed` 필드 | 백엔드 응답은 `resolved`이나 타입은 `analyzed` |
 
 ### 보안 이슈
 

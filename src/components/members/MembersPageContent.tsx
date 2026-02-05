@@ -21,27 +21,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trash2, Camera as CameraIcon, CheckCircle, ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-// Camera Permission Editor Component
+// 카메라 권한 편집 컴포넌트
 const CameraPermissionEditor: React.FC<{
   user: User;
   cameras: CameraType[];
   onSave: (cameraIds: string[]) => void;
 }> = ({ user, cameras, onSave }) => {
-  const [selectedCameras, setSelectedCameras] = useState<string[]>(
-    user.assignedCameras.includes('all') ? cameras.map(c => c.id) : user.assignedCameras
-  );
+  const [selectedCameras, setSelectedCameras] = useState<string[]>(user.assignedCameras);
 
   const handleToggleCamera = (cameraId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedCameras([...selectedCameras, cameraId]);
-    } else {
-      setSelectedCameras(selectedCameras.filter(id => id !== cameraId));
-    }
+    setSelectedCameras(prev =>
+      checked ? [...prev, cameraId] : prev.filter(id => id !== cameraId)
+    );
   };
 
-  const handleSave = () => {
-    onSave(selectedCameras);
-  };
+  const handleSave = () => onSave(selectedCameras);
 
   return (
     <div className="space-y-4">
@@ -75,8 +69,8 @@ export function MembersPageContent() {
   const { user: currentUser, isAdmin, isLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
 
   // 각 탭별 페이지 상태
   const [approvedPage, setApprovedPage] = useState(0);
@@ -146,9 +140,8 @@ export function MembersPageContent() {
     }
   }, [isAdmin, isLoading, router]);
 
-  const refreshData = async () => {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.cameras.all });
+  const refreshData = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
   };
 
   const handleApprove = async (userId: string) => {
@@ -272,21 +265,22 @@ export function MembersPageContent() {
             </div>
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden flex flex-col">
-            <TabsContent value="members" ref={scrollContainerRef} className="flex-1 overflow-auto m-0">
+            <TabsContent value="members" className="flex-1 m-0 data-[state=active]:flex flex-col overflow-hidden">
               {/* Members Table */}
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>이름</TableHead>
-                    <TableHead>이메일</TableHead>
-                    <TableHead>역할</TableHead>
-                    <TableHead>카메라 권한</TableHead>
-                    <TableHead>가입일</TableHead>
-                    <TableHead className="text-right">관리</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {approvedUsers.map((member) => (
+              <div ref={scrollContainerRef} className="flex-1 overflow-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>이름</TableHead>
+                      <TableHead>이메일</TableHead>
+                      <TableHead>역할</TableHead>
+                      <TableHead>카메라 권한</TableHead>
+                      <TableHead>가입일</TableHead>
+                      <TableHead className="text-right">관리</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {approvedUsers.map((member) => (
                     <TableRow key={member.id}>
                       <TableCell className="font-medium">{member.name}</TableCell>
                       <TableCell>{member.email}</TableCell>
@@ -317,9 +311,9 @@ export function MembersPageContent() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Dialog open={isEditDialogOpen && selectedUser?.id === member.id} onOpenChange={(open) => {
+                          <Dialog open={isEditDialogOpen && editingUserId === member.id} onOpenChange={(open) => {
                             setIsEditDialogOpen(open);
-                            if (open) setSelectedUser(member);
+                            if (open) setEditingUserId(member.id);
                           }}>
                             <DialogTrigger asChild>
                               <Button
@@ -358,44 +352,43 @@ export function MembersPageContent() {
                       </TableCell>
                     </TableRow>
                   ))}
-                </TableBody>
-              </Table>
+                  </TableBody>
+                </Table>
+              </div>
               {/* 승인된 사용자 페이지네이션 */}
-              {approvedTotalPages > 1 && (
-                <div className="flex justify-center items-center gap-4 pt-4 border-t flex-shrink-0 mt-4">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleApprovedPageChange(Math.max(0, approvedPage - 1))}
-                    className="h-8 w-8"
-                    disabled={approvedPage === 0}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm text-muted-foreground min-w-[60px] text-center">
-                    {approvedPage + 1} / {approvedTotalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleApprovedPageChange(Math.min(approvedTotalPages - 1, approvedPage + 1))}
-                    className="h-8 w-8"
-                    disabled={approvedPage >= approvedTotalPages - 1}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+              <div className="flex justify-center items-center gap-4 pt-4 border-t flex-shrink-0">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleApprovedPageChange(Math.max(0, approvedPage - 1))}
+                  className="h-8 w-8"
+                  disabled={approvedPage === 0}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-muted-foreground min-w-[60px] text-center">
+                  {approvedPage + 1} / {Math.max(1, approvedTotalPages)}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleApprovedPageChange(Math.min(approvedTotalPages - 1, approvedPage + 1))}
+                  className="h-8 w-8"
+                  disabled={approvedTotalPages <= 1 || approvedPage >= approvedTotalPages - 1}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </TabsContent>
 
-            <TabsContent value="pending" className="flex-1 overflow-auto m-0 flex flex-col">
-              {pendingUsers.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center py-12">
-                  <CheckCircle className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">승인 대기 중인 요청이 없습니다</p>
-                </div>
-              ) : (
-                <>
+            <TabsContent value="pending" className="flex-1 m-0 data-[state=active]:flex flex-col overflow-hidden">
+              <div className="flex-1 overflow-auto flex flex-col">
+                {pendingUsers.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center">
+                    <CheckCircle className="h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">승인 대기 중인 요청이 없습니다</p>
+                  </div>
+                ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -434,34 +427,32 @@ export function MembersPageContent() {
                       ))}
                     </TableBody>
                   </Table>
-                  {/* 미승인 사용자 페이지네이션 */}
-                  {pendingTotalPages > 1 && (
-                    <div className="flex justify-center items-center gap-4 pt-4 border-t flex-shrink-0 mt-auto">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handlePendingPageChange(Math.max(0, pendingPage - 1))}
-                        className="h-8 w-8"
-                        disabled={pendingPage === 0}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <span className="text-sm text-muted-foreground min-w-[60px] text-center">
-                        {pendingPage + 1} / {pendingTotalPages}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handlePendingPageChange(Math.min(pendingTotalPages - 1, pendingPage + 1))}
-                        className="h-8 w-8"
-                        disabled={pendingPage >= pendingTotalPages - 1}
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
+                )}
+              </div>
+              {/* 미승인 사용자 페이지네이션 */}
+              <div className="flex justify-center items-center gap-4 pt-4 border-t flex-shrink-0">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePendingPageChange(Math.max(0, pendingPage - 1))}
+                  className="h-8 w-8"
+                  disabled={pendingPage === 0}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-muted-foreground min-w-[60px] text-center">
+                  {pendingPage + 1} / {Math.max(1, pendingTotalPages)}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePendingPageChange(Math.min(pendingTotalPages - 1, pendingPage + 1))}
+                  className="h-8 w-8"
+                  disabled={pendingTotalPages <= 1 || pendingPage >= pendingTotalPages - 1}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </TabsContent>
           </CardContent>
         </Tabs>

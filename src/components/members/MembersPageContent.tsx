@@ -340,14 +340,30 @@ export function MembersPageContent() {
                             </DialogContent>
                           </Dialog>
 
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(member.id)}
-                            disabled={member.id === currentUser?.id}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled={member.id === currentUser?.id}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>멤버 삭제</DialogTitle>
+                                <DialogDescription>
+                                  {member.name}님을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <DialogFooter>
+                                <Button variant="destructive" onClick={() => handleDelete(member.id)}>
+                                  삭제
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
                         </div>
                       </TableCell>
                     </TableRow>

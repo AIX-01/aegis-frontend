@@ -12,7 +12,6 @@ import type { ManagedCamera } from "@/types";
 import {
   ClipboardList,
   Filter,
-  X,
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
@@ -359,7 +358,18 @@ export function EventsPageContent() {
 
                     {/* 기간 필터 */}
                     <div className="space-y-3">
-                      <Label className="text-sm font-medium">기간</Label>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium">기간</Label>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => setDateRange(undefined)}
+                          disabled={!dateRange?.from}
+                        >
+                          전체 선택
+                        </Button>
+                      </div>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button variant="outline" className="w-full justify-start text-left font-normal">
@@ -374,7 +384,7 @@ export function EventsPageContent() {
                                 format(dateRange.from, "yyyy.MM.dd", { locale: ko })
                               )
                             ) : (
-                              <span className="text-muted-foreground">기간 선택</span>
+                              <span className="text-muted-foreground">전체 선택됨</span>
                             )}
                           </Button>
                         </PopoverTrigger>
@@ -388,17 +398,6 @@ export function EventsPageContent() {
                           />
                         </PopoverContent>
                       </Popover>
-                      {dateRange?.from && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs"
-                          onClick={() => setDateRange(undefined)}
-                        >
-                          <X className="h-3 w-3 mr-1" />
-                          기간 초기화
-                        </Button>
-                      )}
                     </div>
                   </div>
 

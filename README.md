@@ -97,7 +97,7 @@ src/
 │   ├── api.ts              # API 클라이언트
 │   ├── axios.ts            # Axios 인스턴스 및 인터셉터
 │   ├── queryKeys.ts        # React Query 키 관리
-│   └── utils.ts            # 유틸리티 함수 (cn)
+│   └── utils.ts            # 유틸리티 함수 (cn, getEventTypeKorean)
 └── types/
     └── index.ts            # TypeScript 타입 정의
 ```
@@ -272,6 +272,13 @@ interface StreamInfo {
 - 이벤트 목록 카드 (risk별 왼쪽 라인 색상)
 - 배지 순서: 타입 → 분석상태 → 카메라
 - 우측에 발생 시각 및 경과 시간 표시
+- `getEventTypeKorean` 유틸리티 사용
+
+### EventsPageContent
+
+- 서버사이드 필터링 (위험도, 유형, 상태, 카메라, 기간)
+- 필터 적용 없이 닫으면 UI 상태 자동 복원
+- 페이지네이션과 필터 상태 연동
 
 ---
 

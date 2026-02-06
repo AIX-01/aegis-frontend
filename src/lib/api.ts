@@ -98,10 +98,35 @@ export const eventsApi = {
     params.append('size', size.toString());
 
     if (filters) {
-      filters.risks?.forEach(r => params.append('risks', r));
-      filters.types?.forEach(t => params.append('types', t));
-      filters.statuses?.forEach(s => params.append('statuses', s));
-      filters.cameraIds?.forEach(c => params.append('cameraIds', c));
+      // 빈 배열이면 _empty 마커 전송, 값이 있으면 각 값 전송
+      if (filters.risks !== undefined) {
+        if (filters.risks.length === 0) {
+          params.append('risks', '_empty');
+        } else {
+          filters.risks.forEach(r => params.append('risks', r));
+        }
+      }
+      if (filters.types !== undefined) {
+        if (filters.types.length === 0) {
+          params.append('types', '_empty');
+        } else {
+          filters.types.forEach(t => params.append('types', t));
+        }
+      }
+      if (filters.statuses !== undefined) {
+        if (filters.statuses.length === 0) {
+          params.append('statuses', '_empty');
+        } else {
+          filters.statuses.forEach(s => params.append('statuses', s));
+        }
+      }
+      if (filters.cameraIds !== undefined) {
+        if (filters.cameraIds.length === 0) {
+          params.append('cameraIds', '_empty');
+        } else {
+          filters.cameraIds.forEach(c => params.append('cameraIds', c));
+        }
+      }
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
     }

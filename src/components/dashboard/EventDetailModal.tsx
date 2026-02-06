@@ -338,33 +338,33 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
         {/* 하단 버튼 영역 */}
         <div className="p-4 border-t flex justify-between items-center">
           <div className="flex gap-2">
-            {event.report && (
-              <>
-                <Button variant="outline" onClick={handleOpenReport}>
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  보고서 보기
+            <Button
+              variant="outline"
+              onClick={handleOpenReport}
+              disabled={!event.report}
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              보고서 보기
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={!event.report}>
+                  <Download className="h-4 w-4 mr-2" />
+                  보고서 다운로드
+                  <ChevronDown className="h-4 w-4 ml-2" />
                 </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      <Download className="h-4 w-4 mr-2" />
-                      보고서 다운로드
-                      <ChevronDown className="h-4 w-4 ml-2" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => handleDownloadReport('pdf')}>
-                      <FileText className="h-4 w-4 mr-2" />
-                      PDF 형식
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDownloadReport('docx')}>
-                      <FileText className="h-4 w-4 mr-2" />
-                      DOCX 형식 (Word/한글 호환)
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleDownloadReport('pdf')}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  PDF 형식
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDownloadReport('docx')}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  DOCX 형식 (Word/한글 호환)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <Button
             variant="outline"

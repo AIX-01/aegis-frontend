@@ -1,11 +1,12 @@
 'use client';
 
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { ko } from "date-fns/locale";
 import type { Event } from "@/types";
 import { useState } from "react";
 import { EventDetailModal } from "./EventDetailModal";
 import { EventTypeBadge, EventStatusBadge, EventIcon } from "@/components/common/EventBadges";
+import { Clock } from "lucide-react";
 
 interface EventLogProps {
   events: Event[];
@@ -40,33 +41,37 @@ export function EventLog({ events }: EventLogProps) {
             onClick={() => handleEventClick(event)}
             className="p-3 rounded-lg border bg-card/50 border-border/50 cursor-pointer"
           >
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5">
-                  <EventIcon risk={event.risk} />
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5">
+                <EventIcon risk={event.risk} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <EventTypeBadge type={event.type} risk={event.risk} size="sm" />
+                  <EventStatusBadge status={event.status} size="sm" />
+                  <span className="text-xs text-muted-foreground">
+                    {event.cameraName}
+                  </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <EventTypeBadge type={event.type} risk={event.risk} size="sm" />
-                    <span className="text-xs text-muted-foreground">
-                      {event.cameraName}
-                    </span>
-                  </div>
-                  <p className="text-sm mt-1 font-medium">
-                    {event.cameraLocation}에서 {getEventTypeKorean(event.type)} 감지
+                <p className="text-sm mt-1 font-medium">
+                  {event.cameraLocation}에서 {getEventTypeKorean(event.type)} 감지
+                </p>
+                {event.summary && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                    {event.summary}
                   </p>
-                  {event.summary && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                      {event.summary}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(event.occurredAt), { addSuffix: true, locale: ko })}
-                    </span>
-                    <EventStatusBadge status={event.status} size="sm" />
-                  </div>
+                )}
+              </div>
+              <div className="text-right text-xs text-muted-foreground flex-shrink-0">
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {format(new Date(event.occurredAt), 'yyyy.MM.dd HH:mm:ss', { locale: ko })}
+                </div>
+                <div className="mt-0.5">
+                  {formatDistanceToNow(new Date(event.occurredAt), { addSuffix: true, locale: ko })}
                 </div>
               </div>
+            </div>
           </div>
         ))}
       </div>

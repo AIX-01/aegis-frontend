@@ -6,6 +6,7 @@ import type { Event, Notification } from "@/types";
 
 interface EventTypeBadgeProps {
   type: Event['type'];
+  risk: Event['risk'];
   size?: 'sm' | 'default';
 }
 
@@ -25,10 +26,22 @@ interface NotificationTypeBadgeProps {
   size?: 'sm' | 'default';
 }
 
+// risk에 따른 배지 스타일 반환
+const getRiskBadgeStyle = (risk: Event['risk']) => {
+  switch (risk) {
+    case 'abnormal':
+      return 'bg-destructive text-destructive-foreground';
+    case 'suspicious':
+      return 'bg-warning text-warning-foreground';
+    default:
+      return 'bg-muted text-muted-foreground';
+  }
+};
 
-// 이벤트 타입 배지 (흰색 배경, 검은 글씨)
-export function EventTypeBadge({ type, size = 'default' }: EventTypeBadgeProps) {
+// 이벤트 타입 배지 (risk 기반 색상)
+export function EventTypeBadge({ type, risk, size = 'default' }: EventTypeBadgeProps) {
   const sizeClass = size === 'sm' ? 'text-xs' : '';
+  const riskStyle = getRiskBadgeStyle(risk);
 
   const typeLabel = {
     assault: '폭행',
@@ -38,7 +51,7 @@ export function EventTypeBadge({ type, size = 'default' }: EventTypeBadgeProps) 
     vandalism: '파손'
   }[type] || '알 수 없음';
 
-  return <Badge className={`bg-white text-black border border-border ${sizeClass}`}>{typeLabel}</Badge>;
+  return <Badge className={`${riskStyle} ${sizeClass}`}>{typeLabel}</Badge>;
 }
 
 // 카메라 배지 (흰색 배경, 검은 글씨, location(name) 형식)

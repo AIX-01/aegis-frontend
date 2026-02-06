@@ -23,6 +23,18 @@ const getEventTypeKorean = (type: Event['type']) => {
   return typeMap[type] || '알 수 없음';
 };
 
+// risk에 따른 왼쪽 라인 색상
+const getRiskBorderStyle = (risk: Event['risk']) => {
+  switch (risk) {
+    case 'abnormal':
+      return 'border-l-4 border-l-destructive';
+    case 'suspicious':
+      return 'border-l-4 border-l-warning';
+    default:
+      return 'border-l-4 border-l-muted';
+  }
+};
+
 export function EventLog({ events }: EventLogProps) {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -39,7 +51,7 @@ export function EventLog({ events }: EventLogProps) {
           <div
             key={event.id}
             onClick={() => handleEventClick(event)}
-            className="p-3 rounded-lg border bg-card/50 border-border/50 cursor-pointer"
+            className={`p-3 rounded-lg border bg-card/50 border-border/50 cursor-pointer ${getRiskBorderStyle(event.risk)}`}
           >
             <div className="flex items-center gap-3">
               <div>
@@ -47,7 +59,7 @@ export function EventLog({ events }: EventLogProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <EventTypeBadge type={event.type} size="sm" />
+                  <EventTypeBadge type={event.type} risk={event.risk} size="sm" />
                   <EventStatusBadge status={event.status} size="sm" />
                   <CameraBadge location={event.cameraLocation} name={event.cameraName} size="sm" />
                 </div>

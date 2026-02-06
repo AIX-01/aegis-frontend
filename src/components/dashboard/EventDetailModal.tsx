@@ -198,7 +198,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                   {event.cameraLocation}에서 {getEventTypeKorean(event.type)} 감지
                 </DialogTitle>
                 <div className="flex items-center gap-2 mt-1">
-                  <EventTypeBadge type={event.type} />
+                  <EventTypeBadge type={event.type} risk={event.risk} />
                   <EventStatusBadge status={event.status} />
                   <CameraBadge location={event.cameraLocation} name={event.cameraName} />
                 </div>

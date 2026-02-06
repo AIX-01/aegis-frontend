@@ -174,23 +174,31 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
 
   if (!event) return null;
 
+  // risk에 따른 아이콘 반환
+  const getRiskIcon = () => {
+    switch (event.risk) {
+      case 'abnormal':
+        return <AlertCircle className="h-6 w-6 text-destructive" />;
+      case 'suspicious':
+        return <AlertTriangle className="h-6 w-6 text-warning" />;
+      default:
+        return <AlertCircle className="h-6 w-6 text-muted-foreground" />;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] p-0 gap-0">
         <DialogHeader className="p-6 pb-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {event.type === 'assault' || event.type === 'burglary' ? (
-                <AlertCircle className="h-6 w-6 text-destructive" />
-              ) : (
-                <AlertTriangle className="h-6 w-6 text-warning" />
-              )}
+              {getRiskIcon()}
               <div>
                 <DialogTitle className="text-xl">
                   {event.cameraName}에서 {getEventTypeKorean(event.type)} 감지
                 </DialogTitle>
                 <div className="flex items-center gap-2 mt-1">
-                  <EventTypeBadge type={event.type} />
+                  <EventTypeBadge type={event.type} risk={event.risk} />
                   <EventStatusBadge status={event.status} />
                   <span className="text-sm text-muted-foreground">
                     {event.cameraName}

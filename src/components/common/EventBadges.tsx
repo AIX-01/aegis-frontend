@@ -6,6 +6,7 @@ import type { Event, Notification } from "@/types";
 
 interface EventTypeBadgeProps {
   type: Event['type'];
+  risk: Event['risk'];
   size?: 'sm' | 'default';
 }
 
@@ -19,24 +20,32 @@ interface NotificationTypeBadgeProps {
   size?: 'sm' | 'default';
 }
 
-// 이벤트 타입 배지
-export function EventTypeBadge({ type, size = 'default' }: EventTypeBadgeProps) {
-  const sizeClass = size === 'sm' ? 'text-xs' : '';
-
-  switch (type) {
-    case 'assault':
-      return <Badge variant="destructive" className={sizeClass}>폭행</Badge>;
-    case 'burglary':
-      return <Badge variant="destructive" className={sizeClass}>절도</Badge>;
-    case 'dump':
-      return <Badge className={`bg-warning text-warning-foreground ${sizeClass}`}>투기</Badge>;
-    case 'swoon':
-      return <Badge className={`bg-warning text-warning-foreground ${sizeClass}`}>실신</Badge>;
-    case 'vandalism':
-      return <Badge className={`bg-warning text-warning-foreground ${sizeClass}`}>파손</Badge>;
+// risk에 따른 배지 스타일 반환
+const getRiskBadgeStyle = (risk: Event['risk']) => {
+  switch (risk) {
+    case 'abnormal':
+      return 'bg-destructive text-destructive-foreground';
+    case 'suspicious':
+      return 'bg-warning text-warning-foreground';
     default:
-      return <Badge className={`bg-muted text-muted-foreground ${sizeClass}`}>알 수 없음</Badge>;
+      return 'bg-muted text-muted-foreground';
   }
+};
+
+// 이벤트 타입 배지 (risk 기반 색상)
+export function EventTypeBadge({ type, risk, size = 'default' }: EventTypeBadgeProps) {
+  const sizeClass = size === 'sm' ? 'text-xs' : '';
+  const riskStyle = getRiskBadgeStyle(risk);
+
+  const typeLabel = {
+    assault: '폭행',
+    burglary: '절도',
+    dump: '투기',
+    swoon: '실신',
+    vandalism: '파손'
+  }[type] || '알 수 없음';
+
+  return <Badge className={`${riskStyle} ${sizeClass}`}>{typeLabel}</Badge>;
 }
 
 // 이벤트 상태 배지
@@ -93,20 +102,17 @@ export function NotificationIcon({ type, className }: { type: Notification['type
   }
 }
 
-// 이벤트 타입 아이콘
-export function EventIcon({ type, className }: { type: Event['type']; className?: string }) {
+// 이벤트 위험도 아이콘
+export function EventIcon({ risk, className }: { risk: Event['risk']; className?: string }) {
   const baseClass = className || 'h-4 w-4';
 
-  switch (type) {
-    case 'assault':
-    case 'burglary':
+  switch (risk) {
+    case 'abnormal':
       return <AlertCircle className={`${baseClass} text-destructive`} />;
-    case 'dump':
-    case 'swoon':
-    case 'vandalism':
+    case 'suspicious':
       return <AlertTriangle className={`${baseClass} text-warning`} />;
     default:
-      return <CheckCircle2 className={`${baseClass} text-success`} />;
+      return <AlertCircle className={`${baseClass} text-muted-foreground`} />;
   }
 }
 

@@ -42,11 +42,11 @@ export function EventLog({ events }: EventLogProps) {
           >
               <div className="flex items-start gap-3">
                 <div className="mt-0.5">
-                  <EventIcon type={event.type} />
+                  <EventIcon risk={event.risk} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <EventTypeBadge type={event.type} size="sm" />
+                    <EventTypeBadge type={event.type} risk={event.risk} size="sm" />
                     <span className="text-xs text-muted-foreground">
                       {event.cameraName}
                     </span>

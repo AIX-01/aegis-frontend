@@ -195,7 +195,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
               {getRiskIcon()}
               <div>
                 <DialogTitle className="text-xl">
-                  {event.cameraName}에서 {getEventTypeKorean(event.type)} 감지
+                  {event.cameraLocation}에서 {getEventTypeKorean(event.type)} 감지
                 </DialogTitle>
                 <div className="flex items-center gap-2 mt-1">
                   <EventTypeBadge type={event.type} risk={event.risk} />
@@ -295,7 +295,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 bg-muted/30 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">발생 위치</p>
-                    <p className="text-sm font-medium">{event.cameraName}</p>
+                    <p className="text-sm font-medium">{event.cameraLocation}</p>
                   </div>
                   <div className="p-3 bg-muted/30 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">이벤트 유형</p>

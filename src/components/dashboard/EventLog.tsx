@@ -52,7 +52,7 @@ export function EventLog({ events }: EventLogProps) {
                     </span>
                   </div>
                   <p className="text-sm mt-1 font-medium">
-                    {event.cameraName}에서 {getEventTypeKorean(event.type)} 감지
+                    {event.cameraLocation}에서 {getEventTypeKorean(event.type)} 감지
                   </p>
                   {event.summary && (
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-1">

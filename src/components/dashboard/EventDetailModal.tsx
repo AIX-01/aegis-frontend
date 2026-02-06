@@ -337,6 +337,14 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
 
         {/* 하단 버튼 영역 */}
         <div className="p-4 border-t flex justify-between items-center">
+          <Button
+            variant="outline"
+            onClick={handleClipDownload}
+            disabled={!clipReady || clipError}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            클립 다운로드
+          </Button>
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -366,14 +374,6 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <Button
-            variant="outline"
-            onClick={handleClipDownload}
-            disabled={!clipReady || clipError}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            클립 다운로드
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

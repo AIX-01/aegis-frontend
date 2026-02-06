@@ -5,7 +5,7 @@ import { ko } from "date-fns/locale";
 import type { Event } from "@/types";
 import { useState } from "react";
 import { EventDetailModal } from "./EventDetailModal";
-import { EventTypeBadge, EventStatusBadge, EventIcon } from "@/components/common/EventBadges";
+import { EventTypeBadge, EventStatusBadge, EventIcon, CameraBadge } from "@/components/common/EventBadges";
 import { Clock } from "lucide-react";
 
 interface EventLogProps {
@@ -47,11 +47,9 @@ export function EventLog({ events }: EventLogProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <EventTypeBadge type={event.type} risk={event.risk} size="sm" />
+                  <EventTypeBadge type={event.type} size="sm" />
                   <EventStatusBadge status={event.status} size="sm" />
-                  <span className="text-xs text-muted-foreground">
-                    {event.cameraName}
-                  </span>
+                  <CameraBadge location={event.cameraLocation} name={event.cameraName} size="sm" />
                 </div>
                 <p className="text-sm mt-1 font-medium">
                   {event.cameraLocation}에서 {getEventTypeKorean(event.type)} 감지

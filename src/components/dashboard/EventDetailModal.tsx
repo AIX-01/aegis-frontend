@@ -24,7 +24,7 @@ import type { Event } from "@/types";
 import { useState, useRef, useEffect } from "react";
 import { eventsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { EventTypeBadge, EventStatusBadge } from "@/components/common/EventBadges";
+import { EventTypeBadge, EventStatusBadge, CameraBadge } from "@/components/common/EventBadges";
 
 interface EventDetailModalProps {
   event: Event | null;
@@ -198,11 +198,9 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                   {event.cameraLocation}에서 {getEventTypeKorean(event.type)} 감지
                 </DialogTitle>
                 <div className="flex items-center gap-2 mt-1">
-                  <EventTypeBadge type={event.type} risk={event.risk} />
+                  <EventTypeBadge type={event.type} />
                   <EventStatusBadge status={event.status} />
-                  <span className="text-sm text-muted-foreground">
-                    {event.cameraName}
-                  </span>
+                  <CameraBadge location={event.cameraLocation} name={event.cameraName} />
                 </div>
               </div>
             </div>

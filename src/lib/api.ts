@@ -82,9 +82,31 @@ export const camerasApi = {
 };
 
 // Events API
+export interface EventFilters {
+  risks?: string[];
+  types?: string[];
+  statuses?: string[];
+  cameraIds?: string[];
+  startDate?: string;
+  endDate?: string;
+}
+
 export const eventsApi = {
-  getAll: async (page = 0, size = 20): Promise<PageResponse<Event>> => {
-    const response = await api.get<PageResponse<Event>>(`/api/events?page=${page}&size=${size}`);
+  getAll: async (page = 0, size = 20, filters?: EventFilters): Promise<PageResponse<Event>> => {
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('size', size.toString());
+
+    if (filters) {
+      filters.risks?.forEach(r => params.append('risks', r));
+      filters.types?.forEach(t => params.append('types', t));
+      filters.statuses?.forEach(s => params.append('statuses', s));
+      filters.cameraIds?.forEach(c => params.append('cameraIds', c));
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+    }
+
+    const response = await api.get<PageResponse<Event>>(`/api/events?${params.toString()}`);
     return response.data;
   },
 

@@ -88,12 +88,14 @@ export function EventsPageContent() {
     queryFn: camerasApi.getAllList,
   });
 
-  // 카메라 목록 로드 시 전체 선택
+  // 카메라 목록 로드 시 전체 선택 (최초 1회만)
+  const [cameraInitialized, setCameraInitialized] = useState(false);
   useEffect(() => {
-    if (cameras.length > 0 && selectedCameraIds.length === 0) {
+    if (cameras.length > 0 && !cameraInitialized) {
       setSelectedCameraIds(cameras.map((c: ManagedCamera) => c.id));
+      setCameraInitialized(true);
     }
-  }, [cameras, selectedCameraIds.length]);
+  }, [cameras, cameraInitialized]);
 
   // React Query로 이벤트 목록 조회 (서버사이드 필터링)
   const { data: eventsPage } = useQuery({

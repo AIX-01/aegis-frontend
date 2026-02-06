@@ -24,6 +24,7 @@ import type { Event } from "@/types";
 import { useState, useRef, useEffect } from "react";
 import { eventsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { getEventTypeKorean } from "@/lib/utils";
 import { EventTypeBadge, EventStatusBadge, CameraBadge } from "@/components/common/EventBadges";
 
 interface EventDetailModalProps {
@@ -161,16 +162,6 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
     }
   };
 
-  const getEventTypeKorean = (type: Event['type']) => {
-    const typeMap = {
-      assault: '폭행',
-      burglary: '절도',
-      dump: '투기',
-      swoon: '실신',
-      vandalism: '파손'
-    };
-    return typeMap[type] || '알 수 없음';
-  };
 
   if (!event) return null;
 

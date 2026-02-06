@@ -6,22 +6,13 @@ import type { Event } from "@/types";
 import { useState } from "react";
 import { EventDetailModal } from "./EventDetailModal";
 import { EventTypeBadge, EventStatusBadge, EventIcon, CameraBadge } from "@/components/common/EventBadges";
+import { getEventTypeKorean } from "@/lib/utils";
 import { Clock } from "lucide-react";
 
 interface EventLogProps {
   events: Event[];
 }
 
-const getEventTypeKorean = (type: Event['type']) => {
-  const typeMap = {
-    assault: '폭행',
-    burglary: '절도',
-    dump: '투기',
-    swoon: '실신',
-    vandalism: '파손'
-  };
-  return typeMap[type] || '알 수 없음';
-};
 
 // risk에 따른 왼쪽 라인 색상
 const getRiskBorderStyle = (risk: Event['risk']) => {

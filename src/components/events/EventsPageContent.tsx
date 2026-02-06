@@ -180,6 +180,27 @@ export function EventsPageContent() {
     setPage(0);
   };
 
+  // 필터 UI 상태를 적용된 필터로 복원
+  const restoreFilterUI = () => {
+    setSelectedRisks(appliedFilters.risks ?? riskLabels.map(r => r.id));
+    setSelectedTypes(appliedFilters.types ?? typeLabels.map(t => t.id));
+    setSelectedStatuses(appliedFilters.statuses ?? statusLabels.map(s => s.id));
+    setSelectedCameraIds(appliedFilters.cameraIds ?? cameras.map((c: ManagedCamera) => c.id));
+    setDateRange(
+      appliedFilters.startDate
+        ? { from: new Date(appliedFilters.startDate), to: appliedFilters.endDate ? new Date(appliedFilters.endDate) : undefined }
+        : undefined
+    );
+  };
+
+  // 필터 Sheet 열기/닫기 핸들러
+  const handleFilterOpenChange = (open: boolean) => {
+    if (!open) {
+      restoreFilterUI();
+    }
+    setIsFilterOpen(open);
+  };
+
   return (
     <ProtectedRoute>
       <DashboardLayout title="이벤트">
@@ -191,7 +212,7 @@ export function EventsPageContent() {
                 이벤트 목록
               </CardTitle>
               {/* Filter button */}
-              <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+              <Sheet open={isFilterOpen} onOpenChange={handleFilterOpenChange}>
                 <SheetTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">
                     <Filter className="h-4 w-4" />

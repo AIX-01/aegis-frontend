@@ -260,14 +260,6 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                 </div>
               )}
             </div>
-            {clipReady && !clipError && (
-              <div className="mt-3 flex justify-end">
-                <Button size="sm" variant="outline" onClick={handleClipDownload}>
-                  <Download className="h-4 w-4 mr-2" />
-                  클립 다운로드
-                </Button>
-              </div>
-            )}
           </div>
 
           {/* 우측: 요약 영역 (스크롤) */}
@@ -374,8 +366,13 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
               </>
             )}
           </div>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            닫기
+          <Button
+            variant="outline"
+            onClick={handleClipDownload}
+            disabled={!clipReady || clipError}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            클립 다운로드
           </Button>
         </div>
       </DialogContent>

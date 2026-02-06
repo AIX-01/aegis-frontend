@@ -283,29 +283,6 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                   </CardContent>
                 </Card>
 
-                {/* 이벤트 정보 그리드 */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-muted/30 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">발생 위치</p>
-                    <p className="text-sm font-medium">{event.cameraLocation}</p>
-                  </div>
-                  <div className="p-3 bg-muted/30 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">이벤트 유형</p>
-                    <p className="text-sm font-medium">{getEventTypeKorean(event.type)}</p>
-                  </div>
-                  <div className="p-3 bg-muted/30 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">발생 시각</p>
-                    <p className="text-sm font-medium">
-                      {format(new Date(event.occurredAt), 'HH:mm:ss', { locale: ko })}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-muted/30 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">처리 상태</p>
-                    <p className="text-sm font-medium">
-                      {event.status === 'processing' ? '분석중' : '분석완료'}
-                    </p>
-                  </div>
-                </div>
 
                 {/* 권장 조치 */}
                 {event.actions && event.actions.length > 0 && (

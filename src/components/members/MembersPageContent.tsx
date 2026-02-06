@@ -91,7 +91,7 @@ export function MembersPageContent() {
     scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 승인된 사용자 목록 조회 (관리자→일반 순, 이메일순)
+  // 승인된 사용자 목록 조회 (최신 가입순)
   const { data: approvedUsersPage } = useQuery({
     queryKey: [...queryKeys.users.all, 'approved', approvedPage, pageSize],
     queryFn: () => usersApi.getApproved(approvedPage, pageSize),

@@ -144,98 +144,52 @@ export function MembersPageContent() {
     queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
   };
 
-  const handleApprove = async (userId: string) => {
+  // 공통 API 호출 래퍼
+  const handleApiCall = async (
+    apiCall: () => Promise<unknown>,
+    successTitle: string,
+    successDescription: string,
+    errorDescription: string
+  ) => {
     try {
-      await usersApi.approve(userId);
+      await apiCall();
       await refreshData();
-      toast({
-        title: '승인 완료',
-        description: '멤버가 승인되었습니다.',
-      });
-    } catch (error) {
-      toast({
-        title: '오류',
-        description: '승인 처리 중 오류가 발생했습니다.',
-        variant: 'destructive',
-      });
+      toast({ title: successTitle, description: successDescription });
+    } catch {
+      toast({ title: '오류', description: errorDescription, variant: 'destructive' });
     }
   };
 
-  const handleReject = async (userId: string) => {
-    try {
-      await usersApi.delete(userId);
-      await refreshData();
-      toast({
-        title: '거절 완료',
-        description: '가입 요청이 거절되었습니다.',
-      });
-    } catch (error) {
-      toast({
-        title: '오류',
-        description: '처리 중 오류가 발생했습니다.',
-        variant: 'destructive',
-      });
-    }
-  };
+  const handleApprove = (userId: string) =>
+    handleApiCall(
+      () => usersApi.approve(userId),
+      '승인 완료', '멤버가 승인되었습니다.', '승인 처리 중 오류가 발생했습니다.'
+    );
 
-  const handleDelete = async (userId: string) => {
-    if (userId === currentUser?.id) {
-      toast({
-        title: '삭제 불가',
-        description: '자신의 계정은 삭제할 수 없습니다.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    try {
-      await usersApi.delete(userId);
-      await refreshData();
-      toast({
-        title: '삭제 완료',
-        description: '멤버가 삭제되었습니다.',
-      });
-    } catch (error) {
-      toast({
-        title: '오류',
-        description: '삭제 처리 중 오류가 발생했습니다.',
-        variant: 'destructive',
-      });
-    }
-  };
+  const handleReject = (userId: string) =>
+    handleApiCall(
+      () => usersApi.delete(userId),
+      '거절 완료', '가입 요청이 거절되었습니다.', '처리 중 오류가 발생했습니다.'
+    );
 
-  const handleUpdateRole = async (userId: string, role: 'user' | 'admin') => {
-    try {
-      await usersApi.update(userId, { role });
-      await refreshData();
-      toast({
-        title: '역할 변경',
-        description: `역할이 ${role === 'admin' ? '관리자' : '일반 사용자'}로 변경되었습니다.`,
-      });
-    } catch (error) {
-      toast({
-        title: '오류',
-        description: '역할 변경 중 오류가 발생했습니다.',
-        variant: 'destructive',
-      });
-    }
-  };
+  const handleDelete = (userId: string) =>
+    handleApiCall(
+      () => usersApi.delete(userId),
+      '삭제 완료', '멤버가 삭제되었습니다.', '삭제 처리 중 오류가 발생했습니다.'
+    );
+
+  const handleUpdateRole = (userId: string, role: 'user' | 'admin') =>
+    handleApiCall(
+      () => usersApi.update(userId, { role }),
+      '역할 변경', `역할이 ${role === 'admin' ? '관리자' : '일반 사용자'}로 변경되었습니다.`, '역할 변경 중 오류가 발생했습니다.'
+    );
 
   const handleUpdateCameras = async (userId: string, cameraIds: string[]) => {
-    try {
-      await usersApi.update(userId, { assignedCameras: cameraIds });
-      await refreshData();
-      setIsEditDialogOpen(false);
-      toast({
-        title: '카메라 권한 변경',
-        description: '카메라 접근 권한이 업데이트되었습니다.',
-      });
-    } catch (error) {
-      toast({
-        title: '오류',
-        description: '권한 변경 중 오류가 발생했습니다.',
-        variant: 'destructive',
-      });
-    }
+    await handleApiCall(
+      () => usersApi.update(userId, { assignedCameras: cameraIds }),
+      '카메라 권한 변경', '카메라 접근 권한이 업데이트되었습니다.', '권한 변경 중 오류가 발생했습니다.'
+    );
+    setIsEditDialogOpen(false);
   };
 
 

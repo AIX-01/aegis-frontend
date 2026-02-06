@@ -41,8 +41,8 @@ export function EventLog({ events }: EventLogProps) {
             onClick={() => handleEventClick(event)}
             className="p-3 rounded-lg border bg-card/50 border-border/50 cursor-pointer"
           >
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5">
+            <div className="flex items-center gap-3">
+              <div>
                 <EventIcon risk={event.risk} />
               </div>
               <div className="flex-1 min-w-0">

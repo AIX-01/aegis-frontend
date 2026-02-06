@@ -206,7 +206,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                 </div>
               </div>
             </div>
-            <div className="text-right text-sm text-muted-foreground">
+            <div className="text-right text-sm text-muted-foreground mr-6">
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
                 {format(new Date(event.occurredAt), 'yyyy.MM.dd HH:mm:ss', { locale: ko })}

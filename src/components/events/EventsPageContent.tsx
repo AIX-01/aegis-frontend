@@ -119,22 +119,15 @@ export function EventsPageContent() {
     scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 토글 핸들러들
-  const handleRiskToggle = (id: string) => {
-    setSelectedRisks(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]);
+  // 제네릭 토글 핸들러
+  const createToggleHandler = (setter: React.Dispatch<React.SetStateAction<string[]>>) => (id: string) => {
+    setter(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
   };
 
-  const handleTypeToggle = (id: string) => {
-    setSelectedTypes(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]);
-  };
-
-  const handleStatusToggle = (id: string) => {
-    setSelectedStatuses(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
-  };
-
-  const handleCameraToggle = (id: string) => {
-    setSelectedCameraIds(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]);
-  };
+  const handleRiskToggle = createToggleHandler(setSelectedRisks);
+  const handleTypeToggle = createToggleHandler(setSelectedTypes);
+  const handleStatusToggle = createToggleHandler(setSelectedStatuses);
+  const handleCameraToggle = createToggleHandler(setSelectedCameraIds);
 
   // 필터 적용
   const handleApplyFilters = () => {

@@ -91,6 +91,16 @@ export interface EventFilters {
   endDate?: string;
 }
 
+// 필터 배열을 URLSearchParams에 추가하는 헬퍼
+const appendFilterParam = (params: URLSearchParams, key: string, values?: string[]) => {
+  if (values === undefined) return;
+  if (values.length === 0) {
+    params.append(key, '_empty');
+  } else {
+    values.forEach(v => params.append(key, v));
+  }
+};
+
 export const eventsApi = {
   getAll: async (page = 0, size = 20, filters?: EventFilters): Promise<PageResponse<Event>> => {
     const params = new URLSearchParams();
@@ -98,35 +108,10 @@ export const eventsApi = {
     params.append('size', size.toString());
 
     if (filters) {
-      // 빈 배열이면 _empty 마커 전송, 값이 있으면 각 값 전송
-      if (filters.risks !== undefined) {
-        if (filters.risks.length === 0) {
-          params.append('risks', '_empty');
-        } else {
-          filters.risks.forEach(r => params.append('risks', r));
-        }
-      }
-      if (filters.types !== undefined) {
-        if (filters.types.length === 0) {
-          params.append('types', '_empty');
-        } else {
-          filters.types.forEach(t => params.append('types', t));
-        }
-      }
-      if (filters.statuses !== undefined) {
-        if (filters.statuses.length === 0) {
-          params.append('statuses', '_empty');
-        } else {
-          filters.statuses.forEach(s => params.append('statuses', s));
-        }
-      }
-      if (filters.cameraIds !== undefined) {
-        if (filters.cameraIds.length === 0) {
-          params.append('cameraIds', '_empty');
-        } else {
-          filters.cameraIds.forEach(c => params.append('cameraIds', c));
-        }
-      }
+      appendFilterParam(params, 'risks', filters.risks);
+      appendFilterParam(params, 'types', filters.types);
+      appendFilterParam(params, 'statuses', filters.statuses);
+      appendFilterParam(params, 'cameraIds', filters.cameraIds);
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
     }

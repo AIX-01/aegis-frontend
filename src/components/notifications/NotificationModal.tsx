@@ -11,6 +11,7 @@ import { NotificationTypeBadge, NotificationIcon } from "@/components/common/Eve
 import { notificationsApi } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { useEffect, useRef } from "react";
 
 interface NotificationModalProps {
   notifications: Notification[];
@@ -26,23 +27,46 @@ export function NotificationModal({
 }: NotificationModalProps) {
   const queryClient = useQueryClient();
   const notificationCount = notifications.length;
+  // 모달이 열린 동안 알림을 읽었는지 추적
+  const hasReadRef = useRef(false);
 
-  // 모달이 닫힐 때 전체 삭제
+  // 모달이 열리고 알림이 있으면 읽음 표시
+  useEffect(() => {
+    if (open && notificationCount > 0) {
+      hasReadRef.current = true;
+    }
+  }, [open, notificationCount]);
+
+  // 모달이 닫힐 때 읽은 알림 삭제
   const handleOpenChange = async (isOpen: boolean) => {
-    if (!isOpen && notificationCount > 0) {
+    if (!isOpen && hasReadRef.current) {
+      hasReadRef.current = false;
       try {
         await notificationsApi.deleteAll();
         await queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
       } catch {
-        // 전체 삭제 실패 무시
+        // 삭제 실패 무시
       }
     }
     onOpenChange(isOpen);
   };
 
+  // 새로고침/페이지 이탈 시에도 삭제
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (hasReadRef.current) {
+        // fetch keepalive로 페이지 이탈 시에도 요청 전송
+        fetch('/api/notifications', { method: 'DELETE', keepalive: true });
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-md p-0 gap-0">
+      <DialogContent className="max-w-md p-0 gap-0" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader className="p-4 pb-3 border-b">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg flex items-center gap-2">

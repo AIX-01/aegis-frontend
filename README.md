@@ -260,6 +260,14 @@ interface StreamInfo {
   - 보고서 보기 (새 탭) 및 다운로드 (PDF/DOCX)
   - 미준비 시 버튼 disabled 처리
 
+### NotificationModal
+
+- **Props**: `notifications: Notification[], open: boolean, onOpenChange: (open: boolean) => void`
+- **기능**:
+  - 알림 목록 실시간 표시 (SSE로 새 알림 추가됨)
+  - 모달 닫힐 때 전체 알림 삭제 (x, esc, 바깥 클릭 모두)
+  - 새로고침 시에도 읽은 알림 삭제 (fetch keepalive)
+  - x 버튼 자동 포커스 비활성화
 ### EventBadges
 
 - **EventTypeBadge**: risk 기반 색상 (abnormal: 빨강, suspicious: 노랑)

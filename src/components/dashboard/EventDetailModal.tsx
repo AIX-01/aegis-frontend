@@ -24,7 +24,8 @@ import type { Event } from "@/types";
 import { useState, useRef, useEffect } from "react";
 import { eventsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { EventTypeBadge, EventStatusBadge } from "@/components/common/EventBadges";
+import { getEventTypeKorean } from "@/lib/utils";
+import { EventTypeBadge, EventStatusBadge, CameraBadge } from "@/components/common/EventBadges";
 
 interface EventDetailModalProps {
   event: Event | null;
@@ -161,18 +162,20 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
     }
   };
 
-  const getEventTypeKorean = (type: Event['type']) => {
-    const typeMap = {
-      assault: '폭행',
-      burglary: '절도',
-      dump: '투기',
-      swoon: '실신',
-      vandalism: '파손'
-    };
-    return typeMap[type] || '알 수 없음';
-  };
 
   if (!event) return null;
+
+  // risk에 따른 아이콘 반환
+  const getRiskIcon = () => {
+    switch (event.risk) {
+      case 'abnormal':
+        return <AlertCircle className="h-6 w-6 text-destructive" />;
+      case 'suspicious':
+        return <AlertTriangle className="h-6 w-6 text-warning" />;
+      default:
+        return <AlertCircle className="h-6 w-6 text-muted-foreground" />;
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -180,25 +183,19 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
         <DialogHeader className="p-6 pb-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {event.type === 'assault' || event.type === 'burglary' ? (
-                <AlertCircle className="h-6 w-6 text-destructive" />
-              ) : (
-                <AlertTriangle className="h-6 w-6 text-warning" />
-              )}
+              {getRiskIcon()}
               <div>
                 <DialogTitle className="text-xl">
-                  {event.cameraName}에서 {getEventTypeKorean(event.type)} 감지
+                  {event.cameraLocation}에서 {getEventTypeKorean(event.type)} 감지
                 </DialogTitle>
                 <div className="flex items-center gap-2 mt-1">
-                  <EventTypeBadge type={event.type} />
+                  <EventTypeBadge type={event.type} risk={event.risk} />
                   <EventStatusBadge status={event.status} />
-                  <span className="text-sm text-muted-foreground">
-                    {event.cameraName}
-                  </span>
+                  <CameraBadge location={event.cameraLocation} name={event.cameraName} />
                 </div>
               </div>
             </div>
-            <div className="text-right text-sm text-muted-foreground">
+            <div className="text-right text-sm text-muted-foreground mr-6">
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
                 {format(new Date(event.occurredAt), 'yyyy.MM.dd HH:mm:ss', { locale: ko })}
@@ -252,14 +249,6 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                 </div>
               )}
             </div>
-            {clipReady && !clipError && (
-              <div className="mt-3 flex justify-end">
-                <Button size="sm" variant="outline" onClick={handleClipDownload}>
-                  <Download className="h-4 w-4 mr-2" />
-                  클립 다운로드
-                </Button>
-              </div>
-            )}
           </div>
 
           {/* 우측: 요약 영역 (스크롤) */}
@@ -283,29 +272,6 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                   </CardContent>
                 </Card>
 
-                {/* 이벤트 정보 그리드 */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-muted/30 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">발생 위치</p>
-                    <p className="text-sm font-medium">{event.cameraName}</p>
-                  </div>
-                  <div className="p-3 bg-muted/30 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">이벤트 유형</p>
-                    <p className="text-sm font-medium">{getEventTypeKorean(event.type)}</p>
-                  </div>
-                  <div className="p-3 bg-muted/30 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">발생 시각</p>
-                    <p className="text-sm font-medium">
-                      {format(new Date(event.occurredAt), 'HH:mm:ss', { locale: ko })}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-muted/30 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">처리 상태</p>
-                    <p className="text-sm font-medium">
-                      {event.status === 'processing' ? '분석중' : '분석완료'}
-                    </p>
-                  </div>
-                </div>
 
                 {/* 권장 조치 */}
                 {event.actions && event.actions.length > 0 && (
@@ -337,38 +303,43 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
 
         {/* 하단 버튼 영역 */}
         <div className="p-4 border-t flex justify-between items-center">
-          <div className="flex gap-2">
-            {event.report && (
-              <>
-                <Button variant="outline" onClick={handleOpenReport}>
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  보고서 보기
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      <Download className="h-4 w-4 mr-2" />
-                      보고서 다운로드
-                      <ChevronDown className="h-4 w-4 ml-2" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => handleDownloadReport('pdf')}>
-                      <FileText className="h-4 w-4 mr-2" />
-                      PDF 형식
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDownloadReport('docx')}>
-                      <FileText className="h-4 w-4 mr-2" />
-                      DOCX 형식 (Word/한글 호환)
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            )}
-          </div>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            닫기
+          <Button
+            variant="outline"
+            onClick={handleClipDownload}
+            disabled={!clipReady || clipError}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            클립 다운로드
           </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleOpenReport}
+              disabled={!event.report}
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              보고서 보기
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={!event.report}>
+                  <Download className="h-4 w-4 mr-2" />
+                  보고서 다운로드
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleDownloadReport('pdf')}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  PDF 형식
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDownloadReport('docx')}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  DOCX 형식 (Word/한글 호환)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

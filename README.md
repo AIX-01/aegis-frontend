@@ -97,7 +97,7 @@ src/
 │   ├── api.ts              # API 클라이언트
 │   ├── axios.ts            # Axios 인스턴스 및 인터셉터
 │   ├── queryKeys.ts        # React Query 키 관리
-│   └── utils.ts            # 유틸리티 함수 (cn)
+│   └── utils.ts            # 유틸리티 함수 (cn, getEventTypeKorean)
 └── types/
     └── index.ts            # TypeScript 타입 정의
 ```
@@ -268,6 +268,25 @@ interface StreamInfo {
   - 모달 닫힐 때 전체 알림 삭제 (x, esc, 바깥 클릭 모두)
   - 새로고침 시에도 읽은 알림 삭제 (fetch keepalive)
   - x 버튼 자동 포커스 비활성화
+### EventBadges
+
+- **EventTypeBadge**: risk 기반 색상 (abnormal: 빨강, suspicious: 노랑)
+- **EventStatusBadge**: 분석중/분석완료 표시
+- **CameraBadge**: location(name) 형식으로 표시
+- **EventIcon**: risk 기반 아이콘 (abnormal: 원+느낌표, suspicious: 삼각형+느낌표)
+
+### EventLog
+
+- 이벤트 목록 카드 (risk별 왼쪽 라인 색상)
+- 배지 순서: 타입 → 분석상태 → 카메라
+- 우측에 발생 시각 및 경과 시간 표시
+- `getEventTypeKorean` 유틸리티 사용
+
+### EventsPageContent
+
+- 서버사이드 필터링 (위험도, 유형, 상태, 카메라, 기간)
+- 필터 적용 없이 닫으면 UI 상태 자동 복원
+- 페이지네이션과 필터 상태 연동
 
 ---
 
@@ -296,9 +315,9 @@ pnpm lint
 |------|--------|------|------|
 | `/` | 카메라 모니터링 | 실시간 CCTV 그리드 (3x2, 6개) | 로그인 |
 | `/auth` | 로그인/회원가입 | 인증 페이지 | 공개 |
-| `/events` | 이벤트 목록 | 감지된 이벤트 목록 및 상세 | 로그인 |
+| `/events` | 이벤트 목록 | 감지된 이벤트 목록, 서버사이드 필터링(위험도, 유형, 상태, 카메라, 기간) | 로그인 |
 | `/statistics` | 통계 대시보드 | 주간 추이, 유형별 분포, 캘린더 | 로그인 |
-| `/members` | 멤버 관리 | 멤버 목록(관리자→일반순, 이메일순), 승인 대기(신청순) 탭, 카메라 권한 관리 | Admin |
+| `/members` | 멤버 관리 | 멤버 목록(최신 가입순), 승인 대기(최신 가입순) 탭, 카메라 권한 관리, 삭제 확인 다이얼로그 | Admin |
 | `/settings` | 설정 | 프로필, 비밀번호, 계정 삭제 | 로그인 |
 
 ## 상태 관리
@@ -374,13 +393,23 @@ QueryClientProvider
 
 | 메서드 | 설명 |
 |--------|------|
-| `getAll(page, size)` | 이벤트 목록 (페이지네이션, 기본 size=20) |
+| `getAll(page, size, filters?)` | 이벤트 목록 (페이지네이션, 서버사이드 필터링) |
 | `getById(id)` | 이벤트 상세 조회 |
 | `getClipBlobUrl(id)` | 클립 Blob URL 조회 |
 | `downloadClip(id, filename)` | 클립 다운로드 |
 | `getReportHtml(id)` | 보고서 HTML 조회 (새 창 렌더링용) |
-| `getClipBlobUrl(id)` | 클립 Blob URL (인증 포함) |
-| `downloadClip(id, filename)` | 클립 다운로드 |
+
+**EventFilters 인터페이스**:
+```typescript
+interface EventFilters {
+  risks?: string[];      // 위험도 필터 (suspicious, abnormal)
+  types?: string[];      // 이상행동 유형 (assault, burglary, dump, swoon, vandalism)
+  statuses?: string[];   // 분석 상태 (processing, analyzed)
+  cameraIds?: string[];  // 카메라 ID 목록
+  startDate?: string;    // 시작 날짜 (ISO 8601)
+  endDate?: string;      // 종료 날짜 (ISO 8601)
+}
+```
 
 ### notificationsApi
 
@@ -401,7 +430,7 @@ QueryClientProvider
 
 | 메서드 | 설명 |
 |--------|------|
-| `getApproved(page, size)` | 승인된 사용자 목록 (관리자→일반 순, 이메일순) |
+| `getApproved(page, size)` | 승인된 사용자 목록 (최신 가입순) |
 | `getPending(page, size)` | 미승인 사용자 목록 (최신 가입순) |
 | `getPendingCount()` | 미승인 사용자 수 |
 | `update(id, data)` | 사용자 정보 수정 |

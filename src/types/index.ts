@@ -29,6 +29,7 @@ export interface Event {
   id: string;
   cameraId: string;
   cameraName: string;
+  cameraLocation: string;
   risk: 'normal' | 'suspicious' | 'abnormal';
   type: 'assault' | 'burglary' | 'dump' | 'swoon' | 'vandalism';
   occurredAt: string;

@@ -1,25 +1,29 @@
 'use client';
 
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { ko } from "date-fns/locale";
 import type { Event } from "@/types";
 import { useState } from "react";
 import { EventDetailModal } from "./EventDetailModal";
-import { EventTypeBadge, EventStatusBadge, EventIcon } from "@/components/common/EventBadges";
+import { EventTypeBadge, EventStatusBadge, EventIcon, CameraBadge } from "@/components/common/EventBadges";
+import { getEventTypeKorean } from "@/lib/utils";
+import { Clock } from "lucide-react";
 
 interface EventLogProps {
   events: Event[];
 }
 
-const getEventTypeKorean = (type: Event['type']) => {
-  const typeMap = {
-    assault: '폭행',
-    burglary: '절도',
-    dump: '투기',
-    swoon: '실신',
-    vandalism: '파손'
-  };
-  return typeMap[type] || '알 수 없음';
+
+// risk에 따른 왼쪽 라인 색상
+const getRiskBorderStyle = (risk: Event['risk']) => {
+  switch (risk) {
+    case 'abnormal':
+      return 'border-l-4 border-l-destructive';
+    case 'suspicious':
+      return 'border-l-4 border-l-warning';
+    default:
+      return 'border-l-4 border-l-muted';
+  }
 };
 
 export function EventLog({ events }: EventLogProps) {
@@ -38,35 +42,37 @@ export function EventLog({ events }: EventLogProps) {
           <div
             key={event.id}
             onClick={() => handleEventClick(event)}
-            className="p-3 rounded-lg border bg-card/50 border-border/50 cursor-pointer"
+            className={`p-3 rounded-lg border bg-card/50 border-border/50 cursor-pointer ${getRiskBorderStyle(event.risk)}`}
           >
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5">
-                  <EventIcon type={event.type} />
+            <div className="flex items-center gap-3">
+              <div>
+                <EventIcon risk={event.risk} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <EventTypeBadge type={event.type} risk={event.risk} size="sm" />
+                  <EventStatusBadge status={event.status} size="sm" />
+                  <CameraBadge location={event.cameraLocation} name={event.cameraName} size="sm" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <EventTypeBadge type={event.type} size="sm" />
-                    <span className="text-xs text-muted-foreground">
-                      {event.cameraName}
-                    </span>
-                  </div>
-                  <p className="text-sm mt-1 font-medium">
-                    {event.cameraName}에서 {getEventTypeKorean(event.type)} 감지
+                <p className="text-sm mt-1 font-medium">
+                  {event.cameraLocation}에서 {getEventTypeKorean(event.type)} 감지
+                </p>
+                {event.summary && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                    {event.summary}
                   </p>
-                  {event.summary && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                      {event.summary}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(event.occurredAt), { addSuffix: true, locale: ko })}
-                    </span>
-                    <EventStatusBadge status={event.status} size="sm" />
-                  </div>
+                )}
+              </div>
+              <div className="text-right text-xs text-muted-foreground flex-shrink-0">
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {format(new Date(event.occurredAt), 'yyyy.MM.dd HH:mm:ss', { locale: ko })}
+                </div>
+                <div className="mt-0.5">
+                  {formatDistanceToNow(new Date(event.occurredAt), { addSuffix: true, locale: ko })}
                 </div>
               </div>
+            </div>
           </div>
         ))}
       </div>

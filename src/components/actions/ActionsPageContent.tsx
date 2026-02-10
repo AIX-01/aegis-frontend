@@ -9,9 +9,8 @@ import { actionsApi } from '@/lib/api';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import type { Action } from '@/types';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { ChevronLeft, ChevronRight, Plus, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ActionCard } from './ActionCard';
@@ -108,73 +107,74 @@ export function ActionsPageContent() {
 
   return (
     <ProtectedRoute>
-      <DashboardLayout>
-        <div className="flex flex-col h-full">
+      <DashboardLayout title="액션 관리">
+        <Card className="soft-shadow h-[calc(100vh-6.5rem)] flex flex-col">
           {/* 헤더 */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Zap className="h-8 w-8 text-yellow-500" />
-              <h1 className="text-2xl font-bold">액션 관리</h1>
+          <CardHeader className="pb-3 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Zap className="h-5 w-5 text-yellow-500" />
+                액션 목록
+              </CardTitle>
+              <Button size="sm" onClick={() => setIsCreateModalOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                새 액션
+              </Button>
             </div>
-            <Button onClick={() => setIsCreateModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              새 액션
-            </Button>
-          </div>
-
-          {/* 목록 */}
-          <div
-            ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto space-y-3"
-          >
-            {isActionsLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-              </div>
-            ) : actions.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
+          </CardHeader>
+          <CardContent className="flex-1 overflow-hidden flex flex-col">
+            {/* 목록 */}
+            <div
+              ref={scrollContainerRef}
+              className="flex-1 overflow-auto space-y-3"
+            >
+              {isActionsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                </div>
+              ) : actions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12">
                   <Zap className="h-12 w-12 text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">등록된 액션이 없습니다.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              actions.map((action) => (
-                <ActionCard
-                  key={action.id}
-                  action={action}
-                  onToggleEnabled={() => handleToggleEnabled(action)}
-                  onClick={() => setEditingAction(action)}
-                />
-              ))
-            )}
-          </div>
+                </div>
+              ) : (
+                actions.map((action) => (
+                  <ActionCard
+                    key={action.id}
+                    action={action}
+                    onToggleEnabled={() => handleToggleEnabled(action)}
+                    onClick={() => setEditingAction(action)}
+                  />
+                ))
+              )}
+            </div>
 
-          {/* 페이지네이션 */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t">
+            {/* 페이지네이션 */}
+            <div className="flex justify-center items-center gap-4 pt-4 border-t flex-shrink-0">
               <Button
                 variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(page - 1)}
+                size="icon"
+                onClick={() => handlePageChange(Math.max(0, page - 1))}
+                className="h-8 w-8"
                 disabled={page === 0}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="text-sm text-muted-foreground">
-                {page + 1} / {Math.max(totalPages, 1)}
+              <span className="text-sm text-muted-foreground min-w-[60px] text-center">
+                {page + 1} / {Math.max(1, totalPages)}
               </span>
               <Button
                 variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page >= totalPages - 1}
+                size="icon"
+                onClick={() => handlePageChange(Math.min(totalPages - 1, page + 1))}
+                className="h-8 w-8"
+                disabled={totalPages <= 1 || page >= totalPages - 1}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-          )}
-        </div>
+          </CardContent>
+        </Card>
 
         {/* 생성 모달 */}
         <ActionEditModal

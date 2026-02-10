@@ -23,9 +23,9 @@ const navItems = [
 ];
 
 const adminNavItems = [
-  { title: "멤버", url: "/members", icon: Users },
-  { title: "액션", url: "/actions", icon: Zap },
   { title: "매뉴얼", url: "/manuals", icon: BookOpen },
+  { title: "액션", url: "/actions", icon: Zap },
+  { title: "멤버", url: "/members", icon: Users },
 ];
 
 export function Header(_props: HeaderProps) {

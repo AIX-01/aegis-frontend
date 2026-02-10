@@ -162,7 +162,7 @@ export function ActionsPageContent() {
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <span className="text-sm text-muted-foreground">
-                {page + 1} / {totalPages}
+                {page + 1} / {Math.max(totalPages, 1)}
               </span>
               <Button
                 variant="outline"

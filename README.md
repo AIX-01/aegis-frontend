@@ -298,6 +298,20 @@ interface StreamInfo {
 - 필터 적용 없이 닫으면 UI 상태 자동 복원
 - 페이지네이션과 필터 상태 연동
 
+### ActionsPageContent
+
+- Card 컨테이너 내 스크롤 레이아웃
+- 액션 목록 + 페이지네이션
+- ActionCard: 액션 카드, on/off 토글
+- ActionEditModal: 생성/수정/삭제 모달, 파라미터 동적 폼
+
+### ManualsPageContent
+
+- Card 컨테이너 내 스크롤 레이아웃
+- 매뉴얼 목록 + 페이지네이션
+- ManualCard: 매뉴얼 카드, on/off 토글
+- ManualEditModal: 생성/수정/삭제 모달, 내용 미리보기
+
 ---
 
 ## 설치 및 실행
@@ -327,6 +341,8 @@ pnpm lint
 | `/auth` | 로그인/회원가입 | 인증 페이지 | 공개 |
 | `/events` | 이벤트 목록 | 감지된 이벤트 목록, 서버사이드 필터링(위험도, 유형, 상태, 카메라, 기간) | 로그인 |
 | `/statistics` | 통계 대시보드 | 주간 추이, 유형별 분포, 캘린더 | 로그인 |
+| `/actions` | 액션 관리 | AI Agent 실행 액션 목록, 활성화/비활성화, 파라미터 설정 | Admin |
+| `/manuals` | 매뉴얼 관리 | AI Agent 참조 매뉴얼 목록, 활성화/비활성화, RAG 임베딩 동기화 | Admin |
 | `/members` | 멤버 관리 | 멤버 목록(최신 가입순), 승인 대기(최신 가입순) 탭, 카메라 권한 관리, 삭제 확인 다이얼로그 | Admin |
 | `/settings` | 설정 | 프로필, 비밀번호, 계정 삭제 | 로그인 |
 
@@ -446,6 +462,26 @@ interface EventFilters {
 | `update(id, data)` | 사용자 정보 수정 |
 | `delete(id)` | 사용자 삭제 |
 | `approve(id)` | 사용자 승인 |
+
+### actionsApi (Admin)
+
+| 메서드 | 설명 |
+|--------|------|
+| `getAll(page, size)` | 액션 목록 (페이지네이션) |
+| `getById(id)` | 액션 상세 조회 |
+| `create(data)` | 액션 생성 |
+| `update(id, data)` | 액션 수정 |
+| `delete(id)` | 액션 삭제 |
+
+### manualsApi (Admin)
+
+| 메서드 | 설명 |
+|--------|------|
+| `getAll(page, size)` | 매뉴얼 목록 (페이지네이션) |
+| `getById(id)` | 매뉴얼 상세 조회 |
+| `create(data)` | 매뉴얼 생성 (Agent 임베딩 동기화) |
+| `update(id, data)` | 매뉴얼 수정 (Agent 임베딩 동기화) |
+| `delete(id)` | 매뉴얼 삭제 (Agent 임베딩 동기화) |
 
 ## 인증 흐름
 

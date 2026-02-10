@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Bell, Monitor, ClipboardList, BarChart3, Users, Settings, LogOut, Shield } from "lucide-react";
+import { Bell, Monitor, ClipboardList, BarChart3, Users, Settings, LogOut, Shield, Zap, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { notificationsApi, usersApi } from "@/lib/api";
@@ -23,7 +23,9 @@ const navItems = [
 ];
 
 const adminNavItems = [
-  { title: "멤버 관리", url: "/members", icon: Users },
+  { title: "멤버", url: "/members", icon: Users },
+  { title: "액션", url: "/actions", icon: Zap },
+  { title: "매뉴얼", url: "/manuals", icon: BookOpen },
 ];
 
 export function Header(_props: HeaderProps) {

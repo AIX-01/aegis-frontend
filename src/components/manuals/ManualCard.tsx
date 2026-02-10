@@ -20,7 +20,7 @@ export function ManualCard({ manual, onToggleEnabled, onClick }: ManualCardProps
 
   return (
     <Card
-      className="cursor-pointer hover:bg-accent/50 transition-colors"
+      className="cursor-pointer hover:bg-muted/50 transition-colors"
       onClick={onClick}
     >
       <CardContent className="p-4">

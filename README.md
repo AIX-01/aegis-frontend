@@ -33,6 +33,8 @@ src/
 │   ├── events/             # 이벤트 목록
 │   ├── statistics/         # 통계 대시보드
 │   ├── members/            # 멤버 관리 (Admin)
+│   ├── actions/            # 액션 관리 (Admin)
+│   ├── manuals/            # 매뉴얼 관리 (Admin)
 │   ├── settings/           # 설정
 │   ├── error.tsx           # 에러 페이지
 │   ├── loading.tsx         # 로딩 페이지
@@ -55,6 +57,14 @@ src/
 │   │   └── EventsPageContent.tsx
 │   ├── members/
 │   │   └── MembersPageContent.tsx
+│   ├── actions/            # 액션 관리 (Admin)
+│   │   ├── ActionsPageContent.tsx
+│   │   ├── ActionCard.tsx
+│   │   └── ActionEditModal.tsx
+│   ├── manuals/            # 매뉴얼 관리 (Admin)
+│   │   ├── ManualsPageContent.tsx
+│   │   ├── ManualCard.tsx
+│   │   └── ManualEditModal.tsx
 │   ├── notifications/
 │   │   └── NotificationModal.tsx
 │   ├── settings/

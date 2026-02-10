@@ -286,9 +286,14 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                       <ul className="text-sm text-muted-foreground space-y-2">
                         {event.actions.map((action) => (
                           <li key={action.id} className="flex flex-col gap-0.5">
-                            <span>• {action.log}</span>
-                            <span className="text-xs text-muted-foreground/70 ml-3">
-                              {new Date(action.triggeredAt).toLocaleString('ko-KR')}
+                            <span className="flex items-center gap-2">
+                              <span className={action.success ? 'text-green-600' : 'text-red-600'}>
+                                {action.success ? '✓' : '✗'}
+                              </span>
+                              {action.actionName}: {action.outputResult}
+                            </span>
+                            <span className="text-xs text-muted-foreground/70 ml-5">
+                              {new Date(action.executedAt).toLocaleString('ko-KR')}
                             </span>
                           </li>
                         ))}

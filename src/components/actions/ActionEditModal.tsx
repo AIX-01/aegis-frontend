@@ -282,10 +282,7 @@ export function ActionEditModal({
               삭제
             </Button>
           )}
-          <div className="flex gap-2 ml-auto">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              취소
-            </Button>
+          <div className="ml-auto">
             <Button onClick={handleSubmit} disabled={isSubmitting}>
               {isSubmitting ? '저장 중...' : '저장'}
             </Button>

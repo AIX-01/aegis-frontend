@@ -15,8 +15,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PythonCodeEditor } from '@/components/common/PythonCodeEditor';
 import { Plus, Trash2, X } from 'lucide-react';
 
 interface ParameterFormItem {
@@ -201,75 +201,71 @@ export function ActionEditModal({
                   추가
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                기본값이 비어있으면 LLM이 상황에 맞게 채웁니다.
-              </p>
 
-              {parameters.length > 0 ? (
-                <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {parameters.map((param, index) => (
-                    <div key={index} className="p-3 border rounded-lg bg-muted/30 space-y-2">
-                      <div className="flex items-center gap-2">
+              <div className="mt-2">
+                {parameters.length > 0 ? (
+                  <div className="h-[340px] space-y-2 overflow-y-auto border rounded-lg p-2 bg-muted/10">
+                    {parameters.map((param, index) => (
+                      <div key={index} className="p-3 border rounded-lg bg-muted/30 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            className="flex-1"
+                            placeholder="이름"
+                            value={param.name}
+                            onChange={(e) => handleUpdateParameter(index, 'name', e.target.value)}
+                          />
+                          <Select
+                            value={param.type}
+                            onValueChange={(value) => handleUpdateParameter(index, 'type', value)}
+                          >
+                            <SelectTrigger className="w-20">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="str">str</SelectItem>
+                              <SelectItem value="int">int</SelectItem>
+                              <SelectItem value="float">float</SelectItem>
+                              <SelectItem value="bool">bool</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveParameter(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
                         <Input
-                          className="flex-1"
-                          placeholder="이름"
-                          value={param.name}
-                          onChange={(e) => handleUpdateParameter(index, 'name', e.target.value)}
+                          placeholder="설명"
+                          value={param.description}
+                          onChange={(e) => handleUpdateParameter(index, 'description', e.target.value)}
                         />
-                        <Select
-                          value={param.type}
-                          onValueChange={(value) => handleUpdateParameter(index, 'type', value)}
-                        >
-                          <SelectTrigger className="w-20">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="str">str</SelectItem>
-                            <SelectItem value="int">int</SelectItem>
-                            <SelectItem value="float">float</SelectItem>
-                            <SelectItem value="bool">bool</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveParameter(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                        <Input
+                          placeholder="기본값 (선택)"
+                          value={param.defaultValue}
+                          onChange={(e) => handleUpdateParameter(index, 'defaultValue', e.target.value)}
+                        />
                       </div>
-                      <Input
-                        placeholder="설명"
-                        value={param.description}
-                        onChange={(e) => handleUpdateParameter(index, 'description', e.target.value)}
-                      />
-                      <Input
-                        placeholder="기본값 (선택)"
-                        value={param.defaultValue}
-                        onChange={(e) => handleUpdateParameter(index, 'defaultValue', e.target.value)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-[100px] border rounded-lg bg-muted/10 text-muted-foreground text-sm">
-                  파라미터가 없습니다
-                </div>
-              )}
+                    ))}
+                  </div>
+                ) : (
+                  <div className="h-[340px] flex items-center justify-center border rounded-lg bg-muted/10 text-muted-foreground text-sm text-center">
+                    <p>파라미터가 없습니다<br /><span className="text-xs">기본값이 비어있으면 LLM이 상황에 맞게 채웁니다.</span></p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* 코드 - 2칸 차지 */}
-            <div className="col-span-2 space-y-2">
-              <Label htmlFor="code">Python 코드 *</Label>
-              <Textarea
-                id="code"
+            <div className="col-span-2">
+               <PythonCodeEditor
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder={`def execute(to_email: str, subject: str, body: str) -> str:
-    # 실행 로직
-    return "완료"`}
-                className="font-mono text-sm min-h-[340px]"
+                onChange={setCode}
+                height="340px"
+                label="Python 코드"
+                required
               />
             </div>
           </div>

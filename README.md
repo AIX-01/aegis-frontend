@@ -72,7 +72,8 @@ src/
 │   ├── statistics/
 │   │   └── StatisticsPageContent.tsx
 │   ├── common/
-│   │   └── EventBadges.tsx
+│   │   ├── EventBadges.tsx     # 이벤트 타입/심각도 배지
+│   │   └── PythonCodeEditor.tsx # Python 코드 에디터 (Monaco + Pyodide 문법 검사)
 │   └── ui/                 # shadcn/ui 컴포넌트
 │       ├── alert-dialog.tsx
 │       ├── badge.tsx

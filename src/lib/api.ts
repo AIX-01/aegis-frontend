@@ -15,6 +15,12 @@ import type {
   RefreshResponse,
   PasswordChangeRequest,
   PageResponse,
+  Action,
+  ActionCreateRequest,
+  ActionUpdateRequest,
+  Manual,
+  ManualCreateRequest,
+  ManualUpdateRequest,
 } from '@/types';
 
 // Auth API
@@ -210,4 +216,56 @@ export const usersApi = {
   },
 };
 
+// Actions API (Admin)
+export const actionsApi = {
+  getAll: async (page = 0, size = 20): Promise<PageResponse<Action>> => {
+    const response = await api.get<PageResponse<Action>>(`/api/actions?page=${page}&size=${size}`);
+    return response.data;
+  },
 
+  getById: async (id: string): Promise<Action> => {
+    const response = await api.get<Action>(`/api/actions/${id}`);
+    return response.data;
+  },
+
+  create: async (data: ActionCreateRequest): Promise<Action> => {
+    const response = await api.post<Action>('/api/actions', data);
+    return response.data;
+  },
+
+  update: async (id: string, data: ActionUpdateRequest): Promise<Action> => {
+    const response = await api.patch<Action>(`/api/actions/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/api/actions/${id}`);
+  },
+};
+
+// Manuals API (Admin)
+export const manualsApi = {
+  getAll: async (page = 0, size = 20): Promise<PageResponse<Manual>> => {
+    const response = await api.get<PageResponse<Manual>>(`/api/manuals?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  getById: async (id: string): Promise<Manual> => {
+    const response = await api.get<Manual>(`/api/manuals/${id}`);
+    return response.data;
+  },
+
+  create: async (data: ManualCreateRequest): Promise<Manual> => {
+    const response = await api.post<Manual>('/api/manuals', data);
+    return response.data;
+  },
+
+  update: async (id: string, data: ManualUpdateRequest): Promise<Manual> => {
+    const response = await api.patch<Manual>(`/api/manuals/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/api/manuals/${id}`);
+  },
+};

@@ -21,8 +21,12 @@ export interface CameraUpdateRequest {
 // Event types
 export interface EventAction {
   id: string;
-  log: string;
-  triggeredAt: string;
+  actionId: string;
+  actionName: string;
+  inputParams: Record<string, unknown>;
+  outputResult: string;
+  success: boolean;
+  executedAt: string;
 }
 
 export interface Event {
@@ -40,6 +44,60 @@ export interface Event {
   actions?: EventAction[];
   ragReferences?: Record<string, unknown>[];
   report?: string;
+}
+
+// Action types (관리자 전용)
+export interface ActionParameter {
+  type: 'str' | 'int' | 'float' | 'bool';
+  description: string;
+  default_value?: string | number | boolean | null;
+}
+
+export interface Action {
+  id: string;
+  name: string;
+  description: string;
+  parameters?: Record<string, ActionParameter>;
+  code: string;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ActionCreateRequest {
+  name: string;
+  description: string;
+  parameters?: Record<string, ActionParameter>;
+  code: string;
+}
+
+export interface ActionUpdateRequest {
+  name?: string;
+  description?: string;
+  parameters?: Record<string, ActionParameter>;
+  code?: string;
+  enabled?: boolean;
+}
+
+// Manual types (관리자 전용)
+export interface Manual {
+  id: string;
+  name: string;
+  content: string;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ManualCreateRequest {
+  name: string;
+  content: string;
+}
+
+export interface ManualUpdateRequest {
+  name?: string;
+  content?: string;
+  enabled?: boolean;
 }
 
 // Notification types

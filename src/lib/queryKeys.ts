@@ -24,5 +24,15 @@ export const queryKeys = {
     eventTypes: ['stats', 'eventTypes'] as const,
     monthly: ['stats', 'monthly'] as const,
   },
+  actions: {
+    all: ['actions'] as const,
+    page: (page: number, size: number) => ['actions', { page, size }] as const,
+    detail: (id: string) => ['actions', id] as const,
+  },
+  manuals: {
+    all: ['manuals'] as const,
+    page: (page: number, size: number) => ['manuals', { page, size }] as const,
+    detail: (id: string) => ['manuals', id] as const,
+  },
 } as const;
 

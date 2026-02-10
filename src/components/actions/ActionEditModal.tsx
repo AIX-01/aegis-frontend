@@ -168,8 +168,8 @@ export function ActionEditModal({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* 이름 / 설명 - 2열 */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* 이름 / 설명 - 1:2 비율 */}
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">이름 *</Label>
               <Input
@@ -179,7 +179,7 @@ export function ActionEditModal({
                 placeholder="메일 발송"
               />
             </div>
-            <div className="space-y-2">
+            <div className="col-span-2 space-y-2">
               <Label htmlFor="description">설명 *</Label>
               <Input
                 id="description"
@@ -190,8 +190,8 @@ export function ActionEditModal({
             </div>
           </div>
 
-          {/* 파라미터 / 코드 - 2열 */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* 파라미터 / 코드 - 1:2 비율 */}
+          <div className="grid grid-cols-3 gap-4">
             {/* 파라미터 */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -259,8 +259,8 @@ export function ActionEditModal({
               )}
             </div>
 
-            {/* 코드 */}
-            <div className="space-y-2">
+            {/* 코드 - 2칸 차지 */}
+            <div className="col-span-2 space-y-2">
               <Label htmlFor="code">Python 코드 *</Label>
               <Textarea
                 id="code"

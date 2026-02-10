@@ -54,12 +54,12 @@ export function EventTypeBadge({ type, risk, size = 'default' }: EventTypeBadgeP
   return <Badge className={`${riskStyle} ${sizeClass}`}>{typeLabel}</Badge>;
 }
 
-// 카메라 배지 (흰색 배경, 검은 글씨, location(name) 형식)
+// 카메라 배지 (흰색 배경, 연한 글씨, location(name) 형식)
 export function CameraBadge({ location, name, size = 'default' }: CameraBadgeProps) {
   const sizeClass = size === 'sm' ? 'text-xs' : '';
 
   return (
-    <Badge className={`bg-white text-black border border-border ${sizeClass}`}>
+    <Badge className={`bg-white text-muted-foreground border border-border ${sizeClass}`}>
       {location}({name})
     </Badge>
   );

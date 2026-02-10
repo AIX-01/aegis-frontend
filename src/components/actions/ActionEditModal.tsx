@@ -204,7 +204,11 @@ export function ActionEditModal({
 
               <div className="mt-2">
                 {parameters.length > 0 ? (
-                  <div className="h-[340px] space-y-2 overflow-y-auto border rounded-lg p-2 bg-muted/10">
+                  <div className="h-[340px] flex flex-col border rounded-lg bg-muted/10">
+                    <p className="text-xs text-muted-foreground px-2 py-1.5 border-b">
+                      기본값이 비어있으면 LLM이 상황에 맞게 채웁니다.
+                    </p>
+                    <div className="flex-1 space-y-2 overflow-y-auto p-2">
                     {parameters.map((param, index) => (
                       <div key={index} className="p-3 border rounded-lg bg-muted/30 space-y-2">
                         <div className="flex items-center gap-2">
@@ -249,10 +253,11 @@ export function ActionEditModal({
                         />
                       </div>
                     ))}
+                    </div>
                   </div>
                 ) : (
                   <div className="h-[340px] flex items-center justify-center border rounded-lg bg-muted/10 text-muted-foreground text-sm text-center">
-                    <p>파라미터가 없습니다<br /><span className="text-xs">기본값이 비어있으면 LLM이 상황에 맞게 채웁니다.</span></p>
+                    <p>파라미터가 없습니다</p>
                   </div>
                 )}
               </div>

@@ -1,5 +1,15 @@
-import { StatisticsPageContent } from "@/components/statistics/StatisticsPageContent";
+'use client';
+
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import { StatsContainer } from "@/components/statistics/StatsContainer";
 
 export default function StatisticsPage() {
-  return <StatisticsPageContent />;
+  return (
+    <ProtectedRoute>
+      <DashboardLayout title="통계">
+        <StatsContainer />
+      </DashboardLayout>
+    </ProtectedRoute>
+  );
 }

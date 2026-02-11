@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Calendar as CalendarIcon, AlertTriangle, TrendingUp, Camera, FileText } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { Calendar as CalendarIcon, AlertTriangle, TrendingUp, Camera, FileText, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -61,7 +61,7 @@ const PeriodSelector = ({ periodType, onPeriodTypeChange, dateRange, onDateRange
   // 월별 선택
   const renderMonthSelector = () => (
     <div className="flex gap-2">
-      {renderYearSelector(currentYear, () => {})}
+      {renderYearSelector(currentYear, () => {})} {/* TODO: 실제 연도 선택 값 반영 */}
       <Select>
         <SelectTrigger className="w-[100px]">
           <SelectValue placeholder="월 선택" />
@@ -171,19 +171,54 @@ const PeriodSelector = ({ periodType, onPeriodTypeChange, dateRange, onDateRange
 
 export function StatsDashboard() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [periodType, setPeriodType] = useState("weekly"); // 기본값을 'weekly'로 변경하여 확인 용이
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: addDays(new Date(), -29),
-    to: new Date(),
-  });
+  const [periodType, setPeriodType] = useState("weekly");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined); // 초기값 undefined로 변경
+  const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
 
   // TODO: API 연동 시 아래 목업 데이터는 실제 데이터 상태로 변경됩니다.
   const dailyData = null; // 일간 데이터
-  const periodData = null; // 기간별 데이터
+  const periodData = null; // 기간별 데이터 (null이면 데이터 없음, undefined면 기간 미선택)
 
   const dailyTitle = selectedDate
     ? `${format(selectedDate, "yyyy년 M월 d일 (eee)", { locale: ko })}의 일간 이벤트`
     : "일간 상세 분석";
+
+  // 로딩 시뮬레이션 (실제 API 호출로 대체될 부분)
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      // 여기에서 실제 데이터를 불러오는 로직이 들어갑니다.
+      // dailyData, periodData 상태 업데이트
+    }, 1000); // 1초 로딩 시뮬레이션
+    return () => clearTimeout(timer);
+  }, [selectedDate, periodType, dateRange]); // 의존성 추가
+
+  const renderLoadingOrNoData = (height: string, hasData: any, initialMessage: string) => {
+    if (isLoading) {
+      return (
+        <div className={cn("flex items-center justify-center text-sm text-muted-foreground", height)}>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 데이터 로딩 중...
+        </div>
+      );
+    }
+    if (hasData === undefined) { // 기간 미선택 (periodData만 해당)
+      return (
+        <div className={cn("flex items-center justify-center text-sm text-muted-foreground", height)}>
+          {initialMessage}
+        </div>
+      );
+    }
+    if (hasData === null || (Array.isArray(hasData) && hasData.length === 0)) { // 데이터 없음
+      return (
+        <div className={cn("flex items-center justify-center text-sm text-muted-foreground", height)}>
+          해당 기간에 데이터가 없습니다.
+        </div>
+      );
+    }
+    return null; // 데이터가 있으면 아무것도 렌더링하지 않음
+  };
+
 
   return (
     <div className="space-y-8">
@@ -209,41 +244,43 @@ export function StatsDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="lg:col-span-2">
+          <Card className="lg:col-span-2 flex flex-col h-[430px]"> {/* 높이 고정 */}
             <CardHeader>
               <CardTitle>{dailyTitle}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-2">총 이벤트</h3>
-                {dailyData ? (
-                  <p className="text-4xl font-bold">{(dailyData as any).totalEvents}건</p>
-                ) : (
-                  <p className="text-sm text-muted-foreground">캘린더에서 날짜를 선택하세요.</p>
-                )}
-              </div>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Camera className="h-4 w-4" />카메라별 분포</h3>
-                  {dailyData ? (
-                    <ResponsiveContainer width="100%" height={150}>
-                      {/* TODO: 카메라별 분포 차트 구현 */}
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-[150px] flex items-center justify-center text-xs text-muted-foreground">데이터 없음</div>
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><AlertTriangle className="h-4 w-4" />이벤트 유형 분포</h3>
-                  {dailyData ? (
-                    <ResponsiveContainer width="100%" height={150}>
-                      {/* TODO: 이벤트 유형 분포 차트 구현 */}
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-[150px] flex items-center justify-center text-xs text-muted-foreground">데이터 없음</div>
-                  )}
-                </div>
-              </div>
+            <CardContent className="space-y-6 flex-grow">
+              {renderLoadingOrNoData("h-full", dailyData, "캘린더에서 날짜를 선택하세요.") || (
+                <>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">총 이벤트</h3>
+                    <p className="text-4xl font-bold">{(dailyData as any)?.totalEvents}건</p>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-6 flex-grow">
+                    <Card className="flex flex-col">
+                      <CardHeader className="py-2">
+                        <CardTitle className="text-base flex items-center gap-2"><Camera className="h-4 w-4" />카메라별 분포</CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex-grow">
+                        <ResponsiveContainer width="100%" height="100%">
+                          {/* TODO: 카메라별 분포 차트 구현 */}
+                          <div className="flex items-center justify-center text-xs text-muted-foreground h-full">차트 영역</div>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+                    <Card className="flex flex-col">
+                      <CardHeader className="py-2">
+                        <CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="h-4 w-4" />이벤트 유형 분포</CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex-grow">
+                        <ResponsiveContainer width="100%" height="100%">
+                          {/* TODO: 이벤트 유형 분포 차트 구현 */}
+                          <div className="flex items-center justify-center text-xs text-muted-foreground h-full">차트 영역</div>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -266,12 +303,11 @@ export function StatsDashboard() {
               <CardTitle className="flex items-center gap-2"><TrendingUp className="h-5 w-5" />기간별 이벤트 추이</CardTitle>
             </CardHeader>
             <CardContent>
-              {periodData ? (
+              {renderLoadingOrNoData("h-[250px]", periodData, "기간을 선택하여 데이터를 조회하세요.") || (
                 <ResponsiveContainer width="100%" height={250}>
                   {/* TODO: 기간별 이벤트 추이 차트 구현 */}
+                  <div className="flex items-center justify-center text-sm text-muted-foreground h-full">차트 영역</div>
                 </ResponsiveContainer>
-              ) : (
-                <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">기간을 선택하여 데이터를 조회하세요.</div>
               )}
             </CardContent>
           </Card>
@@ -280,12 +316,11 @@ export function StatsDashboard() {
               <CardTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5" />기간별 이벤트 유형 분포</CardTitle>
             </CardHeader>
             <CardContent>
-              {periodData ? (
+              {renderLoadingOrNoData("h-[250px]", periodData, "기간을 선택하여 데이터를 조회하세요.") || (
                 <ResponsiveContainer width="100%" height={250}>
                   {/* TODO: 기간별 이벤트 유형 분포 차트 구현 */}
+                  <div className="flex items-center justify-center text-sm text-muted-foreground h-full">차트 영역</div>
                 </ResponsiveContainer>
-              ) : (
-                <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">기간을 선택하여 데이터를 조회하세요.</div>
               )}
             </CardContent>
           </Card>
@@ -294,12 +329,11 @@ export function StatsDashboard() {
               <CardTitle className="flex items-center gap-2"><Camera className="h-5 w-5" />기간별 카메라별 이벤트 분포</CardTitle>
             </CardHeader>
             <CardContent>
-              {periodData ? (
+              {renderLoadingOrNoData("h-[300px]", periodData, "기간을 선택하여 데이터를 조회하세요.") || (
                 <ResponsiveContainer width="100%" height={300}>
                   {/* TODO: 기간별 카메라별 이벤트 분포 차트 구현 */}
+                  <div className="flex items-center justify-center text-sm text-muted-foreground h-full">차트 영역</div>
                 </ResponsiveContainer>
-              ) : (
-                <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">기간을 선택하여 데이터를 조회하세요.</div>
               )}
             </CardContent>
           </Card>
@@ -308,24 +342,22 @@ export function StatsDashboard() {
               <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" />기간별 이벤트 요약</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>기간</TableHead>
-                    <TableHead className="text-center">총 이벤트</TableHead>
-                    <TableHead className="text-center">분석 완료율</TableHead>
-                    <TableHead className="text-center">주요 유형</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {periodData ? (
-                    // TODO: 요약 데이터 테이블 행 렌더링
-                    <TableRow><TableCell colSpan={4} className="h-24 text-center">데이터 로딩 중...</TableCell></TableRow>
-                  ) : (
+              {renderLoadingOrNoData("h-24", periodData, "기간을 선택하여 데이터를 조회하세요.") || (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>기간</TableHead>
+                      <TableHead className="text-center">총 이벤트</TableHead>
+                      <TableHead className="text-center">분석 완료율</TableHead>
+                      <TableHead className="text-center">주요 유형</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {/* TODO: 요약 데이터 테이블 행 렌더링 */}
                     <TableRow><TableCell colSpan={4} className="h-24 text-center">데이터 없음</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </div>

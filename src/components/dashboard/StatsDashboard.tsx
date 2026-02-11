@@ -34,7 +34,7 @@ const PeriodSelector = ({ periodType, onPeriodTypeChange, dateRange, onDateRange
     const weeks = [];
     const monthStart = startOfMonth(new Date(year, month - 1));
     const monthEnd = endOfMonth(monthStart);
-    let weekStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+    let weekStart = startOfWeek(monthStart, { weekStartsOn: 0 }); // 일요일 시작
 
     while (weekStart <= monthEnd) {
       const weekEnd = endOfWeek(weekStart, { weekStartsOn: 0 });
@@ -175,13 +175,16 @@ const PeriodSelector = ({ periodType, onPeriodTypeChange, dateRange, onDateRange
 // --- 메인 컴포넌트 ---
 
 export function StatsDashboard() {
+  // 상태 관리
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [periodType, setPeriodType] = useState("monthly");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined); 
   
+  // 실제 API 호출을 위한 기간 상태
   const [periodStart, setPeriodStart] = useState<Date | undefined>(startOfMonth(new Date()));
   const [periodEnd, setPeriodEnd] = useState<Date | undefined>(endOfMonth(new Date()));
 
+  // 데이터 상태
   const [dailyData, setDailyData] = useState<DailySummary | null>(null);
   const [periodTrend, setPeriodTrend] = useState<PeriodTrend[] | null>(null);
   const [eventTypeDist, setEventTypeDist] = useState<EventTypeDistribution[] | null>(null);
@@ -191,6 +194,7 @@ export function StatsDashboard() {
   const [isDailyLoading, setIsDailyLoading] = useState(false);
   const [isPeriodLoading, setIsPeriodLoading] = useState(false);
 
+  // 일간 데이터 로딩
   useEffect(() => {
     const fetchDailyData = async () => {
       if (!selectedDate) return;
@@ -209,11 +213,13 @@ export function StatsDashboard() {
     fetchDailyData();
   }, [selectedDate]);
 
+  // 기간별 데이터 로딩
   useEffect(() => {
     const fetchPeriodData = async () => {
       if (periodType !== 'overall' && (!periodStart || !periodEnd)) return;
 
       setIsPeriodLoading(true);
+      // 초기화
       setPeriodTrend(null);
       setEventTypeDist(null);
       setCameraDist(null);
@@ -379,12 +385,45 @@ export function StatsDashboard() {
           />
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
+          {/* 기간별 이벤트 요약 (최상단으로 이동) */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" />기간별 이벤트 요약</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {renderLoadingOrNoData("h-24", isPeriodLoading, !!periodSummary, "기간을 선택하여 데이터를 조회하세요.") || (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>기간</TableHead>
+                      <TableHead className="text-center">총 이벤트</TableHead>
+                      <TableHead className="text-center">분석 완료율</TableHead>
+                      <TableHead className="text-center">주요 유형</TableHead>
+                      <TableHead className="text-center">긴급 알림</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell className="font-medium">{periodSummary?.period}</TableCell>
+                      <TableCell className="text-center">{periodSummary?.totalEvents}</TableCell>
+                      <TableCell className="text-center">
+                        {periodSummary?.totalEvents ? Math.round((periodSummary.resolvedEvents / periodSummary.totalEvents) * 100) : 0}%
+                      </TableCell>
+                      <TableCell className="text-center">{periodSummary?.topEventType}</TableCell>
+                      <TableCell className="text-center text-destructive font-bold">{periodSummary?.alerts}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><TrendingUp className="h-5 w-5" />기간별 이벤트 추이</CardTitle>
             </CardHeader>
             <CardContent>
-              {renderLoadingOrNoData("h-[250px]", isPeriodLoading, !!periodTrend && periodTrend.length > 0, "데이터 없음") || (
+              {renderLoadingOrNoData("h-[250px]", isPeriodLoading, !!periodTrend && periodTrend.length > 0, "기간을 선택하여 데이터를 조회하세요.") || (
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={periodTrend || []}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -403,7 +442,7 @@ export function StatsDashboard() {
               <CardTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5" />기간별 이벤트 유형 분포</CardTitle>
             </CardHeader>
             <CardContent>
-              {renderLoadingOrNoData("h-[250px]", isPeriodLoading, !!eventTypeDist && eventTypeDist.length > 0, "데이터 없음") || (
+              {renderLoadingOrNoData("h-[250px]", isPeriodLoading, !!eventTypeDist && eventTypeDist.length > 0, "기간을 선택하여 데이터를 조회하세요.") || (
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
@@ -432,7 +471,7 @@ export function StatsDashboard() {
               <CardTitle className="flex items-center gap-2"><Camera className="h-5 w-5" />기간별 카메라별 이벤트 분포</CardTitle>
             </CardHeader>
             <CardContent>
-              {renderLoadingOrNoData("h-[300px]", isPeriodLoading, !!cameraDist && cameraDist.length > 0, "데이터 없음") || (
+              {renderLoadingOrNoData("h-[300px]", isPeriodLoading, !!cameraDist && cameraDist.length > 0, "기간을 선택하여 데이터를 조회하세요.") || (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={cameraDist || []} layout="vertical" margin={{ left: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
@@ -442,37 +481,6 @@ export function StatsDashboard() {
                     <Bar dataKey="count" name="이벤트 수" fill="hsl(var(--primary) / 0.6)" radius={[0, 4, 4, 0]} barSize={20} />
                   </BarChart>
                 </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" />기간별 이벤트 요약</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {renderLoadingOrNoData("h-24", isPeriodLoading, !!periodSummary, "데이터 없음") || (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>기간</TableHead>
-                      <TableHead className="text-center">총 이벤트</TableHead>
-                      <TableHead className="text-center">분석 완료율</TableHead>
-                      <TableHead className="text-center">주요 유형</TableHead>
-                      <TableHead className="text-center">긴급 알림</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium">{periodSummary?.period}</TableCell>
-                      <TableCell className="text-center">{periodSummary?.totalEvents}</TableCell>
-                      <TableCell className="text-center">
-                        {periodSummary?.totalEvents ? Math.round((periodSummary.resolvedEvents / periodSummary.totalEvents) * 100) : 0}%
-                      </TableCell>
-                      <TableCell className="text-center">{periodSummary?.topEventType}</TableCell>
-                      <TableCell className="text-center text-destructive font-bold">{periodSummary?.alerts}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
               )}
             </CardContent>
           </Card>

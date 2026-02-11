@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { Calendar as CalendarIcon, AlertTriangle, TrendingUp, Camera, FileText, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,44 +9,76 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { addDays, format, getYear, getMonth, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addWeeks } from "date-fns";
+import { addDays, format, getYear, getMonth, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addWeeks, startOfYear, endOfYear, parseISO } from "date-fns";
 import { ko } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
+import { statsApi } from "@/lib/api";
+import type { DailySummary, PeriodTrend, EventTypeDistribution, CameraDistribution, PeriodSummary } from "@/types";
+
+// --- 상수 ---
+const PIE_CHART_COLORS = ['#2563eb', '#16a34a', '#9333ea', '#0d9488', '#4f46e5'];
 
 // --- Helper Components ---
 
-// 기간 선택 컨트롤러
-const PeriodSelector = ({ periodType, onPeriodTypeChange, dateRange, onDateRangeChange }: any) => {
+const PeriodSelector = ({ periodType, onPeriodTypeChange, dateRange, onDateRangeChange, onPeriodSelect }: any) => {
   const currentYear = getYear(new Date());
   const currentMonth = getMonth(new Date()) + 1;
 
-  const [yearForWeek, setYearForWeek] = useState(currentYear);
-  const [monthForWeek, setMonthForWeek] = useState(currentMonth);
+  const [year, setYear] = useState(currentYear);
+  const [month, setMonth] = useState(currentMonth);
+  const [weekRange, setWeekRange] = useState("");
 
-  // 연도와 월을 기반으로 해당 월의 주차 목록을 생성하는 로직
+  // 주간 목록 생성
   const weeklyOptions = useMemo(() => {
     const weeks = [];
-    const monthStart = startOfMonth(new Date(yearForWeek, monthForWeek - 1));
+    const monthStart = startOfMonth(new Date(year, month - 1));
     const monthEnd = endOfMonth(monthStart);
-    let weekStart = startOfWeek(monthStart, { weekStartsOn: 0 }); // 일요일 시작
+    let weekStart = startOfWeek(monthStart, { weekStartsOn: 0 });
 
     while (weekStart <= monthEnd) {
       const weekEnd = endOfWeek(weekStart, { weekStartsOn: 0 });
       weeks.push({
         label: `${format(weekStart, 'M/d')} ~ ${format(weekEnd, 'M/d')}`,
-        value: format(weekStart, 'yyyy-MM-dd'),
+        value: `${format(weekStart, 'yyyy-MM-dd')}|${format(weekEnd, 'yyyy-MM-dd')}`,
       });
       weekStart = addWeeks(weekStart, 1);
     }
     return weeks;
-  }, [yearForWeek, monthForWeek]);
+  }, [year, month]);
 
-  // 연도별 선택
-  const renderYearSelector = (selectedYear: number, onYearChange: (year: number) => void) => (
-    <Select value={selectedYear.toString()} onValueChange={(val) => onYearChange(parseInt(val))}>
-      <SelectTrigger className="w-[120px]">
-        <SelectValue placeholder="연도 선택" />
+  // 기간 변경 시 부모에게 알림
+  useEffect(() => {
+    let start: Date | undefined;
+    let end: Date | undefined;
+
+    if (periodType === 'yearly') {
+      start = startOfYear(new Date(year, 0));
+      end = endOfYear(new Date(year, 0));
+    } else if (periodType === 'monthly') {
+      start = startOfMonth(new Date(year, month - 1));
+      end = endOfMonth(new Date(year, month - 1));
+    } else if (periodType === 'weekly' && weekRange) {
+      const [s, e] = weekRange.split('|');
+      start = parseISO(s);
+      end = parseISO(e);
+    } else if (periodType === 'custom') {
+        return;
+    } else if (periodType === 'overall') {
+        start = undefined;
+        end = undefined;
+    }
+
+    if (periodType !== 'custom') {
+        onPeriodSelect(start, end);
+    }
+  }, [periodType, year, month, weekRange, onPeriodSelect]);
+
+
+  const renderYearSelector = () => (
+    <Select value={year.toString()} onValueChange={(val) => setYear(parseInt(val))}>
+      <SelectTrigger className="w-[100px]">
+        <SelectValue placeholder="연도" />
       </SelectTrigger>
       <SelectContent>
         {Array.from({ length: 5 }).map((_, i) => (
@@ -58,93 +90,23 @@ const PeriodSelector = ({ periodType, onPeriodTypeChange, dateRange, onDateRange
     </Select>
   );
 
-  // 월별 선택
   const renderMonthSelector = () => (
-    <div className="flex gap-2">
-      {renderYearSelector(currentYear, () => {})} {/* TODO: 실제 연도 선택 값 반영 */}
-      <Select>
-        <SelectTrigger className="w-[100px]">
-          <SelectValue placeholder="월 선택" />
-        </SelectTrigger>
-        <SelectContent>
-          {Array.from({ length: 12 }).map((_, i) => (
-            <SelectItem key={i + 1} value={(i + 1).toString()}>
-              {i + 1}월
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-
-  // 주간별 선택
-  const renderWeekSelector = () => (
-     <div className="flex gap-2">
-      {renderYearSelector(yearForWeek, setYearForWeek)}
-       <Select value={monthForWeek.toString()} onValueChange={(val) => setMonthForWeek(parseInt(val))}>
-        <SelectTrigger className="w-[100px]">
-          <SelectValue placeholder="월 선택" />
-        </SelectTrigger>
-        <SelectContent>
-          {Array.from({ length: 12 }).map((_, i) => (
-            <SelectItem key={i + 1} value={(i + 1).toString()}>
-              {i + 1}월
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Select>
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="주간 선택" />
-        </SelectTrigger>
-        <SelectContent>
-          {weeklyOptions.map((week) => (
-            <SelectItem key={week.value} value={week.value}>
-              {week.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-
-  // 사용자 선택 (Date Range Picker)
-  const renderCustomSelector = () => (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          id="date"
-          variant={"outline"}
-          className={cn("w-[260px] justify-start text-left font-normal", !dateRange && "text-muted-foreground")}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {dateRange?.from ? (
-            dateRange.to ? (
-              <>{format(dateRange.from, "y-MM-dd")} ~ {format(dateRange.to, "y-MM-dd")}</>
-            ) : (
-              format(dateRange.from, "y-MM-dd")
-            )
-          ) : (
-            <span>기간 선택</span>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="end">
-        <Calendar
-          initialFocus
-          mode="range"
-          defaultMonth={dateRange?.from}
-          selected={dateRange}
-          onSelect={onDateRangeChange}
-          numberOfMonths={2}
-          locale={ko}
-        />
-      </PopoverContent>
-    </Popover>
+    <Select value={month.toString()} onValueChange={(val) => setMonth(parseInt(val))}>
+      <SelectTrigger className="w-[80px]">
+        <SelectValue placeholder="월" />
+      </SelectTrigger>
+      <SelectContent>
+        {Array.from({ length: 12 }).map((_, i) => (
+          <SelectItem key={i + 1} value={(i + 1).toString()}>
+            {i + 1}월
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <Select value={periodType} onValueChange={onPeriodTypeChange}>
         <SelectTrigger className="w-[120px]">
           <SelectValue placeholder="기간 단위" />
@@ -158,43 +120,148 @@ const PeriodSelector = ({ periodType, onPeriodTypeChange, dateRange, onDateRange
         </SelectContent>
       </Select>
 
-      {periodType === 'yearly' && renderYearSelector(currentYear, () => {})}
-      {periodType === 'monthly' && renderMonthSelector()}
-      {periodType === 'weekly' && renderWeekSelector()}
-      {periodType === 'custom' && renderCustomSelector()}
+      {(periodType === 'yearly' || periodType === 'monthly' || periodType === 'weekly') && renderYearSelector()}
+      {(periodType === 'monthly' || periodType === 'weekly') && renderMonthSelector()}
+      {periodType === 'weekly' && (
+        <Select value={weekRange} onValueChange={setWeekRange}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="주간 선택" />
+          </SelectTrigger>
+          <SelectContent>
+            {weeklyOptions.map((week) => (
+              <SelectItem key={week.value} value={week.value}>
+                {week.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+      {periodType === 'custom' && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant={"outline"}
+              className={cn("w-[240px] justify-start text-left font-normal", !dateRange && "text-muted-foreground")}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {dateRange?.from ? (
+                dateRange.to ? (
+                  <>{format(dateRange.from, "y-MM-dd")} ~ {format(dateRange.to, "y-MM-dd")}</>
+                ) : (
+                  format(dateRange.from, "y-MM-dd")
+                )
+              ) : (
+                <span>기간 선택</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={onDateRangeChange}
+              numberOfMonths={2}
+              locale={ko}
+            />
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   );
 };
-
 
 // --- 메인 컴포넌트 ---
 
 export function StatsDashboard() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [periodType, setPeriodType] = useState("weekly");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined); // 초기값 undefined로 변경
-  const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
+  const [periodType, setPeriodType] = useState("monthly");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  
+  const [periodStart, setPeriodStart] = useState<Date | undefined>(startOfMonth(new Date()));
+  const [periodEnd, setPeriodEnd] = useState<Date | undefined>(endOfMonth(new Date()));
 
-  // TODO: API 연동 시 아래 목업 데이터는 실제 데이터 상태로 변경됩니다.
-  const dailyData = null; // 일간 데이터
-  const periodData = null; // 기간별 데이터 (null이면 데이터 없음, undefined면 기간 미선택)
+  const [dailyData, setDailyData] = useState<DailySummary | null>(null);
+  const [periodTrend, setPeriodTrend] = useState<PeriodTrend[] | null>(null);
+  const [eventTypeDist, setEventTypeDist] = useState<EventTypeDistribution[] | null>(null);
+  const [cameraDist, setCameraDist] = useState<CameraDistribution[] | null>(null);
+  const [periodSummary, setPeriodSummary] = useState<PeriodSummary | null>(null);
+
+  const [isDailyLoading, setIsDailyLoading] = useState(false);
+  const [isPeriodLoading, setIsPeriodLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchDailyData = async () => {
+      if (!selectedDate) return;
+      setIsDailyLoading(true);
+      try {
+        const dateStr = format(selectedDate, 'yyyy-MM-dd');
+        const data = await statsApi.getDailySummary(dateStr);
+        setDailyData(data);
+      } catch (error) {
+        console.error("일간 데이터 로딩 실패:", error);
+        setDailyData(null);
+      } finally {
+        setIsDailyLoading(false);
+      }
+    };
+    fetchDailyData();
+  }, [selectedDate]);
+
+  useEffect(() => {
+    const fetchPeriodData = async () => {
+      if (periodType !== 'overall' && (!periodStart || !periodEnd)) return;
+
+      setIsPeriodLoading(true);
+      setPeriodTrend(null);
+      setEventTypeDist(null);
+      setCameraDist(null);
+      setPeriodSummary(null);
+
+      try {
+        const startStr = periodStart ? format(periodStart, 'yyyy-MM-dd') : undefined;
+        const endStr = periodEnd ? format(periodEnd, 'yyyy-MM-dd') : undefined;
+
+        const [trend, eventType, camera, summary] = await Promise.all([
+          statsApi.getPeriodTrend(startStr, endStr),
+          statsApi.getEventTypeDistribution(startStr, endStr),
+          statsApi.getCameraDistribution(startStr, endStr),
+          statsApi.getPeriodSummary(startStr, endStr),
+        ]);
+
+        setPeriodTrend(trend);
+        setEventTypeDist(eventType);
+        setCameraDist(camera);
+        setPeriodSummary(summary);
+      } catch (error) {
+        console.error("기간별 데이터 로딩 실패:", error);
+      } finally {
+        setIsPeriodLoading(false);
+      }
+    };
+    fetchPeriodData();
+  }, [periodType, periodStart, periodEnd]);
+
+  // useCallback으로 감싸서 불필요한 리렌더링 방지
+  const handleDateRangeChange = useCallback((range: DateRange | undefined) => {
+    setDateRange(range);
+    if (range?.from && range?.to) {
+      setPeriodStart(range.from);
+      setPeriodEnd(range.to);
+    }
+  }, []);
+
+  const handlePeriodSelect = useCallback((start: Date | undefined, end: Date | undefined) => {
+    setPeriodStart(start);
+    setPeriodEnd(end);
+  }, []);
 
   const dailyTitle = selectedDate
     ? `${format(selectedDate, "yyyy년 M월 d일 (eee)", { locale: ko })}의 일간 이벤트`
     : "일간 상세 분석";
 
-  // 로딩 시뮬레이션 (실제 API 호출로 대체될 부분)
-  useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      // 여기에서 실제 데이터를 불러오는 로직이 들어갑니다.
-      // dailyData, periodData 상태 업데이트
-    }, 1000); // 1초 로딩 시뮬레이션
-    return () => clearTimeout(timer);
-  }, [selectedDate, periodType, dateRange]); // 의존성 추가
-
-  const renderLoadingOrNoData = (height: string, hasData: any, initialMessage: string) => {
+  const renderLoadingOrNoData = (height: string, isLoading: boolean, hasData: boolean, initialMessage: string) => {
     if (isLoading) {
       return (
         <div className={cn("flex items-center justify-center text-sm text-muted-foreground", height)}>
@@ -202,23 +269,15 @@ export function StatsDashboard() {
         </div>
       );
     }
-    if (hasData === undefined) { // 기간 미선택 (periodData만 해당)
+    if (!hasData) {
       return (
         <div className={cn("flex items-center justify-center text-sm text-muted-foreground", height)}>
           {initialMessage}
         </div>
       );
     }
-    if (hasData === null || (Array.isArray(hasData) && hasData.length === 0)) { // 데이터 없음
-      return (
-        <div className={cn("flex items-center justify-center text-sm text-muted-foreground", height)}>
-          해당 기간에 데이터가 없습니다.
-        </div>
-      );
-    }
-    return null; // 데이터가 있으면 아무것도 렌더링하지 않음
+    return null;
   };
-
 
   return (
     <div className="space-y-8">
@@ -244,37 +303,58 @@ export function StatsDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="lg:col-span-2 flex flex-col h-[430px]"> {/* 높이 고정 */}
+          <Card className="lg:col-span-2 flex flex-col h-[430px]">
             <CardHeader>
               <CardTitle>{dailyTitle}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6 flex-grow">
-              {renderLoadingOrNoData("h-full", dailyData, "캘린더에서 날짜를 선택하세요.") || (
+              {renderLoadingOrNoData("h-full", isDailyLoading, !!dailyData, "캘린더에서 날짜를 선택하세요.") || (
                 <>
                   <div>
                     <h3 className="text-lg font-semibold mb-2">총 이벤트</h3>
-                    <p className="text-4xl font-bold">{(dailyData as any)?.totalEvents}건</p>
+                    <p className="text-4xl font-bold">{dailyData?.totalEvents}건</p>
                   </div>
                   <div className="grid md:grid-cols-2 gap-6 flex-grow">
-                    <Card className="flex flex-col">
-                      <CardHeader className="py-2">
+                    <Card className="flex flex-col border-0 shadow-none">
+                      <CardHeader className="py-2 px-0">
                         <CardTitle className="text-base flex items-center gap-2"><Camera className="h-4 w-4" />카메라별 분포</CardTitle>
                       </CardHeader>
-                      <CardContent className="flex-grow">
-                        <ResponsiveContainer width="100%" height="100%">
-                          {/* TODO: 카메라별 분포 차트 구현 */}
-                          <div className="flex items-center justify-center text-xs text-muted-foreground h-full">차트 영역</div>
+                      <CardContent className="flex-grow px-0">
+                        <ResponsiveContainer width="100%" height={150}>
+                          <BarChart data={dailyData?.cameraDistribution} layout="vertical" margin={{ left: 40 }}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                            <XAxis type="number" hide />
+                            <YAxis type="category" dataKey="cameraName" width={80} tick={{fontSize: 11}} />
+                            <Tooltip />
+                            <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20} />
+                          </BarChart>
                         </ResponsiveContainer>
                       </CardContent>
                     </Card>
-                    <Card className="flex flex-col">
-                      <CardHeader className="py-2">
+                    <Card className="flex flex-col border-0 shadow-none">
+                      <CardHeader className="py-2 px-0">
                         <CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="h-4 w-4" />이벤트 유형 분포</CardTitle>
                       </CardHeader>
-                      <CardContent className="flex-grow">
-                        <ResponsiveContainer width="100%" height="100%">
-                          {/* TODO: 이벤트 유형 분포 차트 구현 */}
-                          <div className="flex items-center justify-center text-xs text-muted-foreground h-full">차트 영역</div>
+                      <CardContent className="flex-grow px-0">
+                        <ResponsiveContainer width="100%" height={150}>
+                          <PieChart>
+                            <Pie
+                              data={dailyData?.eventTypeDistribution}
+                              dataKey="count"
+                              nameKey="type"
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={40}
+                              outerRadius={60}
+                              paddingAngle={2}
+                            >
+                              {dailyData?.eventTypeDistribution.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                            <Legend iconSize={8} layout="vertical" verticalAlign="middle" align="right" />
+                          </PieChart>
                         </ResponsiveContainer>
                       </CardContent>
                     </Card>
@@ -294,7 +374,8 @@ export function StatsDashboard() {
             periodType={periodType}
             onPeriodTypeChange={setPeriodType}
             dateRange={dateRange}
-            onDateRangeChange={setDateRange}
+            onDateRangeChange={handleDateRangeChange}
+            onPeriodSelect={handlePeriodSelect}
           />
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
@@ -303,10 +384,16 @@ export function StatsDashboard() {
               <CardTitle className="flex items-center gap-2"><TrendingUp className="h-5 w-5" />기간별 이벤트 추이</CardTitle>
             </CardHeader>
             <CardContent>
-              {renderLoadingOrNoData("h-[250px]", periodData, "기간을 선택하여 데이터를 조회하세요.") || (
+              {renderLoadingOrNoData("h-[250px]", isPeriodLoading, !!periodTrend && periodTrend.length > 0, "데이터 없음") || (
                 <ResponsiveContainer width="100%" height={250}>
-                  {/* TODO: 기간별 이벤트 추이 차트 구현 */}
-                  <div className="flex items-center justify-center text-sm text-muted-foreground h-full">차트 영역</div>
+                  <BarChart data={periodTrend || []}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="period" fontSize={12} />
+                    <YAxis fontSize={12} />
+                    <Tooltip />
+                    <Bar dataKey="totalEvents" name="발생" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="resolvedEvents" name="분석완료" fill="hsl(var(--primary) / 0.3)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
                 </ResponsiveContainer>
               )}
             </CardContent>
@@ -316,10 +403,26 @@ export function StatsDashboard() {
               <CardTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5" />기간별 이벤트 유형 분포</CardTitle>
             </CardHeader>
             <CardContent>
-              {renderLoadingOrNoData("h-[250px]", periodData, "기간을 선택하여 데이터를 조회하세요.") || (
+              {renderLoadingOrNoData("h-[250px]", isPeriodLoading, !!eventTypeDist && eventTypeDist.length > 0, "데이터 없음") || (
                 <ResponsiveContainer width="100%" height={250}>
-                  {/* TODO: 기간별 이벤트 유형 분포 차트 구현 */}
-                  <div className="flex items-center justify-center text-sm text-muted-foreground h-full">차트 영역</div>
+                  <PieChart>
+                    <Pie
+                      data={eventTypeDist || []}
+                      dataKey="count"
+                      nameKey="type"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={2}
+                    >
+                      {eventTypeDist?.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend iconSize={8} />
+                  </PieChart>
                 </ResponsiveContainer>
               )}
             </CardContent>
@@ -329,10 +432,15 @@ export function StatsDashboard() {
               <CardTitle className="flex items-center gap-2"><Camera className="h-5 w-5" />기간별 카메라별 이벤트 분포</CardTitle>
             </CardHeader>
             <CardContent>
-              {renderLoadingOrNoData("h-[300px]", periodData, "기간을 선택하여 데이터를 조회하세요.") || (
+              {renderLoadingOrNoData("h-[300px]", isPeriodLoading, !!cameraDist && cameraDist.length > 0, "데이터 없음") || (
                 <ResponsiveContainer width="100%" height={300}>
-                  {/* TODO: 기간별 카메라별 이벤트 분포 차트 구현 */}
-                  <div className="flex items-center justify-center text-sm text-muted-foreground h-full">차트 영역</div>
+                  <BarChart data={cameraDist || []} layout="vertical" margin={{ left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis type="number" fontSize={12} />
+                    <YAxis type="category" dataKey="cameraName" width={100} fontSize={12} />
+                    <Tooltip />
+                    <Bar dataKey="count" name="이벤트 수" fill="hsl(var(--primary) / 0.6)" radius={[0, 4, 4, 0]} barSize={20} />
+                  </BarChart>
                 </ResponsiveContainer>
               )}
             </CardContent>
@@ -342,7 +450,7 @@ export function StatsDashboard() {
               <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" />기간별 이벤트 요약</CardTitle>
             </CardHeader>
             <CardContent>
-              {renderLoadingOrNoData("h-24", periodData, "기간을 선택하여 데이터를 조회하세요.") || (
+              {renderLoadingOrNoData("h-24", isPeriodLoading, !!periodSummary, "데이터 없음") || (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -350,11 +458,19 @@ export function StatsDashboard() {
                       <TableHead className="text-center">총 이벤트</TableHead>
                       <TableHead className="text-center">분석 완료율</TableHead>
                       <TableHead className="text-center">주요 유형</TableHead>
+                      <TableHead className="text-center">긴급 알림</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {/* TODO: 요약 데이터 테이블 행 렌더링 */}
-                    <TableRow><TableCell colSpan={4} className="h-24 text-center">데이터 없음</TableCell></TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">{periodSummary?.period}</TableCell>
+                      <TableCell className="text-center">{periodSummary?.totalEvents}</TableCell>
+                      <TableCell className="text-center">
+                        {periodSummary?.totalEvents ? Math.round((periodSummary.resolvedEvents / periodSummary.totalEvents) * 100) : 0}%
+                      </TableCell>
+                      <TableCell className="text-center">{periodSummary?.topEventType}</TableCell>
+                      <TableCell className="text-center text-destructive font-bold">{periodSummary?.alerts}</TableCell>
+                    </TableRow>
                   </TableBody>
                 </Table>
               )}

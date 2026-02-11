@@ -65,7 +65,40 @@ export interface User {
   approved: boolean;
 }
 
-// Stats types
+// --- Stats Types (New) ---
+
+export interface EventTypeDistribution {
+  type: string;
+  count: number;
+}
+
+export interface CameraDistribution {
+  cameraName: string;
+  count: number;
+}
+
+export interface DailySummary {
+  totalEvents: number;
+  cameraDistribution: CameraDistribution[];
+  eventTypeDistribution: EventTypeDistribution[];
+}
+
+export interface PeriodTrend {
+  period: string; // 날짜, 월, 주차 등 X축 레이블
+  totalEvents: number;
+  resolvedEvents: number;
+}
+
+export interface PeriodSummary {
+  period: string;
+  totalEvents: number;
+  resolvedEvents: number;
+  topEventType: string;
+  alerts: number;
+}
+
+
+// --- Stats Types (Legacy) ---
 export interface DailyStat {
   day: string;
   events: number;

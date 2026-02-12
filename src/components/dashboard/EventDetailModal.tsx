@@ -174,9 +174,23 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
   };
 
   // 보고서 새 창에서 열기
-  const handleOpenReport = () => {
-    if (displayEvent?.id) {
-      window.open(`/api/events/${displayEvent.id}/report`, '_blank');
+  const handleOpenReport = async () => {
+    if (!displayEvent?.id) return;
+
+    try {
+      const html = await eventsApi.getReport(displayEvent.id);
+      const newWindow = window.open('', '_blank');
+      if (newWindow) {
+        newWindow.document.write(html);
+        newWindow.document.title = `${displayEvent.cameraLocation} ${getEventTypeKorean(displayEvent.type)} 분석 보고서`;
+        newWindow.document.close();
+      }
+    } catch {
+      toast({
+        title: "보고서 열기 실패",
+        description: "보고서를 불러올 수 없습니다.",
+        variant: "alert",
+      });
     }
   };
 
@@ -185,9 +199,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
     if (!displayEvent?.id) return;
 
     try {
-      const response = await fetch(`/api/events/${displayEvent.id}/report`);
-      if (!response.ok) throw new Error('보고서를 불러올 수 없습니다');
-      const html = await response.text();
+      const html = await eventsApi.getReport(displayEvent.id);
 
       if (format === 'pdf') {
         // html2pdf.js 동적 로드

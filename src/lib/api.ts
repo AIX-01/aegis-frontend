@@ -149,6 +149,12 @@ export const eventsApi = {
     );
     return response.data;
   },
+
+  /** 보고서 HTML 조회 */
+  getReport: async (id: string): Promise<string> => {
+    const response = await api.get<string>(`/api/events/${id}/report`);
+    return response.data;
+  },
 };
 
 // Notifications API

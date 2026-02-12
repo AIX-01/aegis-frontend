@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import useSWR from 'swr';
 import {
   Activity,
   AlertTriangle,
@@ -14,41 +15,76 @@ import { HeatmapChart } from './HeatmapChart';
 import { TopCamerasList } from './TopCamerasList';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
+import { fetcher } from '@/lib/utils';
 
 type TimeRange = 'day' | 'week' | 'month';
 
-interface ChartConfigItem {
-  lineTitle: string;
-  lineXAxis: string[];
-  heatmapTitle: string;
-  heatmapY: string[];
+interface StatisticsResponse {
+    kpi: {
+        totalEvents: string;
+        totalEventsTrend: string;
+        totalEventsTrendUp: boolean;
+        emergencyAlerts: string;
+        emergencyAlertsTrend: string;
+        emergencyAlertsTrendUp: boolean;
+        analysisCompletionRate: string;
+        analysisCompletionRateTrend: string;
+        analysisCompletionRateTrendUp: boolean;
+        monitoringCameras: string;
+        monitoringCamerasUnit: string;
+        monitoringCamerasTrend: string;
+        monitoringCamerasTrendUp: boolean;
+    };
+    trend: {
+        title: string;
+        xAxis: string[];
+        series: number[];
+    };
+    eventTypeDistribution: {
+        items: {
+            type: string;
+            count: number;
+            percentage: number;
+        }[];
+    };
+    heatmap: {
+        title: string;
+        yAxis: string[];
+        series: {
+            x: number;
+            y: number;
+            value: number;
+        }[];
+    };
+    topCameras: {
+        rank: number;
+        name: string;
+        count: number;
+        alert: boolean;
+    }[];
 }
 
 export const StatisticsDashboard = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>('day');
+  const { data, error, isLoading } = useSWR<StatisticsResponse>(`/api/stats/dashboard?timeRange=${timeRange}`, fetcher);
 
-  const chartConfig: Record<TimeRange, ChartConfigItem> = {
-    day: {
-      lineTitle: '시간대별 이벤트 추이',
-      lineXAxis: ['00시', '04시', '08시', '12시', '16시', '20시', '24시'],
-      heatmapTitle: '구역/시간대별 집중도',
-      heatmapY: ['정문', '후문', '주차장', '로비', '복도', '외곽', '옥상'],
-    },
-    week: {
-      lineTitle: '요일별 이벤트 추이',
-      lineXAxis: ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'],
-      heatmapTitle: '요일/시간대별 발생 패턴',
-      heatmapY: ['월', '화', '수', '목', '금', '토', '일'],
-    },
-    month: {
-      lineTitle: '일별 이벤트 추이',
-      lineXAxis: ['1일', '5일', '10일', '15일', '20일', '25일', '말일'],
-      heatmapTitle: '요일/시간대별 발생 패턴 (월간 평균)',
-      heatmapY: ['월', '화', '수', '목', '금', '토', '일'],
-    }
-  };
-
-  const currentConfig = chartConfig[timeRange];
+  const renderLoading = () => (
+    <div className="animate-pulse space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-slate-100 h-32 rounded-xl" />
+            ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 bg-slate-100 h-80 rounded-xl" />
+            <div className="bg-slate-100 h-80 rounded-xl" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-slate-100 h-72 rounded-xl" />
+            <div className="bg-slate-100 h-72 rounded-xl" />
+        </div>
+    </div>
+  );
 
   return (
     <ProtectedRoute>
@@ -76,55 +112,59 @@ export const StatisticsDashboard = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <KpiCard
-              title="총 발생 이벤트"
-              value="1,248"
-              unit="건"
-              trend="+12% (전일 대비)"
-              trendUp={true}
-              icon={<Activity size={20} className="text-blue-500" />}
-              color="bg-blue-50"
-          />
-          <KpiCard
-              title="긴급 (위험) 알림"
-              value="7"
-              unit="건"
-              trend="+2건 (전일 대비)"
-              trendUp={true}
-              icon={<AlertTriangle size={20} className="text-red-500" />}
-              color="bg-red-50"
-              alert={true}
-          />
-          <KpiCard
-              title="분석 완료율 (AI)"
-              value="99.8"
-              unit="%"
-              trend="변동 없음"
-              trendUp={null}
-              icon={<ShieldCheck size={20} className="text-emerald-500" />}
-              color="bg-emerald-50"
-          />
-          <KpiCard
-              title="모니터링 카메라"
-              value="45"
-              unit="/ 45 대"
-              trend="모두 정상 작동중"
-              trendUp={null}
-              icon={<Camera size={20} className="text-purple-500" />}
-              color="bg-purple-50"
-          />
-        </div>
+        {isLoading ? renderLoading() : error ? <p className="text-red-500">데이터를 불러오는데 실패했습니다.</p> : data && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <KpiCard
+                  title="총 발생 이벤트"
+                  value={data.kpi.totalEvents}
+                  unit="건"
+                  trend={data.kpi.totalEventsTrend}
+                  trendUp={data.kpi.totalEventsTrendUp}
+                  icon={<Activity size={20} className="text-blue-500" />}
+                  color="bg-blue-50"
+              />
+              <KpiCard
+                  title="긴급 (위험) 알림"
+                  value={data.kpi.emergencyAlerts}
+                  unit="건"
+                  trend={data.kpi.emergencyAlertsTrend}
+                  trendUp={data.kpi.emergencyAlertsTrendUp}
+                  icon={<AlertTriangle size={20} className="text-red-500" />}
+                  color="bg-red-50"
+                  alert={true}
+              />
+              <KpiCard
+                  title="분석 완료율 (AI)"
+                  value={data.kpi.analysisCompletionRate}
+                  unit="%"
+                  trend={data.kpi.analysisCompletionRateTrend}
+                  trendUp={data.kpi.analysisCompletionRateTrendUp}
+                  icon={<ShieldCheck size={20} className="text-emerald-500" />}
+                  color="bg-emerald-50"
+              />
+              <KpiCard
+                  title="모니터링 카메라"
+                  value={data.kpi.monitoringCameras}
+                  unit={data.kpi.monitoringCamerasUnit}
+                  trend={data.kpi.monitoringCamerasTrend}
+                  trendUp={data.kpi.monitoringCamerasTrendUp}
+                  icon={<Camera size={20} className="text-purple-500" />}
+                  color="bg-purple-50"
+              />
+            </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <TrendLineChart title={currentConfig.lineTitle} xAxis={currentConfig.lineXAxis} />
-          <EventTypeDonutChart />
-        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              <TrendLineChart title={data.trend.title} xAxis={data.trend.xAxis} series={data.trend.series} />
+              <EventTypeDonutChart items={data.eventTypeDistribution.items} />
+            </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <HeatmapChart title={currentConfig.heatmapTitle} yAxis={currentConfig.heatmapY} />
-          <TopCamerasList />
-        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <HeatmapChart title={data.heatmap.title} yAxis={data.heatmap.yAxis} series={data.heatmap.series} />
+              <TopCamerasList items={data.topCameras} />
+            </div>
+          </>
+        )}
       </DashboardLayout>
     </ProtectedRoute>
   );

@@ -2,7 +2,20 @@ import React from 'react';
 import { MapPin } from 'lucide-react';
 import { CameraRankItem } from './CameraRankItem';
 
-export const TopCamerasList = () => {
+interface CameraRankData {
+    rank: number;
+    name: string;
+    count: number;
+    alert: boolean;
+}
+
+interface TopCamerasListProps {
+    items: CameraRankData[];
+}
+
+export const TopCamerasList: React.FC<TopCamerasListProps> = ({ items = [] }) => {
+    const maxCount = Math.max(...items.map(i => i.count), 1);
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
       <div className="flex justify-between items-center mb-6">
@@ -13,11 +26,16 @@ export const TopCamerasList = () => {
       </div>
 
       <div className="space-y-5 mt-4">
-        <CameraRankItem rank={1} name="CAM-01 (정문 출입구)" count={7} maxCount={10} alert={true} />
-        <CameraRankItem rank={2} name="CAM-05 (지하주차장 B1)" count={4} maxCount={10} />
-        <CameraRankItem rank={3} name="CAM-12 (후문 쓰레기장)" count={2} maxCount={10} />
-        <CameraRankItem rank={4} name="CAM-03 (1층 로비)" count={1} maxCount={10} />
-        <CameraRankItem rank={5} name="CAM-08 (비상계단 3F)" count={0} maxCount={10} />
+        {items.length > 0 ? items.map(item => (
+            <CameraRankItem
+                key={item.rank}
+                rank={item.rank}
+                name={item.name}
+                count={item.count}
+                maxCount={maxCount}
+                alert={item.alert}
+            />
+        )) : <p className="text-center text-slate-500">데이터가 없습니다.</p>}
       </div>
 
       <button className="w-full mt-6 py-2 text-sm text-blue-600 font-medium bg-blue-50 rounded-lg hover:bg-blue-100 transition">

@@ -1,12 +1,36 @@
 import React from 'react';
 import { Calendar } from 'lucide-react';
 
+interface HeatmapPoint {
+    x: number;
+    y: number;
+    value: number;
+}
+
 interface HeatmapChartProps {
   title: string;
   yAxis: string[];
+  series: HeatmapPoint[];
 }
 
-export const HeatmapChart: React.FC<HeatmapChartProps> = ({ title, yAxis }) => {
+export const HeatmapChart: React.FC<HeatmapChartProps> = ({ title, yAxis, series = [] }) => {
+    const xAxisLabels = ['새벽 (0-6)', '오전 (6-12)', '오후 (12-18)', '야간 (18-24)'];
+
+    const gridData = Array(yAxis.length).fill(0).map(() => Array(xAxisLabels.length).fill(0));
+    series.forEach(point => {
+        if (point.y < yAxis.length && point.x < xAxisLabels.length) {
+            gridData[point.y][point.x] = point.value;
+        }
+    });
+
+    const getBgColor = (value: number) => {
+        if (value > 10) return 'bg-red-400';
+        if (value > 5) return 'bg-blue-400';
+        if (value > 2) return 'bg-blue-200';
+        if (value > 0) return 'bg-blue-100';
+        return 'bg-slate-50';
+    };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
       <div className="flex justify-between items-center mb-6">
@@ -18,50 +42,30 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({ title, yAxis }) => {
       </div>
 
       <div className="flex">
-        {/* Y-axis (Dynamic based on timeRange) */}
         <div className="flex flex-col justify-around text-xs text-slate-400 pr-3 font-medium h-48 pt-6">
           {yAxis.map(label => (
-              <span key={label}>{label}</span>
+              <span key={label} className="flex-1">{label}</span>
           ))}
         </div>
 
-        {/* Heatmap Grid */}
         <div className="flex-1 flex flex-col h-48">
-          {/* X-axis (Hours grouped) */}
           <div className="flex justify-between text-xs text-slate-400 mb-2 px-2">
-            <span>새벽 (0-6)</span>
-            <span>오전 (6-12)</span>
-            <span>오후 (12-18)</span>
-            <span>야간 (18-24)</span>
+            {xAxisLabels.map(label => <span key={label}>{label}</span>)}
           </div>
 
-          {/* Grid Cells */}
           <div className="flex-1 grid grid-rows-7 gap-1">
-            {[...Array(7)].map((_, dayIdx) => (
-                <div key={dayIdx} className="grid grid-cols-4 gap-1">
-                  {[...Array(4)].map((_, timeIdx) => {
-                    // Generate fake intensity (heavier on weekends night, or specific times)
-                    let intensity = Math.random();
-                    if (dayIdx >= 4 && timeIdx === 3) intensity += 0.5; // Friday/Sat night
-                    if (dayIdx === 2 && timeIdx === 2) intensity += 0.8; // Specific spike
-
-                    let bgColor = 'bg-blue-50';
-                    if (intensity > 1.2) bgColor = 'bg-red-400';
-                    else if (intensity > 0.8) bgColor = 'bg-blue-400';
-                    else if (intensity > 0.4) bgColor = 'bg-blue-200';
-
-                    return (
+            {gridData.map((row, y) => (
+                <div key={y} className="grid grid-cols-4 gap-1">
+                  {row.map((value, x) => (
                         <div
-                            key={timeIdx}
-                            className={`${bgColor} rounded-sm hover:ring-2 hover:ring-slate-400 transition-all cursor-pointer group relative`}
+                            key={x}
+                            className={`${getBgColor(value)} rounded-sm hover:ring-2 hover:ring-slate-400 transition-all cursor-pointer group relative`}
                         >
-                          {/* Tooltip on hover */}
                           <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded pointer-events-none z-10 whitespace-nowrap">
-                            평균 {Math.floor(intensity * 5)}건 발생
+                            {value}건 발생
                           </div>
                         </div>
-                    );
-                  })}
+                    ))}
                 </div>
             ))}
           </div>

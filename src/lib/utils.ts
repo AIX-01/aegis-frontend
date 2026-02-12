@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { Event } from "@/types";
+import api from "@/lib/axios";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -18,3 +19,4 @@ export function getEventTypeKorean(type: Event['type']): string {
   return typeMap[type] || '알 수 없음';
 }
 
+export const fetcher = (url: string) => api.get(url).then((res) => res.data);

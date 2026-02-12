@@ -16,11 +16,14 @@ import {
   AlertTriangle,
   Shield,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  CheckCircle,
+  XCircle,
+  History
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { ko } from "date-fns/locale";
-import type { Event } from "@/types";
+import type { Event, EventAction } from "@/types";
 import { useState, useRef, useEffect } from "react";
 import { eventsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -38,8 +41,36 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
   const [clipError, setClipError] = useState(false);
   const [clipReady, setClipReady] = useState(false);
   const [clipUrl, setClipUrl] = useState<string | null>(null);
+  const [resolving, setResolving] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
+
+  // pending 액션과 히스토리 액션 분리
+  const pendingAction = event?.actions?.find(a => a.pending);
+  const historyActions = event?.actions?.filter(a => !a.pending) || [];
+
+  // 액션 승인/거부 처리
+  const handleResolve = async (actionId: string, approved: boolean) => {
+    if (!event) return;
+
+    setResolving(true);
+    try {
+      await eventsApi.resolveAction(event.id, actionId, approved);
+      toast({
+        title: approved ? "승인 완료" : "거부 완료",
+        description: `액션이 ${approved ? '승인' : '거부'}되었습니다.`,
+      });
+      // 모달 닫기 또는 이벤트 새로고침은 SSE로 처리됨
+    } catch (error) {
+      toast({
+        title: "처리 실패",
+        description: "액션 처리에 실패했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    } finally {
+      setResolving(false);
+    }
+  };
 
   useEffect(() => {
     if (!open || !event?.id || !event?.clipUrl) {
@@ -255,6 +286,57 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
           <div className="w-1/2 flex flex-col">
             <ScrollArea className="flex-1 h-[450px]">
               <div className="p-6 space-y-4">
+                {/* Pending 액션 (승인 대기 중) - 요약 위에 표시 */}
+                {pendingAction && (
+                  <Card className="border-warning bg-warning/5">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2 text-warning">
+                        <AlertTriangle className="h-4 w-4" />
+                        승인 대기 중
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="p-3 bg-background rounded-lg border">
+                          <p className="font-medium text-sm">{pendingAction.action}</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {pendingAction.description}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleResolve(pendingAction.id, true)}
+                            disabled={resolving}
+                          >
+                            {resolving ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                            )}
+                            승인
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="flex-1"
+                            onClick={() => handleResolve(pendingAction.id, false)}
+                            disabled={resolving}
+                          >
+                            {resolving ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <XCircle className="h-4 w-4 mr-2" />
+                            )}
+                            거부
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Agent 자동 요약 */}
                 <Card>
                   <CardHeader className="pb-2">
@@ -273,23 +355,30 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                 </Card>
 
 
-                {/* 권장 조치 */}
-                {event.actions && event.actions.length > 0 && (
+                {/* 액션 히스토리 */}
+                {historyActions.length > 0 && (
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-primary" />
-                        권장 조치
+                        <History className="h-4 w-4 text-primary" />
+                        액션 히스토리
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <ul className="text-sm text-muted-foreground space-y-2">
-                        {event.actions.map((action) => (
-                          <li key={action.id} className="flex flex-col gap-0.5">
-                            <span>• {action.log}</span>
-                            <span className="text-xs text-muted-foreground/70 ml-3">
-                              {new Date(action.triggeredAt).toLocaleString('ko-KR')}
-                            </span>
+                      <ul className="text-sm space-y-3">
+                        {historyActions.map((action) => (
+                          <li key={action.id} className="p-3 bg-muted/50 rounded-lg">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <p className="font-medium">{action.action}</p>
+                                <p className="text-muted-foreground mt-0.5">
+                                  {action.description}
+                                </p>
+                              </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground/70 mt-2">
+                              {format(new Date(action.createdAt), 'yyyy.MM.dd HH:mm:ss', { locale: ko })}
+                            </p>
                           </li>
                         ))}
                       </ul>

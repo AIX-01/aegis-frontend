@@ -62,7 +62,8 @@ src/
 │   ├── statistics/
 │   │   └── StatisticsPageContent.tsx
 │   ├── common/
-│   │   └── EventBadges.tsx
+│   │   ├── EventBadges.tsx
+│   │   └── GlobalEventModal.tsx  # 전역 이벤트 모달 (토스트 클릭 시)
 │   └── ui/                 # shadcn/ui 컴포넌트
 │       ├── alert-dialog.tsx
 │       ├── badge.tsx
@@ -211,7 +212,13 @@ interface AuthContextType {
 - **재연결**: 연결 오류 시 5초 후 자동 재연결
 - **토스트**: notification 이벤트 수신 시 자동 표시
   - eventId 포함 시 토스트 클릭으로 이벤트 모달 열기 가능
-  - 커스텀 이벤트 `aegis:open-event-modal` 발생
+  - 커스텀 이벤트 `aegis:open-event-modal` 발생 → GlobalEventModal 처리
+
+### GlobalEventModal
+
+- **위치**: Providers에서 전역으로 렌더링
+- **기능**: 어느 페이지에서든 토스트 클릭 시 이벤트 상세 모달 표시
+- **동작**: `aegis:open-event-modal` 이벤트 수신 → API로 이벤트 조회 → 모달 표시
 
 ### WebRTCContext
 
@@ -285,7 +292,7 @@ interface StreamInfo {
 - 배지 순서: 타입 → 분석상태 → 카메라
 - 우측에 발생 시각 및 경과 시간 표시
 - `getEventTypeKorean` 유틸리티 사용
-- 토스트 클릭 시 이벤트 모달 열기: `aegis:open-event-modal` 이벤트 수신
+- 클릭 시 자체 EventDetailModal 표시 (이벤트 페이지용)
 
 ### EventsPageContent
 

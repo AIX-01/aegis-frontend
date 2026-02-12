@@ -17,7 +17,7 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({ title, xAxis = [
     return `${x},${y}`;
   }).join(' ');
 
-  const areaPoints = `${points} 100,100 0,100`;
+  const areaPoints = `0,100 ${points} 100,${100 - (series[series.length - 1] / maxValue) * 100} 100,100`;
 
   return (
     <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-5">
@@ -36,8 +36,8 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({ title, xAxis = [
           {yAxisLabels.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
         </div>
 
-        <div className="w-full h-full flex items-end justify-between px-8 relative">
-          <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
+        <div className="w-full h-full flex items-end justify-between px-4 sm:px-8 relative">
+          <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             <path
                 d={`M${areaPoints}`}
                 fill="rgba(59, 130, 246, 0.1)"
@@ -53,7 +53,7 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({ title, xAxis = [
           </svg>
         </div>
 
-        <div className="absolute left-8 right-8 bottom-0 flex justify-between text-xs text-slate-400 mt-2">
+        <div className="absolute left-4 sm:left-8 right-4 sm:right-8 bottom-0 flex justify-between text-xs text-slate-400 mt-2">
           {xAxis.map(label => (
               <span key={label} className="text-center" style={{ width: `${100 / (xAxis.length || 1)}%` }}>{label}</span>
           ))}

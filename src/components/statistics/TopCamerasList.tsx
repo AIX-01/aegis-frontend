@@ -14,7 +14,10 @@ interface TopCamerasListProps {
 }
 
 export const TopCamerasList: React.FC<TopCamerasListProps> = ({ items = [] }) => {
-    const maxCount = Math.max(...items.map(i => i.count), 1);
+    // For debugging: Check what props are being received
+    console.log('TopCamerasList received items:', items);
+
+    const maxCount = items.length > 0 ? Math.max(...items.map(i => i.count), 1) : 1;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
@@ -26,7 +29,8 @@ export const TopCamerasList: React.FC<TopCamerasListProps> = ({ items = [] }) =>
       </div>
 
       <div className="space-y-5 mt-4">
-        {items.length > 0 ? items.map(item => (
+        {items.length > 0 ? (
+          items.map(item => (
             <CameraRankItem
                 key={item.rank}
                 rank={item.rank}
@@ -35,7 +39,10 @@ export const TopCamerasList: React.FC<TopCamerasListProps> = ({ items = [] }) =>
                 maxCount={maxCount}
                 alert={item.alert}
             />
-        )) : <p className="text-center text-slate-500">데이터가 없습니다.</p>}
+          ))
+        ) : (
+          <p className="text-center text-slate-500 py-8">데이터가 없습니다.</p>
+        )}
       </div>
 
       <button className="w-full mt-6 py-2 text-sm text-blue-600 font-medium bg-blue-50 rounded-lg hover:bg-blue-100 transition">

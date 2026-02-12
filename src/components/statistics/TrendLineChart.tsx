@@ -7,12 +7,12 @@ interface TrendLineChartProps {
   series: number[];
 }
 
-export const TrendLineChart: React.FC<TrendLineChartProps> = ({ title, xAxis, series }) => {
+export const TrendLineChart: React.FC<TrendLineChartProps> = ({ title, xAxis = [], series = [] }) => {
   const maxValue = Math.max(...series, 1); // Prevent division by zero
   const yAxisLabels = [Math.round(maxValue), Math.round(maxValue * 0.66), Math.round(maxValue * 0.33), 0];
 
   const points = series.map((value, index) => {
-    const x = (index / (series.length - 1)) * 100;
+    const x = (index / (series.length > 1 ? series.length - 1 : 1)) * 100;
     const y = 100 - (value / maxValue) * 100;
     return `${x},${y}`;
   }).join(' ');
@@ -33,7 +33,7 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({ title, xAxis, se
 
       <div className="h-64 flex items-end justify-between relative pt-8 pb-6 border-b border-slate-100">
         <div className="absolute left-0 top-0 bottom-6 flex flex-col justify-between text-xs text-slate-400">
-          {yAxisLabels.map(label => <span key={label}>{label}</span>)}
+          {yAxisLabels.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
         </div>
 
         <div className="w-full h-full flex items-end justify-between px-8 relative">
@@ -55,7 +55,7 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({ title, xAxis, se
 
         <div className="absolute left-8 right-8 bottom-0 flex justify-between text-xs text-slate-400 mt-2">
           {xAxis.map(label => (
-              <span key={label} className="text-center" style={{ width: `${100 / xAxis.length}%` }}>{label}</span>
+              <span key={label} className="text-center" style={{ width: `${100 / (xAxis.length || 1)}%` }}>{label}</span>
           ))}
         </div>
       </div>

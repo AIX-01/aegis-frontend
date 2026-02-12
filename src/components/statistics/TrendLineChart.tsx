@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ChevronDown, Clock } from 'lucide-react';
 
 interface TrendLineChartProps {
@@ -8,6 +8,7 @@ interface TrendLineChartProps {
 }
 
 export const TrendLineChart: React.FC<TrendLineChartProps> = ({ title, xAxis = [], series = [] }) => {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const maxValue = Math.max(...series, 1); // Prevent division by zero
   const yAxisLabels = [Math.round(maxValue), Math.round(maxValue * 0.66), Math.round(maxValue * 0.33), 0];
 
@@ -28,7 +29,7 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({ title, xAxis = [
       const surgeX = (surgeIndex / (series.length > 1 ? series.length - 1 : 1)) * 100;
       const surgeY = 100 - (maxSeriesValue / maxValue) * 100;
       const surgeLabel = xAxis[surgeIndex];
-      surgePoint = { x: surgeX, y: surgeY, label: surgeLabel };
+      surgePoint = { x: surgeX, y: surgeY, label: surgeLabel, index: surgeIndex };
     }
   }
 
@@ -65,31 +66,61 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({ title, xAxis = [
             />
           </svg>
 
-          {/* HTML-based marker, positioned absolutely over the SVG */}
-          {surgePoint && (
-            <div
-              className="absolute flex flex-col items-center"
-              style={{
-                left: `${surgePoint.x}%`,
-                top: `${surgePoint.y}%`,
-                transform: 'translate(-50%, -50%)' // Center the circle on the data point
-              }}
-            >
+          {/* Hover Interaction Layer */}
+          <div className="absolute inset-0 flex items-stretch">
+            {series.map((_, index) => (
               <div
-                className={`absolute text-xs font-bold text-red-500 whitespace-nowrap px-1.5 py-0.5 rounded-md bg-white/70 backdrop-blur-sm ${
-                  surgePoint.y < 20 ? 'top-full mt-2' : 'bottom-full mb-2'
-                }`}
+                key={index}
+                className="flex-1 hover:bg-slate-50/50 group relative cursor-pointer"
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
               >
-                급증 ({surgePoint.label})
+                {/* Vertical Line on Hover */}
+                {hoveredIndex === index && (
+                  <div className="absolute inset-y-0 left-1/2 w-px bg-blue-300 -translate-x-1/2" />
+                )}
               </div>
-              <div className="w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-md" />
-            </div>
-          )}
+            ))}
+          </div>
+
+          {/* Data Points */}
+          {series.map((value, index) => {
+             const x = (index / (series.length > 1 ? series.length - 1 : 1)) * 100;
+             const y = 100 - (value / maxValue) * 100;
+             const isHovered = hoveredIndex === index;
+             const isSurge = surgePoint?.index === index;
+
+             if (!isHovered && !isSurge) return null;
+
+             return (
+                <div
+                  key={index}
+                  className="absolute flex flex-col items-center pointer-events-none"
+                  style={{
+                    left: `${x}%`,
+                    top: `${y}%`,
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 10
+                  }}
+                >
+                  <div
+                    className={`absolute text-xs font-bold whitespace-nowrap px-2 py-1 rounded-md shadow-sm backdrop-blur-sm transition-all duration-200 ${
+                      y < 20 ? 'top-full mt-2' : 'bottom-full mb-2'
+                    } ${isSurge && !isHovered ? 'text-red-500 bg-white/80' : 'text-slate-700 bg-white border border-slate-200'}`}
+                  >
+                    {isSurge && !isHovered ? `급증 (${xAxis[index]})` : `${xAxis[index]}: ${value}건`}
+                  </div>
+                  <div className={`w-3 h-3 rounded-full border-2 shadow-md transition-colors duration-200 ${
+                      isSurge ? 'bg-red-500 border-white' : 'bg-blue-500 border-white'
+                  }`} />
+                </div>
+             );
+          })}
         </div>
 
         <div className="absolute left-4 sm:left-8 right-4 sm:right-8 bottom-0 flex justify-between text-xs text-slate-400 mt-2">
-          {xAxis.map(label => (
-              <span key={label} className="text-center" style={{ width: `${100 / (xAxis.length || 1)}%` }}>{label}</span>
+          {xAxis.map((label, index) => (
+              <span key={label} className={`text-center transition-colors duration-200 ${hoveredIndex === index ? 'text-slate-800 font-medium' : ''}`} style={{ width: `${100 / (xAxis.length || 1)}%` }}>{label}</span>
           ))}
         </div>
       </div>

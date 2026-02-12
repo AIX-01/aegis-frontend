@@ -1,5 +1,7 @@
-import { StatisticsPageContent } from "@/components/statistics/StatisticsPageContent";
+import { StatisticsDashboard } from '@/components/statistics/StatisticsDashboard';
 
-export default function StatisticsPage() {
-  return <StatisticsPageContent />;
-}
+const StatisticsPage = () => {
+  return <StatisticsDashboard />;
+};
+
+export default StatisticsPage;

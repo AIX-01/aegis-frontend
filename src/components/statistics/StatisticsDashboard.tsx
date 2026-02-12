@@ -69,9 +69,11 @@ export const StatisticsDashboard = () => {
         {isLoading ? (
           <DashboardLoading />
         ) : error ? (
-          <p className="text-red-500">데이터를 불러오는데 실패했습니다.</p>
+          <div className="animate-in fade-in duration-500">
+            <p className="text-red-500">데이터를 불러오는데 실패했습니다.</p>
+          </div>
         ) : data ? (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <KpiCards data={data.kpi} />
             <ChartGrid
               trend={data.trend}

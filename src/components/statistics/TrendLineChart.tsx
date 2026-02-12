@@ -90,7 +90,8 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({ title, xAxis = [
              const isHovered = hoveredIndex === index;
              const isSurge = surgePoint?.index === index;
 
-             if (!isHovered && !isSurge) return null;
+             // Only show if hovered OR (it's a surge point AND nothing is hovered)
+             if (!isHovered && !(isSurge && hoveredIndex === null)) return null;
 
              return (
                 <div
@@ -111,7 +112,7 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({ title, xAxis = [
                     {isSurge && !isHovered ? `급증 (${xAxis[index]})` : `${xAxis[index]}: ${value}건`}
                   </div>
                   <div className={`w-3 h-3 rounded-full border-2 shadow-md transition-colors duration-200 ${
-                      isSurge ? 'bg-red-500 border-white' : 'bg-blue-500 border-white'
+                      isSurge && !isHovered ? 'bg-red-500 border-white' : 'bg-blue-500 border-white'
                   }`} />
                 </div>
              );

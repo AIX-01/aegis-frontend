@@ -44,13 +44,14 @@ export function AuthForm() {
       toast({
         title: '로그인 성공',
         description: '환영합니다!',
+        variant: 'success',
       });
       router.push('/');
     } else {
       toast({
         title: '로그인 실패',
         description: result.error,
-        variant: 'destructive',
+        variant: 'alert',
       });
     }
 
@@ -64,7 +65,7 @@ export function AuthForm() {
       toast({
         title: '회원가입 실패',
         description: '비밀번호가 일치하지 않습니다.',
-        variant: 'destructive',
+        variant: 'alert',
       });
       return;
     }
@@ -73,7 +74,7 @@ export function AuthForm() {
       toast({
         title: '회원가입 실패',
         description: '비밀번호는 최소 6자 이상이어야 합니다.',
-        variant: 'destructive',
+        variant: 'alert',
       });
       return;
     }
@@ -86,6 +87,7 @@ export function AuthForm() {
       toast({
         title: '회원가입 완료',
         description: '관리자 승인 후 로그인이 가능합니다.',
+        variant: 'success',
       });
       setSignupName('');
       setSignupEmail('');
@@ -95,7 +97,7 @@ export function AuthForm() {
       toast({
         title: '회원가입 실패',
         description: result.error,
-        variant: 'destructive',
+        variant: 'alert',
       });
     }
 

@@ -99,6 +99,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
       toast({
         title: approved ? "승인 완료" : "거부 완료",
         description: `액션이 ${approved ? '승인' : '거부'}되었습니다.`,
+        variant: "success",
       });
       // 이벤트 다시 조회
       fetchEventData(displayEvent.id);
@@ -106,7 +107,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
       toast({
         title: "처리 실패",
         description: "액션 처리에 실패했습니다. 다시 시도해주세요.",
-        variant: "destructive",
+        variant: "alert",
       });
     } finally {
       setResolving(false);
@@ -168,7 +169,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
         toast({
           title: "다운로드 실패",
           description: "클립 다운로드에 실패했습니다.",
-          variant: "destructive",
+          variant: "alert",
         });
       }
     }
@@ -224,12 +225,13 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
       toast({
         title: "다운로드 완료",
         description: `보고서가 ${format.toUpperCase()} 형식으로 다운로드되었습니다.`,
+        variant: "success",
       });
     } catch (error) {
       toast({
         title: "다운로드 실패",
         description: "보고서 다운로드에 실패했습니다.",
-        variant: "destructive",
+        variant: "alert",
       });
     }
   };

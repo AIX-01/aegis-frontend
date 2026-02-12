@@ -48,10 +48,11 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
 
       // 토스트 표시 (eventId 포함 - 클릭 시 모달 열기)
+      // notification.type과 toast.variant가 동일 (alert, warning, info, success)
       toastRef.current({
         title: notification.title,
         description: notification.message,
-        variant: notification.type === 'alert' ? 'destructive' : 'default',
+        variant: notification.type as 'alert' | 'warning' | 'info' | 'success',
         eventId: notification.eventId,
       });
     } catch (error) {

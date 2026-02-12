@@ -134,6 +134,21 @@ export const eventsApi = {
     link.download = filename || response.data.filename;
     link.click();
   },
+
+  /** 이벤트 상세 조회 */
+  getById: async (id: string): Promise<Event> => {
+    const response = await api.get<Event>(`/api/events/${id}`);
+    return response.data;
+  },
+
+  /** 액션 승인/거부 (Human-in-the-Loop) */
+  resolveAction: async (eventId: string, actionId: string, approved: boolean): Promise<{ success: boolean }> => {
+    const response = await api.post<{ success: boolean }>(
+      `/api/events/${eventId}/actions/${actionId}/resolve`,
+      { approved }
+    );
+    return response.data;
+  },
 };
 
 // Notifications API

@@ -68,6 +68,7 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ data }) => {
             trendUp={data.analysisCompletionRateTrendUp}
             icon={<ShieldCheck size={20} className="text-emerald-500" />}
             color="bg-emerald-50"
+            description="10건 중 9건 분석 완료"
           />
         </div>
     </div>

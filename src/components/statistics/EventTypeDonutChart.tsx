@@ -3,6 +3,7 @@ import { Activity, ArrowLeft } from 'lucide-react';
 import { getEventTypeKorean, fetcher } from '@/lib/utils';
 import useSWR from 'swr';
 import type { Event } from '@/types';
+import { EventDetailModal } from '../dashboard/EventDetailModal';
 
 interface DonutChartItem {
     type: string;
@@ -73,6 +74,7 @@ const createDonutSegmentPath = (
 };
 
 const EventList = ({ eventType, timeRange, onBack }: { eventType: string; timeRange: 'day' | 'week' | 'month', onBack: () => void }) => {
+    const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
     const endDate = toLocalISOString(new Date());
     const startDate = toLocalISOString(new Date(Date.now() - TimeRangeInDays[timeRange] * 24 * 60 * 60 * 1000));
 
@@ -88,36 +90,50 @@ const EventList = ({ eventType, timeRange, onBack }: { eventType: string; timeRa
     const events: Event[] = data?.content || [];
 
     return (
-        <div className="flex flex-col h-full animate-in fade-in duration-300">
-            <div className="flex items-center gap-2 mb-4 flex-shrink-0">
-                <button onClick={onBack} className="p-1 rounded-full hover:bg-slate-100">
-                    <ArrowLeft size={18} className="text-slate-500" />
-                </button>
-                <h3 className="text-lg font-semibold text-slate-800">
-                    {getEventTypeKorean(eventType.toLowerCase() as any)} 목록
-                </h3>
+        <>
+            <div className="flex flex-col h-full animate-in fade-in duration-300">
+                <div className="flex items-center gap-2 mb-4 flex-shrink-0">
+                    <button onClick={onBack} className="p-1 rounded-full hover:bg-slate-100">
+                        <ArrowLeft size={18} className="text-slate-500" />
+                    </button>
+                    <h3 className="text-lg font-semibold text-slate-800">
+                        {getEventTypeKorean(eventType.toLowerCase() as any)} 목록
+                    </h3>
+                </div>
+                <div className="flex-1 overflow-y-auto -mr-3 pr-3 min-h-0">
+                    {isLoading && <div className="text-center py-8 text-slate-500">목록을 불러오는 중...</div>}
+                    {error && <div className="text-center py-8 text-red-500">오류가 발생했습니다.</div>}
+                    {!isLoading && !error && events.length === 0 && (
+                        <div className="text-center py-8 text-slate-500">해당 유형의 이벤트가 없습니다.</div>
+                    )}
+                    <ul className="space-y-3">
+                        {events.map((event) => (
+                            <li 
+                                key={event.id} 
+                                className="p-3 bg-slate-50 rounded-md border border-slate-200 text-sm cursor-pointer hover:bg-slate-100 transition-colors"
+                                onClick={() => setSelectedEvent(event)}
+                            >
+                                <div className="flex justify-between items-center">
+                                    <p className="font-medium text-slate-700 truncate pr-2">
+                                        {event.cameraName} ({event.cameraLocation})
+                                    </p>
+                                    <p className="text-xs text-slate-500 flex-shrink-0">{new Date(event.occurredAt).toLocaleTimeString()}</p>
+                                </div>
+                                <p className="text-xs text-slate-600 mt-1 truncate">{event.summary || '요약 정보 없음'}</p>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             </div>
-            <div className="flex-1 overflow-y-auto -mr-3 pr-3 min-h-0">
-                {isLoading && <div className="text-center py-8 text-slate-500">목록을 불러오는 중...</div>}
-                {error && <div className="text-center py-8 text-red-500">오류가 발생했습니다.</div>}
-                {!isLoading && !error && events.length === 0 && (
-                    <div className="text-center py-8 text-slate-500">해당 유형의 이벤트가 없습니다.</div>
-                )}
-                <ul className="space-y-3">
-                    {events.map((event) => (
-                        <li key={event.id} className="p-3 bg-slate-50 rounded-md border border-slate-200 text-sm">
-                            <div className="flex justify-between items-center">
-                                <p className="font-medium text-slate-700 truncate pr-2">
-                                    {event.cameraName} ({event.cameraLocation})
-                                </p>
-                                <p className="text-xs text-slate-500 flex-shrink-0">{new Date(event.occurredAt).toLocaleTimeString()}</p>
-                            </div>
-                            <p className="text-xs text-slate-600 mt-1 truncate">{event.summary || '요약 정보 없음'}</p>
-                        </li>
-                    ))}
-                </ul>
-            </div>
-        </div>
+            
+            {selectedEvent && (
+                <EventDetailModal
+                    event={selectedEvent}
+                    isOpen={!!selectedEvent}
+                    onClose={() => setSelectedEvent(null)}
+                />
+            )}
+        </>
     );
 };
 

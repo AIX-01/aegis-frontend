@@ -31,11 +31,11 @@ import { EventTypeBadge, EventStatusBadge, CameraBadge } from "@/components/comm
 
 interface EventDetailModalProps {
   event: Event | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export function EventDetailModal({ event, open, onOpenChange }: EventDetailModalProps) {
+export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalProps) {
   const [clipLoading, setClipLoading] = useState(false);
   const [clipError, setClipError] = useState(false);
   const [clipReady, setClipReady] = useState(false);
@@ -57,16 +57,16 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
 
   // 모달 열릴 때 및 event props 변경 시 이벤트 상세 조회
   useEffect(() => {
-    if (open && event?.id) {
+    if (isOpen && event?.id) {
       fetchEventData(event.id);
     } else {
       setEventData(null);
     }
-  }, [open, event, fetchEventData]);
+  }, [isOpen, event, fetchEventData]);
 
   // SSE 액션 업데이트 이벤트 구독 (실시간 반영)
   useEffect(() => {
-    if (!open || !event?.id) return;
+    if (!isOpen || !event?.id) return;
 
     const handleActionUpdate = (e: CustomEvent<{ eventId: string }>) => {
       if (e.detail.eventId === event.id) {
@@ -78,7 +78,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
     return () => {
       window.removeEventListener('aegis:action-update', handleActionUpdate as EventListener);
     };
-  }, [open, event?.id, fetchEventData]);
+  }, [isOpen, event?.id, fetchEventData]);
 
   // 실제 사용할 이벤트 데이터 (상세 조회 결과 또는 props)
   const displayEvent = eventData || event;
@@ -113,7 +113,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
   };
 
   useEffect(() => {
-    if (!open || !displayEvent?.id || !displayEvent?.clipUrl) {
+    if (!isOpen || !displayEvent?.id || !displayEvent?.clipUrl) {
       setClipLoading(false);
       setClipError(false);
       setClipReady(false);
@@ -135,7 +135,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
         setClipError(true);
         setClipLoading(false);
       });
-  }, [open, displayEvent?.id, displayEvent?.clipUrl]);
+  }, [isOpen, displayEvent?.id, displayEvent?.clipUrl]);
 
   // 비디오 로드 이벤트 핸들러
   useEffect(() => {
@@ -250,7 +250,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] p-0 gap-0">
         <DialogHeader className="p-6 pb-4 border-b">
           <div className="flex items-center justify-between">

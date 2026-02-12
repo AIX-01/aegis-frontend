@@ -255,7 +255,9 @@ interface StreamInfo {
 - **Props**: `event: Event, open: boolean, onOpenChange: (open: boolean) => void`
 - **기능**:
   - 이벤트 상세 정보 표시 (위험도 아이콘, 타입 배지, 상태 배지, 카메라 배지)
-  - AI 요약 및 권장 조치 표시
+  - AI 요약 표시
+  - **Human-in-the-Loop**: pending 액션 승인/거부 UI (요약 위에 표시)
+  - 액션 히스토리 목록 (요약 아래에 표시)
   - 클립 재생 (presigned URL) 및 다운로드
   - 보고서 보기 (새 탭) 및 다운로드 (PDF/DOCX)
   - 미준비 시 버튼 disabled 처리
@@ -351,6 +353,8 @@ QueryClientProvider
   - `event`: 이벤트 목록 갱신
   - `event-deleted`: 이벤트 삭제 반영
   - `member`: 멤버 목록 갱신
+  - `action-pending`: 액션 승인 대기 알림 + 토스트 표시
+  - `action-resolved`: 액션 해결됨 반영
 
 ### WebRTCContext
 
@@ -395,9 +399,9 @@ QueryClientProvider
 |--------|------|
 | `getAll(page, size, filters?)` | 이벤트 목록 (페이지네이션, 서버사이드 필터링) |
 | `getById(id)` | 이벤트 상세 조회 |
-| `getClipBlobUrl(id)` | 클립 Blob URL 조회 |
+| `getClipUrl(id)` | 클립 재생용 presigned URL |
 | `downloadClip(id, filename)` | 클립 다운로드 |
-| `getReportHtml(id)` | 보고서 HTML 조회 (새 창 렌더링용) |
+| `resolveAction(eventId, actionId, approved)` | 액션 승인/거부 (Human-in-the-Loop) |
 
 **EventFilters 인터페이스**:
 ```typescript

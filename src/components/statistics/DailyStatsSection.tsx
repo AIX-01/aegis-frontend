@@ -1,9 +1,9 @@
 'use client';
 
 import { useMemo } from "react";
-import { PieChart, Pie, Cell, Legend, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell, Legend, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Calendar as CalendarIcon, AlertTriangle, Camera, Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,12 +13,12 @@ import { cn } from "@/lib/utils";
 import type { DailySummary } from "@/types";
 
 // --- 상수 ---
-const PASTEL_COLORS = [
-  '#fecaca', // 분홍 (red-200)
-  '#fde68a', // 노랑 (amber-200)
-  '#bbf7d0', // 연두 (green-200)
-  '#bae6fd', // 하늘 (sky-200)
-  '#d8b4fe', // 보라 (purple-300)
+const MUTED_PASTEL_COLORS = [
+  '#f87171', // 분홍 (red-400)
+  '#fbbf24', // 노랑 (amber-400)
+  '#4ade80', // 연두 (green-400)
+  '#60a5fa', // 하늘 (blue-400)
+  '#c084fc', // 보라 (purple-400)
 ];
 
 const ALL_EVENT_TYPES = ['폭행', '절도', '실신', '투기', '파손'];
@@ -33,16 +33,14 @@ interface DailyStatsSectionProps {
 export function DailyStatsSection({ selectedDate, onSelectDate, dailyData, isLoading }: DailyStatsSectionProps) {
   const today = new Date();
 
-  // API 데이터를 기반으로 전체 유형 목록을 생성 (발생 0건 포함)
   const fullEventTypeStats = useMemo(() => {
     const statsMap = new Map(dailyData?.eventTypeDistribution.map(stat => [stat.type, stat.count]));
     return ALL_EVENT_TYPES.map((typeName, index) => ({
       type: typeName,
       count: statsMap.get(typeName) || 0,
-      color: PASTEL_COLORS[index % PASTEL_COLORS.length],
+      color: MUTED_PASTEL_COLORS[index % MUTED_PASTEL_COLORS.length],
     }));
   }, [dailyData]);
-
 
   const renderLoadingOrNoData = (height: string, message: string) => {
     if (isLoading) {
@@ -63,7 +61,6 @@ export function DailyStatsSection({ selectedDate, onSelectDate, dailyData, isLoa
     <section>
       <h2 className="text-2xl font-bold tracking-tight mb-4">일간 데이터 현황</h2>
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* 캘린더 */}
         <Card className="soft-shadow lg:col-span-1">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -93,7 +90,6 @@ export function DailyStatsSection({ selectedDate, onSelectDate, dailyData, isLoa
           </CardContent>
         </Card>
 
-        {/* 선택된 날짜의 상세 통계 */}
         <Card className="soft-shadow lg:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">
@@ -105,7 +101,6 @@ export function DailyStatsSection({ selectedDate, onSelectDate, dailyData, isLoa
             {!isLoading && !dailyData && renderLoadingOrNoData("h-[280px]", "캘린더에서 날짜를 선택하세요.")}
             {dailyData && (
               <div className="grid md:grid-cols-2 gap-4">
-                {/* 카메라별 이벤트 통계 */}
                 <div>
                   <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
                     <Camera className="h-4 w-4 text-primary" />
@@ -133,7 +128,6 @@ export function DailyStatsSection({ selectedDate, onSelectDate, dailyData, isLoa
                   </ScrollArea>
                 </div>
 
-                {/* 이벤트 유형 분포 */}
                 <div>
                   <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4 text-primary" />
@@ -157,6 +151,15 @@ export function DailyStatsSection({ selectedDate, onSelectDate, dailyData, isLoa
                               <Cell key={`cell-${entry.type}`} fill={entry.color} />
                             ))}
                           </Pie>
+                           <Tooltip
+                            contentStyle={{
+                              backgroundColor: 'hsl(var(--card))',
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                            }}
+                            formatter={(value: number) => [`${value}건`, '']}
+                          />
                           <Legend
                             payload={
                               fullEventTypeStats.map(item => ({
@@ -168,7 +171,11 @@ export function DailyStatsSection({ selectedDate, onSelectDate, dailyData, isLoa
                             verticalAlign="bottom"
                             height={50}
                             iconSize={8}
-                            formatter={(value) => <span style={{ fontSize: '11px' }}>{value}</span>}
+                            formatter={(value) => (
+                              <span className="text-xs" style={{ color: 'hsl(var(--foreground))' }}>
+                                {value}
+                              </span>
+                            )}
                           />
                         </PieChart>
                       </ResponsiveContainer>

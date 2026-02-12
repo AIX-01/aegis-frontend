@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ChevronDown, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 interface TrendLineChartProps {
   title: string;
@@ -74,9 +74,6 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({ title, xAxis = [
           <Clock size={18} className="text-slate-400" />
           {title}
         </h2>
-        <button className="text-sm text-slate-500 flex items-center hover:text-slate-800">
-          상세보기 <ChevronDown size={14} className="ml-1" />
-        </button>
       </div>
 
       <div className="flex-1 flex items-end justify-between relative pt-8 pb-6 border-b border-slate-100 min-h-0">

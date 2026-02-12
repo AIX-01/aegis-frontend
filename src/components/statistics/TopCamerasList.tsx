@@ -46,12 +46,6 @@ export const TopCamerasList: React.FC<TopCamerasListProps> = ({ items = [] }) =>
           </div>
         )}
       </div>
-
-      <div className="mt-4 pt-2 border-t border-slate-100 flex-shrink-0">
-          <button className="w-full py-2 text-sm text-blue-600 font-medium bg-blue-50 rounded-lg hover:bg-blue-100 transition">
-            카메라별 전체 목록 보기
-          </button>
-      </div>
     </div>
   );
 };

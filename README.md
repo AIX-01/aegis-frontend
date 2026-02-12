@@ -143,6 +143,9 @@ src/
    - event: queryClient.invalidateQueries(events)
    - event-deleted: queryClient.invalidateQueries(events)
    - member: queryClient.invalidateQueries(users)
+   - action-update: 커스텀 이벤트 발생 (모달 갱신)
+   - action-pending: 알림 목록 갱신 + 커스텀 이벤트 발생
+   - action-resolved: 커스텀 이벤트 발생 (모달 갱신)
 4. 연결 오류 시: 5초 후 자동 재연결
 5. 로그아웃 시: AbortController로 연결 종료
 ```

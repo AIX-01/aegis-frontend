@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from "react";
-import { PieChart, Pie, Cell, Legend, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { PieChart, Pie, Cell, Legend, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area } from "recharts";
 import { Calendar as CalendarIcon, AlertTriangle, Camera, Loader2, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -109,7 +109,13 @@ export function DailyStatsSection({ selectedDate, onSelectDate, dailyData, isLoa
                   <div className="h-[240px]">
                     {dailyData.hourlyTrend && dailyData.hourlyTrend.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={dailyData.hourlyTrend} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+                        <AreaChart data={dailyData.hourlyTrend} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+                           <defs>
+                            <linearGradient id="colorEvents" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} />
                           <XAxis dataKey="hour" fontSize={12} tickLine={false} axisLine={false} />
                           <YAxis fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
@@ -123,8 +129,8 @@ export function DailyStatsSection({ selectedDate, onSelectDate, dailyData, isLoa
                             formatter={(value: number) => [`${value}건`, '']}
                             labelFormatter={(label) => `${label}시`}
                           />
-                          <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                        </BarChart>
+                          <Area type="monotone" dataKey="count" stroke="hsl(var(--primary))" fill="url(#colorEvents)" strokeWidth={2} />
+                        </AreaChart>
                       </ResponsiveContainer>
                     ) : (
                       <div className="flex items-center justify-center h-full text-muted-foreground text-sm">

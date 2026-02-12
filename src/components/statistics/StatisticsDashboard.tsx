@@ -70,7 +70,7 @@ export const StatisticsDashboard = () => {
 
   const renderLoading = () => (
     <div className="animate-pulse space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="bg-slate-100 h-32 rounded-xl" />
             ))}
@@ -113,8 +113,8 @@ export const StatisticsDashboard = () => {
         </div>
 
         {isLoading ? renderLoading() : error ? <p className="text-red-500">데이터를 불러오는데 실패했습니다.</p> : data && (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
               <KpiCard
                   title="총 발생 이벤트"
                   value={data.kpi.totalEvents}
@@ -154,7 +154,7 @@ export const StatisticsDashboard = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <TrendLineChart title={data.trend.title} xAxis={data.trend.xAxis} series={data.trend.series} />
               <EventTypeDonutChart items={data.eventTypeDistribution.items} />
             </div>
@@ -163,7 +163,7 @@ export const StatisticsDashboard = () => {
               <HeatmapChart title={data.heatmap.title} yAxis={data.heatmap.yAxis} series={data.heatmap.series} />
               <TopCamerasList items={data.topCameras} />
             </div>
-          </>
+          </div>
         )}
       </DashboardLayout>
     </ProtectedRoute>

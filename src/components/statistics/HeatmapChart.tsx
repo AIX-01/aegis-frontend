@@ -13,12 +13,12 @@ interface HeatmapChartProps {
   series: HeatmapPoint[];
 }
 
-export const HeatmapChart: React.FC<HeatmapChartProps> = ({ title, yAxis, series = [] }) => {
-    const xAxisLabels = ['새벽 (0-6)', '오전 (6-12)', '오후 (12-18)', '야간 (18-24)'];
+export const HeatmapChart: React.FC<HeatmapChartProps> = ({ title, yAxis = [], series = [] }) => {
+    const xAxisLabels = ['새벽', '오전', '오후', '야간'];
 
     const gridData = Array(yAxis.length).fill(0).map(() => Array(xAxisLabels.length).fill(0));
     series.forEach(point => {
-        if (point.y < yAxis.length && point.x < xAxisLabels.length) {
+        if (point.y >= 0 && point.y < yAxis.length && point.x >= 0 && point.x < xAxisLabels.length) {
             gridData[point.y][point.x] = point.value;
         }
     });
@@ -41,19 +41,19 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({ title, yAxis, series
         <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">패턴 분석용</span>
       </div>
 
-      <div className="flex">
-        <div className="flex flex-col justify-around text-xs text-slate-400 pr-3 font-medium h-48 pt-6">
-          {yAxis.map(label => (
-              <span key={label} className="flex-1">{label}</span>
+      <div className="flex w-full">
+        <div className="flex flex-col justify-around text-xs text-slate-400 pr-3 font-medium pt-8">
+          {yAxis.map((label, index) => (
+              <span key={`${label}-${index}`} className="flex-1 truncate" title={label}>{label}</span>
           ))}
         </div>
 
-        <div className="flex-1 flex flex-col h-48">
-          <div className="flex justify-between text-xs text-slate-400 mb-2 px-2">
-            {xAxisLabels.map(label => <span key={label}>{label}</span>)}
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex text-xs text-slate-400 mb-2">
+            {xAxisLabels.map(label => <span key={label} className="flex-1 text-center">{label}</span>)}
           </div>
 
-          <div className="flex-1 grid grid-rows-7 gap-1">
+          <div className="flex-1 grid gap-1" style={{ gridTemplateRows: `repeat(${yAxis.length}, minmax(0, 1fr))` }}>
             {gridData.map((row, y) => (
                 <div key={y} className="grid grid-cols-4 gap-1">
                   {row.map((value, x) => (

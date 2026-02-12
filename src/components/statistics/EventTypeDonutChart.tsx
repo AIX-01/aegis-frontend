@@ -34,21 +34,21 @@ export const EventTypeDonutChart: React.FC<EventTypeDonutChartProps> = ({ items 
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
-            <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Activity size={18} className="text-slate-400" />
                 주요 이벤트 유형
             </h2>
 
-            <div className="flex-1 flex flex-col items-center justify-center">
-                <div className="relative w-40 h-40 rounded-full bg-slate-100 flex items-center justify-center"
+            <div className="flex-1 flex flex-col items-center justify-center space-y-6 py-4">
+                <div className="relative w-full max-w-[10rem] aspect-square rounded-full bg-slate-100 flex items-center justify-center"
                      style={{ background: `conic-gradient(${conicGradient || '#f1f5f9 0% 100%'})` }}>
-                    <div className="w-28 h-28 bg-white rounded-full flex flex-col items-center justify-center shadow-inner">
+                    <div className="absolute w-3/4 aspect-square bg-white rounded-full flex flex-col items-center justify-center shadow-inner">
                         <span className="text-2xl font-bold text-slate-800">{emergencyCount}</span>
                         <span className="text-xs text-slate-500">긴급 건수</span>
                     </div>
                 </div>
 
-                <div className="w-full mt-8 space-y-3">
+                <div className="w-full space-y-3">
                     {items.length > 0 ? items.map(item => (
                         <div key={item.type} className="flex justify-between items-center text-sm">
                             <div className="flex items-center gap-2">

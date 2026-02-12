@@ -70,7 +70,7 @@ export const StatisticsDashboard = () => {
 
   const renderLoading = () => (
     <div className="animate-pulse space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="bg-slate-100 h-32 rounded-xl" />
             ))}
@@ -113,8 +113,17 @@ export const StatisticsDashboard = () => {
         </div>
 
         {isLoading ? renderLoading() : error ? <p className="text-red-500">데이터를 불러오는데 실패했습니다.</p> : data && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <KpiCard
+                    title="모니터링 카메라"
+                    value={data.kpi.monitoringCameras}
+                    unit={data.kpi.monitoringCamerasUnit}
+                    trend={data.kpi.monitoringCamerasTrend}
+                    trendUp={data.kpi.monitoringCamerasTrendUp}
+                    icon={<Camera size={20} className="text-purple-500" />}
+                    color="bg-purple-50"
+                />
               <KpiCard
                   title="총 발생 이벤트"
                   value={data.kpi.totalEvents}
@@ -143,18 +152,9 @@ export const StatisticsDashboard = () => {
                   icon={<ShieldCheck size={20} className="text-emerald-500" />}
                   color="bg-emerald-50"
               />
-              <KpiCard
-                  title="모니터링 카메라"
-                  value={data.kpi.monitoringCameras}
-                  unit={data.kpi.monitoringCamerasUnit}
-                  trend={data.kpi.monitoringCamerasTrend}
-                  trendUp={data.kpi.monitoringCamerasTrendUp}
-                  icon={<Camera size={20} className="text-purple-500" />}
-                  color="bg-purple-50"
-              />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
               <TrendLineChart title={data.trend.title} xAxis={data.trend.xAxis} series={data.trend.series} />
               <EventTypeDonutChart items={data.eventTypeDistribution.items} />
             </div>
@@ -163,7 +163,7 @@ export const StatisticsDashboard = () => {
               <HeatmapChart title={data.heatmap.title} yAxis={data.heatmap.yAxis} series={data.heatmap.series} />
               <TopCamerasList items={data.topCameras} />
             </div>
-          </div>
+          </>
         )}
       </DashboardLayout>
     </ProtectedRoute>

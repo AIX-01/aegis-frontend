@@ -17,7 +17,20 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({ title, xAxis = [
     return `${x},${y}`;
   }).join(' ');
 
-  const areaPoints = `0,100 ${points} 100,${100 - (series[series.length - 1] / maxValue) * 100} 100,100`;
+  const areaPoints = `0,100 ${points} 100,${100 - (series.length > 0 ? (series[series.length - 1] / maxValue) * 100 : 100)} 100,100`;
+
+  // Find surge point
+  let surgePoint = null;
+  if (series.length > 0) {
+    const maxSeriesValue = Math.max(...series);
+    if (maxSeriesValue > 0) {
+      const surgeIndex = series.indexOf(maxSeriesValue);
+      const surgeX = (surgeIndex / (series.length > 1 ? series.length - 1 : 1)) * 100;
+      const surgeY = 100 - (maxSeriesValue / maxValue) * 100;
+      const surgeLabel = xAxis[surgeIndex];
+      surgePoint = { x: surgeX, y: surgeY, label: surgeLabel };
+    }
+  }
 
   return (
     <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-5">
@@ -37,20 +50,41 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({ title, xAxis = [
         </div>
 
         <div className="w-full h-full flex items-end justify-between px-4 sm:px-8 relative">
+          {/* SVG for stretchable chart elements */}
           <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             <path
                 d={`M${areaPoints}`}
                 fill="rgba(59, 130, 246, 0.1)"
-                vectorEffect="non-scaling-stroke"
             />
             <polyline
                 points={points}
                 fill="none"
                 stroke="#3b82f6"
-                strokeWidth="2"
+                strokeWidth="1.5"
                 vectorEffect="non-scaling-stroke"
             />
           </svg>
+
+          {/* HTML-based marker, positioned absolutely over the SVG */}
+          {surgePoint && (
+            <div
+              className="absolute flex flex-col items-center"
+              style={{
+                left: `${surgePoint.x}%`,
+                top: `${surgePoint.y}%`,
+                transform: 'translate(-50%, -50%)' // Center the circle on the data point
+              }}
+            >
+              <div
+                className={`absolute text-xs font-bold text-red-500 whitespace-nowrap px-1.5 py-0.5 rounded-md bg-white/70 backdrop-blur-sm ${
+                  surgePoint.y < 20 ? 'top-full mt-2' : 'bottom-full mb-2'
+                }`}
+              >
+                급증 ({surgePoint.label})
+              </div>
+              <div className="w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-md" />
+            </div>
+          )}
         </div>
 
         <div className="absolute left-4 sm:left-8 right-4 sm:right-8 bottom-0 flex justify-between text-xs text-slate-400 mt-2">

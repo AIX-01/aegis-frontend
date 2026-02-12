@@ -14,7 +14,6 @@ import {
   Loader2,
   AlertCircle,
   AlertTriangle,
-  Shield,
   ExternalLink,
   ChevronDown,
   CheckCircle,
@@ -23,8 +22,8 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { ko } from "date-fns/locale";
-import type { Event, EventAction } from "@/types";
-import { useState, useRef, useEffect } from "react";
+import type { Event } from "@/types";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { eventsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { getEventTypeKorean } from "@/lib/utils";
@@ -43,19 +42,18 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
   const [clipUrl, setClipUrl] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
   const [eventData, setEventData] = useState<Event | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
   // 이벤트 상세 조회 함수
-  const fetchEventData = async (eventId: string) => {
+  const fetchEventData = useCallback(async (eventId: string) => {
     try {
       const data = await eventsApi.getById(eventId);
       setEventData(data);
     } catch {
       setEventData(event);
     }
-  };
+  }, [event]);
 
   // 모달 열릴 때 및 event props 변경 시 이벤트 상세 조회
   useEffect(() => {
@@ -64,7 +62,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
     } else {
       setEventData(null);
     }
-  }, [open, event, refreshKey]);
+  }, [open, event, fetchEventData]);
 
   // SSE 액션 업데이트 이벤트 구독 (실시간 반영)
   useEffect(() => {
@@ -80,7 +78,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
     return () => {
       window.removeEventListener('aegis:action-update', handleActionUpdate as EventListener);
     };
-  }, [open, event?.id]);
+  }, [open, event?.id, fetchEventData]);
 
   // 실제 사용할 이벤트 데이터 (상세 조회 결과 또는 props)
   const displayEvent = eventData || event;

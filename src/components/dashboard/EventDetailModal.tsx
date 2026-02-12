@@ -42,20 +42,35 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
   const [clipReady, setClipReady] = useState(false);
   const [clipUrl, setClipUrl] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
+  const [eventData, setEventData] = useState<Event | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
+  // 모달 열릴 때 이벤트 상세 조회 (pending 상태 반영)
+  useEffect(() => {
+    if (open && event?.id) {
+      eventsApi.getById(event.id)
+        .then(setEventData)
+        .catch(() => setEventData(event));
+    } else {
+      setEventData(null);
+    }
+  }, [open, event]);
+
+  // 실제 사용할 이벤트 데이터 (상세 조회 결과 또는 props)
+  const displayEvent = eventData || event;
+
   // pending 액션과 히스토리 액션 분리
-  const pendingAction = event?.actions?.find(a => a.pending);
-  const historyActions = event?.actions?.filter(a => !a.pending) || [];
+  const pendingAction = displayEvent?.actions?.find(a => a.pending);
+  const historyActions = displayEvent?.actions?.filter(a => !a.pending) || [];
 
   // 액션 승인/거부 처리
   const handleResolve = async (actionId: string, approved: boolean) => {
-    if (!event) return;
+    if (!displayEvent) return;
 
     setResolving(true);
     try {
-      await eventsApi.resolveAction(event.id, actionId, approved);
+      await eventsApi.resolveAction(displayEvent.id, actionId, approved);
       toast({
         title: approved ? "승인 완료" : "거부 완료",
         description: `액션이 ${approved ? '승인' : '거부'}되었습니다.`,
@@ -73,7 +88,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
   };
 
   useEffect(() => {
-    if (!open || !event?.id || !event?.clipUrl) {
+    if (!open || !displayEvent?.id || !displayEvent?.clipUrl) {
       setClipLoading(false);
       setClipError(false);
       setClipReady(false);
@@ -86,7 +101,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
     setClipReady(false);
 
     // presigned URL 요청
-    eventsApi.getClipUrl(event.id)
+    eventsApi.getClipUrl(displayEvent.id)
       .then((url) => {
         setClipUrl(url);
         setClipLoading(false);
@@ -95,7 +110,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
         setClipError(true);
         setClipLoading(false);
       });
-  }, [open, event?.id, event?.clipUrl]);
+  }, [open, displayEvent?.id, displayEvent?.clipUrl]);
 
   // 비디오 로드 이벤트 핸들러
   useEffect(() => {
@@ -120,9 +135,9 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
 
   // 클립 다운로드
   const handleClipDownload = async () => {
-    if (event?.clipUrl) {
+    if (displayEvent?.clipUrl) {
       try {
-        await eventsApi.downloadClip(event.id, `event-${event.id}.mp4`);
+        await eventsApi.downloadClip(displayEvent.id, `event-${displayEvent.id}.mp4`);
       } catch {
         toast({
           title: "다운로드 실패",
@@ -135,17 +150,17 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
 
   // 보고서 새 창에서 열기
   const handleOpenReport = () => {
-    if (event?.id) {
-      window.open(`/api/events/${event.id}/report`, '_blank');
+    if (displayEvent?.id) {
+      window.open(`/api/events/${displayEvent.id}/report`, '_blank');
     }
   };
 
   // 보고서 다운로드 (PDF/DOCX)
   const handleDownloadReport = async (format: 'pdf' | 'docx') => {
-    if (!event?.id) return;
+    if (!displayEvent?.id) return;
 
     try {
-      const response = await fetch(`/api/events/${event.id}/report`);
+      const response = await fetch(`/api/events/${displayEvent.id}/report`);
       if (!response.ok) throw new Error('보고서를 불러올 수 없습니다');
       const html = await response.text();
 
@@ -157,7 +172,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
         html2pdf()
           .set({
             margin: 10,
-            filename: `report-${event.id}.pdf`,
+            filename: `report-${displayEvent.id}.pdf`,
             html2canvas: { scale: 2 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
           })
@@ -175,7 +190,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `report-${event.id}.doc`;
+        a.download = `report-${displayEvent.id}.doc`;
         a.click();
         URL.revokeObjectURL(url);
       }
@@ -194,11 +209,11 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
   };
 
 
-  if (!event) return null;
+  if (!displayEvent) return null;
 
   // risk에 따른 아이콘 반환
   const getRiskIcon = () => {
-    switch (event.risk) {
+    switch (displayEvent.risk) {
       case 'abnormal':
         return <AlertCircle className="h-6 w-6 text-destructive" />;
       case 'suspicious':
@@ -217,22 +232,22 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
               {getRiskIcon()}
               <div>
                 <DialogTitle className="text-xl">
-                  {event.cameraLocation}에서 {getEventTypeKorean(event.type)} 감지
+                  {displayEvent.cameraLocation}에서 {getEventTypeKorean(displayEvent.type)} 감지
                 </DialogTitle>
                 <div className="flex items-center gap-2 mt-1">
-                  <EventTypeBadge type={event.type} risk={event.risk} />
-                  <EventStatusBadge status={event.status} />
-                  <CameraBadge location={event.cameraLocation} name={event.cameraName} />
+                  <EventTypeBadge type={displayEvent.type} risk={displayEvent.risk} />
+                  <EventStatusBadge status={displayEvent.status} />
+                  <CameraBadge location={displayEvent.cameraLocation} name={displayEvent.cameraName} />
                 </div>
               </div>
             </div>
             <div className="text-right text-sm text-muted-foreground mr-6">
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
-                {format(new Date(event.occurredAt), 'yyyy.MM.dd HH:mm:ss', { locale: ko })}
+                {format(new Date(displayEvent.occurredAt), 'yyyy.MM.dd HH:mm:ss', { locale: ko })}
               </div>
               <div className="text-xs mt-0.5">
-                {formatDistanceToNow(new Date(event.occurredAt), { addSuffix: true, locale: ko })}
+                {formatDistanceToNow(new Date(displayEvent.occurredAt), { addSuffix: true, locale: ko })}
               </div>
             </div>
           </div>
@@ -254,7 +269,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
               )}
 
               {/* 비디오 플레이어 */}
-              {event.clipUrl && (
+              {displayEvent.clipUrl && (
                 <video
                   ref={videoRef}
                   className={`w-full h-full object-contain bg-black ${!clipReady || clipError ? 'hidden' : ''}`}
@@ -263,7 +278,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
               )}
 
               {/* 에러/없음 상태 */}
-              {!clipLoading && (!clipReady || clipError || !event.clipUrl) && (
+              {!clipLoading && (!clipReady || clipError || !displayEvent.clipUrl) && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
                   <div className="text-center">
                     <div className="w-16 h-16 rounded-full bg-muted-foreground/10 flex items-center justify-center mx-auto mb-3">
@@ -272,7 +287,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                     <p className="text-sm text-muted-foreground">
                       {clipError
                         ? '클립을 불러올 수 없습니다'
-                        : !event.clipUrl
+                        : !displayEvent.clipUrl
                           ? '클립이 저장되지 않았습니다'
                           : '클립이 아직 준비되지 않았습니다'}
                     </p>
@@ -348,7 +363,7 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
                   <CardContent>
                     <div className="p-4 bg-muted/50 rounded-lg">
                       <p className="text-sm leading-relaxed">
-                        {event.summary || '이 이벤트에 대한 요약 정보가 없습니다.'}
+                        {displayEvent.summary || '이 이벤트에 대한 요약 정보가 없습니다.'}
                       </p>
                     </div>
                   </CardContent>
@@ -356,35 +371,23 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
 
 
                 {/* 액션 히스토리 */}
-                {historyActions.length > 0 && (
-                  <Card>
+                {historyActions.map((action) => (
+                  <Card key={action.id}>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm flex items-center gap-2">
                         <History className="h-4 w-4 text-primary" />
-                        액션 히스토리
+                        {action.action}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <ul className="text-sm space-y-3">
-                        {historyActions.map((action) => (
-                          <li key={action.id} className="p-3 bg-muted/50 rounded-lg">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <p className="font-medium">{action.action}</p>
-                                <p className="text-muted-foreground mt-0.5">
-                                  {action.description}
-                                </p>
-                              </div>
-                            </div>
-                            <p className="text-xs text-muted-foreground/70 mt-2">
-                              {format(new Date(action.createdAt), 'yyyy.MM.dd HH:mm:ss', { locale: ko })}
-                            </p>
-                          </li>
-                        ))}
-                      </ul>
+                      <div className="p-4 bg-muted/50 rounded-lg">
+                        <p className="text-sm leading-relaxed">
+                          {action.description}
+                        </p>
+                      </div>
                     </CardContent>
                   </Card>
-                )}
+                ))}
               </div>
             </ScrollArea>
           </div>
@@ -404,14 +407,14 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
             <Button
               variant="outline"
               onClick={handleOpenReport}
-              disabled={!event.report}
+              disabled={!displayEvent.report}
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               보고서 보기
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" disabled={!event.report}>
+                <Button variant="outline" disabled={!displayEvent.report}>
                   <Download className="h-4 w-4 mr-2" />
                   보고서 다운로드
                   <ChevronDown className="h-4 w-4 ml-2" />

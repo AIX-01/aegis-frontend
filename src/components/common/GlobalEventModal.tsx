@@ -37,9 +37,8 @@ export function GlobalEventModal() {
   return (
     <EventDetailModal
       event={event}
-      open={open}
-      onOpenChange={setOpen}
+      isOpen={open}
+      onClose={() => setOpen(false)}
     />
   );
 }
-

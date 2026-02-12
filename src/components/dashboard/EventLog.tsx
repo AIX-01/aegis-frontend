@@ -79,8 +79,8 @@ export function EventLog({ events }: EventLogProps) {
 
       <EventDetailModal
         event={selectedEvent}
-        open={modalOpen}
-        onOpenChange={setModalOpen}
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
       />
     </>
   );

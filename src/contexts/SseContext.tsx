@@ -107,6 +107,39 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [queryClient]);
 
+  // 액션 승인 대기 처리 (Human-in-the-Loop)
+  const handleActionPending = useCallback((data: string) => {
+    try {
+      const parsed = JSON.parse(data);
+      if (isDev) console.log('[SSE] 액션 승인 대기:', parsed);
+
+      // 이벤트 목록 갱신
+      void queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+
+      // 토스트 표시
+      toastRef.current({
+        title: '승인 요청',
+        description: `${parsed.action}: ${parsed.description}`,
+        variant: 'default',
+      });
+    } catch (error) {
+      if (isDev) console.error('[SSE] 액션 승인 대기 처리 오류:', error);
+    }
+  }, [queryClient]);
+
+  // 액션 해결됨 처리
+  const handleActionResolved = useCallback((data: string) => {
+    try {
+      const parsed = JSON.parse(data);
+      if (isDev) console.log('[SSE] 액션 해결됨:', parsed);
+
+      // 이벤트 목록 갱신
+      void queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+    } catch (error) {
+      if (isDev) console.error('[SSE] 액션 해결됨 처리 오류:', error);
+    }
+  }, [queryClient]);
+
   const connect = useCallback(() => {
     const accessToken = getAccessToken();
     if (!accessToken) {
@@ -173,6 +206,14 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             handleMemberUpdate(data);
             break;
 
+          case 'action-pending':
+            handleActionPending(data);
+            break;
+
+          case 'action-resolved':
+            handleActionResolved(data);
+            break;
+
           default:
             if (isDev) console.log('[SSE] 알 수 없는 이벤트:', eventType, data);
         }
@@ -198,7 +239,7 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }).catch(() => {
       // fetchEventSource 종료됨
     });
-  }, [handleNotification, handleCameraUpdate, handleEventUpdate, handleEventDeleted, handleMemberUpdate]);
+  }, [handleNotification, handleCameraUpdate, handleEventUpdate, handleEventDeleted, handleMemberUpdate, handleActionPending, handleActionResolved]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

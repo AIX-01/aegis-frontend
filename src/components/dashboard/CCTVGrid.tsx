@@ -328,7 +328,7 @@ export function CCTVGrid({
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm text-muted-foreground min-w-[60px] text-center">
-            {currentPage + 1} / {totalPages}
+            {currentPage + 1} / {Math.max(1, totalPages)}
           </span>
           <Button
             variant="outline"

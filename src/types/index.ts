@@ -21,8 +21,10 @@ export interface CameraUpdateRequest {
 // Event types
 export interface EventAction {
   id: string;
-  log: string;
-  triggeredAt: string;
+  action: string;
+  description: string;
+  createdAt: string;
+  pending: boolean;
 }
 
 export interface Event {
@@ -36,9 +38,7 @@ export interface Event {
   status: 'processing' | 'analyzed';
   clipUrl?: string;
   summary?: string;
-  riskScore?: string;
   actions?: EventAction[];
-  ragReferences?: Record<string, unknown>[];
   report?: string;
 }
 

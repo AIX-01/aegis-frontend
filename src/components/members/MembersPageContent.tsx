@@ -153,10 +153,10 @@ export function MembersPageContent() {
   ) => {
     try {
       await apiCall();
-      await refreshData();
-      toast({ title: successTitle, description: successDescription });
+      refreshData();
+      toast({ title: successTitle, description: successDescription, variant: 'success' });
     } catch {
-      toast({ title: '오류', description: errorDescription, variant: 'destructive' });
+      toast({ title: '오류', description: errorDescription, variant: 'alert' });
     }
   };
 

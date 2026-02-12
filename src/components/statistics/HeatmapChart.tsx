@@ -32,8 +32,8 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({ title, yAxis = [], s
     };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 h-full">
-      <div className="flex justify-between items-center mb-6">
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 h-[22rem] flex flex-col relative">
+      <div className="flex justify-between items-center mb-4 flex-shrink-0">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Calendar size={18} className="text-slate-400" />
           {title}
@@ -41,28 +41,40 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({ title, yAxis = [], s
         <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">패턴 분석용</span>
       </div>
 
-      <div className="flex w-full">
-        <div className="flex flex-col justify-around text-xs text-slate-400 pr-3 font-medium pt-8">
+      <div className="flex-1 flex w-full min-h-0">
+        <div className="flex flex-col justify-between text-xs text-slate-400 pr-3 font-medium py-1">
           {yAxis.map((label, index) => (
-              <span key={`${label}-${index}`} className="flex-1 truncate" title={label}>{label}</span>
+              <div key={`${label}-${index}`} className="flex items-center justify-end truncate h-full" title={label}>
+                  <span className="truncate">{label}</span>
+              </div>
           ))}
         </div>
 
-        <div className="flex-1 flex flex-col min-w-0">
-          <div className="flex text-xs text-slate-400 mb-2">
+        <div className="flex-1 flex flex-col min-w-0 h-full">
+          <div className="flex text-xs text-slate-400 mb-1 flex-shrink-0">
             {xAxisLabels.map(label => <span key={label} className="flex-1 text-center">{label}</span>)}
           </div>
 
-          <div className="flex-1 grid gap-1" style={{ gridTemplateRows: `repeat(${yAxis.length}, minmax(0, 1fr))` }}>
+          <div className="flex-1 grid gap-1 h-full" style={{ gridTemplateRows: `repeat(${yAxis.length}, minmax(0, 1fr))` }}>
             {gridData.map((row, y) => (
-                <div key={y} className="grid grid-cols-4 gap-1">
+                <div key={y} className="grid grid-cols-4 gap-1 h-full">
                   {row.map((value, x) => (
                         <div
                             key={x}
-                            className={`${getBgColor(value)} rounded-sm hover:ring-2 hover:ring-slate-400 transition-all cursor-pointer group relative`}
+                            className={`${getBgColor(value)} rounded-sm hover:ring-2 hover:ring-slate-400 transition-all cursor-pointer group relative w-full h-full`}
                         >
-                          <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded pointer-events-none z-10 whitespace-nowrap">
+                          <div 
+                            className={`opacity-0 group-hover:opacity-100 absolute left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded pointer-events-none z-50 whitespace-nowrap shadow-lg transition-opacity duration-200 ${
+                                y === 0 ? 'top-full mt-2' : '-top-8'
+                            }`}
+                          >
                             {value}건 발생
+                            {/* Tooltip Arrow */}
+                            <div 
+                                className={`absolute left-1/2 -translate-x-1/2 border-4 border-transparent ${
+                                    y === 0 ? 'bottom-full border-b-slate-800' : 'top-full border-t-slate-800'
+                                }`} 
+                            />
                           </div>
                         </div>
                     ))}

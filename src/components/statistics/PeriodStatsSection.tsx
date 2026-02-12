@@ -1,7 +1,32 @@
 'use client';
 
 import { useMemo } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  BarChart,
+  Bar,
+} from "recharts";
+import {
+  eachDayOfInterval,
+  eachMonthOfInterval,
+  format,
+  startOfMonth,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
+  getDate,
+  getMonth,
+} from "date-fns";
 import { AlertTriangle, TrendingUp, Camera, FileText, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -37,7 +62,7 @@ interface PeriodStatsSectionProps {
 export function PeriodStatsSection({
   periodType,
   onPeriodTypeChange,
-  dateRange,
+  dateRange: initialDateRange,
   onDateRangeChange,
   onPeriodSelect,
   periodTrend,
@@ -47,6 +72,18 @@ export function PeriodStatsSection({
   isLoading,
 }: PeriodStatsSectionProps) {
 
+  const dateRange = useMemo(() => {
+    if (initialDateRange?.from && initialDateRange?.to) {
+      return initialDateRange;
+    }
+    const now = new Date();
+    if (periodType === 'yearly') {
+      return { from: startOfYear(now), to: endOfYear(now) };
+    }
+    // 'monthly' 또는 기본값
+    return { from: startOfMonth(now), to: endOfMonth(now) };
+  }, [initialDateRange, periodType]);
+
   const fullEventTypeStats = useMemo(() => {
     const statsMap = new Map(eventTypeDist?.map(stat => [stat.type, stat.count]));
     return ALL_EVENT_TYPES.map((typeName, index) => ({
@@ -55,6 +92,43 @@ export function PeriodStatsSection({
       color: MUTED_PASTEL_COLORS[index % MUTED_PASTEL_COLORS.length],
     }));
   }, [eventTypeDist]);
+
+  const processedPeriodTrend = useMemo(() => {
+    if (!periodTrend) return [];
+    
+    const trendMap = new Map(periodTrend.map(d => [d.period, d]));
+
+    if (periodType === 'yearly') {
+      const allMonths = eachMonthOfInterval({ start: dateRange.from, end: dateRange.to });
+      return allMonths.map(month => {
+        const monthStr = format(month, 'yyyy-MM');
+        const eventsInMonth = periodTrend.filter(d => d.period.startsWith(monthStr));
+        const totalEvents = eventsInMonth.reduce((sum, d) => sum + d.totalEvents, 0);
+        const resolvedEvents = eventsInMonth.reduce((sum, d) => sum + d.resolvedEvents, 0);
+
+        return {
+          period: `${getMonth(month) + 1}월`,
+          totalEvents: totalEvents,
+          resolvedEvents: resolvedEvents,
+        };
+      });
+    }
+
+    const allDays = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
+    return allDays.map(day => {
+      const dateKey = format(day, 'yyyy-MM-dd');
+      const existingData = trendMap.get(dateKey);
+      return {
+        period: getDate(day).toString(),
+        totalEvents: existingData?.totalEvents || 0,
+        resolvedEvents: existingData?.resolvedEvents || 0,
+      };
+    });
+  }, [periodTrend, dateRange, periodType]);
+
+  const hasPeriodTrendData = useMemo(() => {
+    return processedPeriodTrend.some(d => d.totalEvents > 0 || d.resolvedEvents > 0);
+  }, [processedPeriodTrend]);
 
   const renderLoadingOrNoData = (height: string, isLoading: boolean, hasData: boolean, initialMessage: string) => {
     if (isLoading) {
@@ -81,7 +155,7 @@ export function PeriodStatsSection({
         <PeriodSelector
           periodType={periodType}
           onPeriodTypeChange={onPeriodTypeChange}
-          dateRange={dateRange}
+          dateRange={initialDateRange}
           onDateRangeChange={onDateRangeChange}
           onPeriodSelect={onPeriodSelect}
         />
@@ -129,16 +203,43 @@ export function PeriodStatsSection({
             {/* 기간별 이벤트 추이 */}
             <div className="md:col-span-1">
               <h3 className="font-semibold flex items-center gap-2 mb-4"><TrendingUp className="h-5 w-5 text-primary" />이벤트 추이</h3>
-              {renderLoadingOrNoData("h-[250px]", isLoading, !!periodTrend && periodTrend.length > 0, "데이터가 없습니다.") || (
+              {renderLoadingOrNoData("h-[250px]", isLoading, hasPeriodTrendData, "데이터가 없습니다.") || (
                 <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={periodTrend || []}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="period" fontSize={12} />
-                    <YAxis fontSize={12} />
+                  <AreaChart data={processedPeriodTrend} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="period"
+                      fontSize={12}
+                      tickFormatter={(value, index) => {
+                        if (periodType === 'monthly') {
+                          const day = parseInt(value, 10);
+                          const lastDay = processedPeriodTrend.length;
+                          // 1일, 5의 배수일, 마지막 날에만 라벨 표시
+                          if (day === 1 || day % 5 === 0 || day === lastDay) {
+                            return value;
+                          }
+                          return '';
+                        }
+                        return value;
+                      }}
+                      // Recharts가 자동으로 라벨을 건너뛰지 않도록 interval={0} 설정
+                      interval={0}
+                    />
+                    <YAxis fontSize={12} domain={['auto', 'auto']} />
                     <Tooltip />
-                    <Bar dataKey="totalEvents" name="발생" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="resolvedEvents" name="분석완료" fill="hsl(var(--primary) / 0.3)" radius={[4, 4, 0, 0]} />
-                  </BarChart>
+                    <defs>
+                      <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorResolved" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary) / 0.3)" stopOpacity={0.7}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary) / 0.3)" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <Area type="monotone" dataKey="totalEvents" name="발생" stroke="hsl(var(--primary))" fill="url(#colorTotal)" />
+                    <Area type="monotone" dataKey="resolvedEvents" name="분석완료" stroke="hsl(var(--primary) / 0.5)" fill="url(#colorResolved)" />
+                  </AreaChart>
                 </ResponsiveContainer>
               )}
             </div>

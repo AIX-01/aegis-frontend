@@ -62,7 +62,8 @@ src/
 │   ├── statistics/
 │   │   └── StatisticsPageContent.tsx
 │   ├── common/
-│   │   └── EventBadges.tsx
+│   │   ├── EventBadges.tsx
+│   │   └── GlobalEventModal.tsx  # 전역 이벤트 모달 (토스트 클릭 시)
 │   └── ui/                 # shadcn/ui 컴포넌트
 │       ├── alert-dialog.tsx
 │       ├── badge.tsx
@@ -142,6 +143,9 @@ src/
    - event: queryClient.invalidateQueries(events)
    - event-deleted: queryClient.invalidateQueries(events)
    - member: queryClient.invalidateQueries(users)
+   - action-update: 커스텀 이벤트 발생 (모달 갱신)
+   - action-pending: 알림 목록 갱신 + 커스텀 이벤트 발생
+   - action-resolved: 커스텀 이벤트 발생 (모달 갱신)
 4. 연결 오류 시: 5초 후 자동 재연결
 5. 로그아웃 시: AbortController로 연결 종료
 ```
@@ -207,9 +211,17 @@ interface AuthContextType {
 ### SseContext
 
 - **연결 관리**: 로그인 시 자동 연결, 로그아웃 시 자동 해제
-- **이벤트 핸들링**: 5가지 이벤트 타입별 React Query 캐시 무효화
+- **이벤트 핸들링**: 9가지 이벤트 타입별 React Query 캐시 무효화
 - **재연결**: 연결 오류 시 5초 후 자동 재연결
 - **토스트**: notification 이벤트 수신 시 자동 표시
+  - eventId 포함 시 토스트 클릭으로 이벤트 모달 열기 가능 (X 버튼은 제외)
+  - 커스텀 이벤트 `aegis:open-event-modal` 발생 → GlobalEventModal 처리
+
+### GlobalEventModal
+
+- **위치**: Providers에서 전역으로 렌더링
+- **기능**: 어느 페이지에서든 토스트 클릭 시 이벤트 상세 모달 표시
+- **동작**: `aegis:open-event-modal` 이벤트 수신 → API로 이벤트 조회 → 모달 표시
 
 ### WebRTCContext
 
@@ -255,7 +267,9 @@ interface StreamInfo {
 - **Props**: `event: Event, open: boolean, onOpenChange: (open: boolean) => void`
 - **기능**:
   - 이벤트 상세 정보 표시 (위험도 아이콘, 타입 배지, 상태 배지, 카메라 배지)
-  - AI 요약 및 권장 조치 표시
+  - AI 요약 표시
+  - **Human-in-the-Loop**: pending 액션 승인/거부 UI (요약 위에 표시)
+  - 액션 히스토리 목록 (요약 아래에 표시)
   - 클립 재생 (presigned URL) 및 다운로드
   - 보고서 보기 (새 탭) 및 다운로드 (PDF/DOCX)
   - 미준비 시 버튼 disabled 처리
@@ -281,6 +295,7 @@ interface StreamInfo {
 - 배지 순서: 타입 → 분석상태 → 카메라
 - 우측에 발생 시각 및 경과 시간 표시
 - `getEventTypeKorean` 유틸리티 사용
+- 클릭 시 자체 EventDetailModal 표시 (이벤트 페이지용)
 
 ### EventsPageContent
 
@@ -351,6 +366,8 @@ QueryClientProvider
   - `event`: 이벤트 목록 갱신
   - `event-deleted`: 이벤트 삭제 반영
   - `member`: 멤버 목록 갱신
+  - `action-pending`: 액션 승인 대기 알림 + 토스트 표시
+  - `action-resolved`: 액션 해결됨 반영
 
 ### WebRTCContext
 
@@ -395,9 +412,9 @@ QueryClientProvider
 |--------|------|
 | `getAll(page, size, filters?)` | 이벤트 목록 (페이지네이션, 서버사이드 필터링) |
 | `getById(id)` | 이벤트 상세 조회 |
-| `getClipBlobUrl(id)` | 클립 Blob URL 조회 |
+| `getClipUrl(id)` | 클립 재생용 presigned URL |
 | `downloadClip(id, filename)` | 클립 다운로드 |
-| `getReportHtml(id)` | 보고서 HTML 조회 (새 창 렌더링용) |
+| `resolveAction(eventId, actionId, approved)` | 액션 승인/거부 (Human-in-the-Loop) |
 
 **EventFilters 인터페이스**:
 ```typescript
@@ -507,23 +524,24 @@ interface CameraUpdateRequest {
 ```typescript
 interface EventAction {
   id: string;
-  log: string;
-  triggeredAt: string;
+  action: string;
+  description: string;
+  createdAt: string;
+  pending: boolean;       // Human-in-the-Loop 승인 대기 상태
 }
 
 interface Event {
   id: string;
   cameraId: string;
   cameraName: string;
+  cameraLocation: string;
   risk: 'normal' | 'suspicious' | 'abnormal';
   type: 'assault' | 'burglary' | 'dump' | 'swoon' | 'vandalism';
   occurredAt: string;
   status: 'processing' | 'analyzed';
   clipUrl?: string;
   summary?: string;
-  riskScore?: string;
   actions?: EventAction[];
-  ragReferences?: Record<string, unknown>[];
   report?: string;
 }
 ```
@@ -692,7 +710,7 @@ Caddy 리버스 프록시를 통해 `/` 경로로 서비스됩니다.
 
 ## 🐛 Known Issues
 
-> 최종 감사일: 2026-02-05
+> 최종 감사일: 2026-02-12
 
 ### 중복 코드
 

@@ -77,6 +77,7 @@ export function DashboardContent() {
       toast({
         title: "장소 수정 완료",
         description: `카메라 장소가 "${location}"(으)로 변경되었습니다.`,
+        variant: "success",
       });
     } catch {
       // 실패 시 롤백
@@ -84,7 +85,7 @@ export function DashboardContent() {
       toast({
         title: "장소 수정 실패",
         description: "카메라 장소 변경에 실패했습니다.",
-        variant: "destructive",
+        variant: "alert",
       });
     }
   };
@@ -105,6 +106,7 @@ export function DashboardContent() {
         description: enabled
           ? "카메라가 활성화되었습니다."
           : "카메라가 비활성화되었습니다.",
+        variant: "success",
       });
     } catch {
       // 실패 시 롤백
@@ -112,7 +114,7 @@ export function DashboardContent() {
       toast({
         title: "상태 변경 실패",
         description: "카메라 상태 변경에 실패했습니다.",
-        variant: "destructive",
+        variant: "alert",
       });
     }
   };
@@ -131,6 +133,7 @@ export function DashboardContent() {
         description: analysisEnabled
           ? "AI 분석이 활성화되었습니다."
           : "AI 분석이 비활성화되었습니다.",
+        variant: "success",
       });
     } catch {
       // 실패 시 롤백
@@ -138,7 +141,7 @@ export function DashboardContent() {
       toast({
         title: "상태 변경 실패",
         description: "AI 분석 상태 변경에 실패했습니다.",
-        variant: "destructive",
+        variant: "alert",
       });
     }
   };

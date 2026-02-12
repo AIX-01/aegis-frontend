@@ -10,6 +10,8 @@ type ToasterToast = ToastProps & {
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
+  eventId?: string;
+  onClick?: () => void;
 };
 
 const actionTypes = {

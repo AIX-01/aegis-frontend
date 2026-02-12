@@ -47,11 +47,13 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // 알림 목록 갱신 (fire-and-forget)
       void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
 
-      // 토스트 표시
+      // 토스트 표시 (eventId 포함 - 클릭 시 모달 열기)
+      // notification.type과 toast.variant가 동일 (alert, warning, info, success)
       toastRef.current({
         title: notification.title,
         description: notification.message,
-        variant: notification.type === 'alert' ? 'destructive' : 'default',
+        variant: notification.type as 'alert' | 'warning' | 'info' | 'success',
+        eventId: notification.eventId,
       });
     } catch (error) {
       if (isDev) console.error('[SSE] 알림 파싱 오류:', error);
@@ -106,6 +108,38 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (isDev) console.error('[SSE] 멤버 업데이트 처리 오류:', error);
     }
   }, [queryClient]);
+
+  // 액션 관련 이벤트 공통 처리
+  const handleActionEvent = useCallback((eventType: string, data: string, refreshNotifications = false) => {
+    try {
+      const parsed = JSON.parse(data);
+      if (isDev) console.log(`[SSE] ${eventType}:`, parsed);
+
+      void queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      window.dispatchEvent(new CustomEvent('aegis:action-update', { detail: parsed }));
+
+      if (refreshNotifications) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+      }
+    } catch (error) {
+      if (isDev) console.error(`[SSE] ${eventType} 처리 오류:`, error);
+    }
+  }, [queryClient]);
+
+  // 액션 업데이트 처리 (생성/수정)
+  const handleActionUpdate = useCallback((data: string) => {
+    handleActionEvent('액션 업데이트', data);
+  }, [handleActionEvent]);
+
+  // 액션 승인 대기 처리 (Human-in-the-Loop)
+  const handleActionPending = useCallback((data: string) => {
+    handleActionEvent('액션 승인 대기', data, true);
+  }, [handleActionEvent]);
+
+  // 액션 해결됨 처리
+  const handleActionResolved = useCallback((data: string) => {
+    handleActionEvent('액션 해결됨', data);
+  }, [handleActionEvent]);
 
   const connect = useCallback(() => {
     const accessToken = getAccessToken();
@@ -173,6 +207,18 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             handleMemberUpdate(data);
             break;
 
+          case 'action-update':
+            handleActionUpdate(data);
+            break;
+
+          case 'action-pending':
+            handleActionPending(data);
+            break;
+
+          case 'action-resolved':
+            handleActionResolved(data);
+            break;
+
           default:
             if (isDev) console.log('[SSE] 알 수 없는 이벤트:', eventType, data);
         }
@@ -198,7 +244,7 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }).catch(() => {
       // fetchEventSource 종료됨
     });
-  }, [handleNotification, handleCameraUpdate, handleEventUpdate, handleEventDeleted, handleMemberUpdate]);
+  }, [handleNotification, handleCameraUpdate, handleEventUpdate, handleEventDeleted, handleMemberUpdate, handleActionUpdate, handleActionPending, handleActionResolved]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

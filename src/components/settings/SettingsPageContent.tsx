@@ -64,7 +64,7 @@ export function SettingsPageContent() {
       toast({
         title: "이름 오류",
         description: "이름을 입력해주세요.",
-        variant: "destructive",
+        variant: "alert",
       });
       return;
     }
@@ -75,12 +75,13 @@ export function SettingsPageContent() {
       toast({
         title: "프로필 수정 완료",
         description: "개인정보가 성공적으로 수정되었습니다.",
+        variant: "success",
       });
     } catch (error) {
       toast({
         title: "프로필 수정 실패",
         description: "프로필 수정에 실패했습니다.",
-        variant: "destructive",
+        variant: "alert",
       });
     } finally {
       setIsProfileLoading(false);
@@ -92,7 +93,7 @@ export function SettingsPageContent() {
       toast({
         title: "비밀번호 불일치",
         description: "새 비밀번호와 확인 비밀번호가 일치하지 않습니다.",
-        variant: "destructive",
+        variant: "alert",
       });
       return;
     }
@@ -101,7 +102,7 @@ export function SettingsPageContent() {
       toast({
         title: "비밀번호 오류",
         description: "비밀번호는 6자 이상이어야 합니다.",
-        variant: "destructive",
+        variant: "alert",
       });
       return;
     }
@@ -115,6 +116,7 @@ export function SettingsPageContent() {
       toast({
         title: "비밀번호 변경 완료",
         description: "비밀번호가 성공적으로 변경되었습니다.",
+        variant: "success",
       });
       setCurrentPassword('');
       setNewPassword('');
@@ -124,7 +126,7 @@ export function SettingsPageContent() {
       toast({
         title: "비밀번호 변경 실패",
         description: err.response?.data?.error || "비밀번호 변경에 실패했습니다.",
-        variant: "destructive",
+        variant: "alert",
       });
     } finally {
       setIsPasswordLoading(false);
@@ -138,13 +140,14 @@ export function SettingsPageContent() {
       toast({
         title: "회원 탈퇴 완료",
         description: "계정이 삭제되었습니다.",
+        variant: "success",
       });
       logout();
     } catch (error) {
       toast({
         title: "회원 탈퇴 실패",
         description: "회원 탈퇴에 실패했습니다.",
-        variant: "destructive",
+        variant: "alert",
       });
     } finally {
       setIsDeleteLoading(false);

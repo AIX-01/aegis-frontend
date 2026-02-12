@@ -2,7 +2,7 @@
 
 import { formatDistanceToNow, format } from "date-fns";
 import { ko } from "date-fns/locale";
-import type { Event } from "@/types";
+import type { Event as AegisEvent } from "@/types";
 import { useState } from "react";
 import { EventDetailModal } from "./EventDetailModal";
 import { EventTypeBadge, EventStatusBadge, EventIcon, CameraBadge } from "@/components/common/EventBadges";
@@ -10,12 +10,12 @@ import { getEventTypeKorean } from "@/lib/utils";
 import { Clock } from "lucide-react";
 
 interface EventLogProps {
-  events: Event[];
+  events: AegisEvent[];
 }
 
 
 // risk에 따른 왼쪽 라인 색상
-const getRiskBorderStyle = (risk: Event['risk']) => {
+const getRiskBorderStyle = (risk: AegisEvent['risk']) => {
   switch (risk) {
     case 'abnormal':
       return 'border-l-4 border-l-destructive';
@@ -27,10 +27,10 @@ const getRiskBorderStyle = (risk: Event['risk']) => {
 };
 
 export function EventLog({ events }: EventLogProps) {
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<AegisEvent | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const handleEventClick = (event: Event) => {
+  const handleEventClick = (event: AegisEvent) => {
     setSelectedEvent(event);
     setModalOpen(true);
   };

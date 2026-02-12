@@ -53,7 +53,7 @@ export const EventTypeDonutChart: React.FC<EventTypeDonutChartProps> = ({ items 
                         <div key={item.type} className="flex justify-between items-center text-sm">
                             <div className="flex items-center gap-2">
                                 <span className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[item.type] || '#ccc' }}></span>
-                                {getEventTypeKorean(item.type as any)}
+                                {getEventTypeKorean(item.type.toLowerCase() as any)}
                             </div>
                             <span className="font-semibold">{item.count}건 ({item.percentage.toFixed(1)}%)</span>
                         </div>

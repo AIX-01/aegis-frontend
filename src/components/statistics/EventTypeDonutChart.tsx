@@ -89,7 +89,7 @@ const EventList = ({ eventType, timeRange, onBack }: { eventType: string; timeRa
 
     return (
         <div className="flex flex-col h-full animate-in fade-in duration-300">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-4 flex-shrink-0">
                 <button onClick={onBack} className="p-1 rounded-full hover:bg-slate-100">
                     <ArrowLeft size={18} className="text-slate-500" />
                 </button>
@@ -97,7 +97,7 @@ const EventList = ({ eventType, timeRange, onBack }: { eventType: string; timeRa
                     {getEventTypeKorean(eventType.toLowerCase() as any)} 목록
                 </h3>
             </div>
-            <div className="flex-1 overflow-y-auto -mr-3 pr-3">
+            <div className="flex-1 overflow-y-auto -mr-3 pr-3 min-h-0">
                 {isLoading && <div className="text-center py-8 text-slate-500">목록을 불러오는 중...</div>}
                 {error && <div className="text-center py-8 text-red-500">오류가 발생했습니다.</div>}
                 {!isLoading && !error && events.length === 0 && (
@@ -128,7 +128,7 @@ export const EventTypeDonutChart: React.FC<EventTypeDonutChartProps> = ({ items 
 
     if (selectedEventType) {
         return (
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col h-[26rem]">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col h-[22rem]">
                 <EventList eventType={selectedEventType} timeRange={timeRange} onBack={() => setSelectedEventType(null)} />
             </div>
         );
@@ -159,13 +159,13 @@ export const EventTypeDonutChart: React.FC<EventTypeDonutChartProps> = ({ items 
     });
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col h-[26rem]">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col h-[22rem]">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 flex-shrink-0">
                 <Activity size={18} className="text-slate-400" />
                 주요 이벤트 유형
             </h2>
 
-            <div className="flex-1 flex flex-col items-center justify-center space-y-4 py-2">
+            <div className="flex-1 flex flex-col items-center justify-center space-y-4 py-2 min-h-0">
                 <div className="relative w-full max-w-[12rem] aspect-square flex items-center justify-center shrink-0">
                     <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-full">
                         {segments.map((segment, index) => (
@@ -198,7 +198,7 @@ export const EventTypeDonutChart: React.FC<EventTypeDonutChartProps> = ({ items 
                     </div>
                 </div>
 
-                <div className="w-full flex flex-nowrap items-center gap-2 overflow-x-auto pb-2 px-1">
+                <div className="w-full flex flex-nowrap items-center gap-2 overflow-x-auto pb-2 px-1 flex-shrink-0">
                     {items.length > 0 ? items.map((item, index) => (
                         <div
                             key={item.type}

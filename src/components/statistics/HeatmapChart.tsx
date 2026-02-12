@@ -32,7 +32,7 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({ title, yAxis = [], s
     };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 h-full">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Calendar size={18} className="text-slate-400" />

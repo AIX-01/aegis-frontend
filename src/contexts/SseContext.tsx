@@ -109,56 +109,37 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [queryClient]);
 
-  // 액션 업데이트 처리 (생성/수정 - 토스트 없이 모달만 업데이트)
+  // 액션 관련 이벤트 공통 처리
+  const handleActionEvent = useCallback((eventType: string, data: string, refreshNotifications = false) => {
+    try {
+      const parsed = JSON.parse(data);
+      if (isDev) console.log(`[SSE] ${eventType}:`, parsed);
+
+      void queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      window.dispatchEvent(new CustomEvent('aegis:action-update', { detail: parsed }));
+
+      if (refreshNotifications) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+      }
+    } catch (error) {
+      if (isDev) console.error(`[SSE] ${eventType} 처리 오류:`, error);
+    }
+  }, [queryClient]);
+
+  // 액션 업데이트 처리 (생성/수정)
   const handleActionUpdate = useCallback((data: string) => {
-    try {
-      const parsed = JSON.parse(data);
-      if (isDev) console.log('[SSE] 액션 업데이트:', parsed);
+    handleActionEvent('액션 업데이트', data);
+  }, [handleActionEvent]);
 
-      // 이벤트 목록 갱신
-      void queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
-
-      // 모달 실시간 업데이트용 커스텀 이벤트
-      window.dispatchEvent(new CustomEvent('aegis:action-update', { detail: parsed }));
-    } catch (error) {
-      if (isDev) console.error('[SSE] 액션 업데이트 처리 오류:', error);
-    }
-  }, [queryClient]);
-
-  // 액션 승인 대기 처리 (Human-in-the-Loop) - 알림으로 토스트 발생하므로 별도 토스트 없음
+  // 액션 승인 대기 처리 (Human-in-the-Loop)
   const handleActionPending = useCallback((data: string) => {
-    try {
-      const parsed = JSON.parse(data);
-      if (isDev) console.log('[SSE] 액션 승인 대기:', parsed);
-
-      // 이벤트 목록 갱신
-      void queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
-
-      // 모달 실시간 업데이트용 커스텀 이벤트
-      window.dispatchEvent(new CustomEvent('aegis:action-update', { detail: parsed }));
-
-      // 알림 목록 갱신 (토스트는 notification 이벤트에서 발생)
-      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
-    } catch (error) {
-      if (isDev) console.error('[SSE] 액션 승인 대기 처리 오류:', error);
-    }
-  }, [queryClient]);
+    handleActionEvent('액션 승인 대기', data, true);
+  }, [handleActionEvent]);
 
   // 액션 해결됨 처리
   const handleActionResolved = useCallback((data: string) => {
-    try {
-      const parsed = JSON.parse(data);
-      if (isDev) console.log('[SSE] 액션 해결됨:', parsed);
-
-      // 이벤트 목록 갱신
-      void queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
-
-      // 모달 실시간 업데이트용 커스텀 이벤트
-      window.dispatchEvent(new CustomEvent('aegis:action-update', { detail: parsed }));
-    } catch (error) {
-      if (isDev) console.error('[SSE] 액션 해결됨 처리 오류:', error);
-    }
-  }, [queryClient]);
+    handleActionEvent('액션 해결됨', data);
+  }, [handleActionEvent]);
 
   const connect = useCallback(() => {
     const accessToken = getAccessToken();

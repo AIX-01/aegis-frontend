@@ -524,23 +524,24 @@ interface CameraUpdateRequest {
 ```typescript
 interface EventAction {
   id: string;
-  log: string;
-  triggeredAt: string;
+  action: string;
+  description: string;
+  createdAt: string;
+  pending: boolean;       // Human-in-the-Loop 승인 대기 상태
 }
 
 interface Event {
   id: string;
   cameraId: string;
   cameraName: string;
+  cameraLocation: string;
   risk: 'normal' | 'suspicious' | 'abnormal';
   type: 'assault' | 'burglary' | 'dump' | 'swoon' | 'vandalism';
   occurredAt: string;
   status: 'processing' | 'analyzed';
   clipUrl?: string;
   summary?: string;
-  riskScore?: string;
   actions?: EventAction[];
-  ragReferences?: Record<string, unknown>[];
   report?: string;
 }
 ```
@@ -709,7 +710,7 @@ Caddy 리버스 프록시를 통해 `/` 경로로 서비스됩니다.
 
 ## 🐛 Known Issues
 
-> 최종 감사일: 2026-02-05
+> 최종 감사일: 2026-02-12
 
 ### 중복 코드
 

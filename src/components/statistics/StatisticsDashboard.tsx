@@ -78,6 +78,7 @@ export const StatisticsDashboard = () => {
               eventTypeDistribution={data.eventTypeDistribution}
               heatmap={data.heatmap}
               topCameras={data.topCameras}
+              timeRange={timeRange}
             />
           </div>
         ) : null}

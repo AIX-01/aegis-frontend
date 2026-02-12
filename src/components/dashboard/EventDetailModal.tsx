@@ -43,19 +43,44 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
   const [clipUrl, setClipUrl] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
   const [eventData, setEventData] = useState<Event | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
-  // 모달 열릴 때 이벤트 상세 조회 (pending 상태 반영)
+  // 이벤트 상세 조회 함수
+  const fetchEventData = async (eventId: string) => {
+    try {
+      const data = await eventsApi.getById(eventId);
+      setEventData(data);
+    } catch {
+      setEventData(event);
+    }
+  };
+
+  // 모달 열릴 때 및 event props 변경 시 이벤트 상세 조회
   useEffect(() => {
     if (open && event?.id) {
-      eventsApi.getById(event.id)
-        .then(setEventData)
-        .catch(() => setEventData(event));
+      fetchEventData(event.id);
     } else {
       setEventData(null);
     }
-  }, [open, event]);
+  }, [open, event, refreshKey]);
+
+  // SSE 액션 업데이트 이벤트 구독 (실시간 반영)
+  useEffect(() => {
+    if (!open || !event?.id) return;
+
+    const handleActionUpdate = (e: CustomEvent<{ eventId: string }>) => {
+      if (e.detail.eventId === event.id) {
+        fetchEventData(event.id);
+      }
+    };
+
+    window.addEventListener('aegis:action-update', handleActionUpdate as EventListener);
+    return () => {
+      window.removeEventListener('aegis:action-update', handleActionUpdate as EventListener);
+    };
+  }, [open, event?.id]);
 
   // 실제 사용할 이벤트 데이터 (상세 조회 결과 또는 props)
   const displayEvent = eventData || event;
@@ -75,7 +100,8 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
         title: approved ? "승인 완료" : "거부 완료",
         description: `액션이 ${approved ? '승인' : '거부'}되었습니다.`,
       });
-      // 모달 닫기 또는 이벤트 새로고침은 SSE로 처리됨
+      // 이벤트 다시 조회
+      fetchEventData(displayEvent.id);
     } catch (error) {
       toast({
         title: "처리 실패",

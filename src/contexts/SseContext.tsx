@@ -116,6 +116,9 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // 이벤트 목록 갱신
       void queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
 
+      // 모달 실시간 업데이트용 커스텀 이벤트
+      window.dispatchEvent(new CustomEvent('aegis:action-update', { detail: parsed }));
+
       // 토스트 표시
       toastRef.current({
         title: '승인 요청',
@@ -135,6 +138,9 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       // 이벤트 목록 갱신
       void queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+
+      // 모달 실시간 업데이트용 커스텀 이벤트
+      window.dispatchEvent(new CustomEvent('aegis:action-update', { detail: parsed }));
     } catch (error) {
       if (isDev) console.error('[SSE] 액션 해결됨 처리 오류:', error);
     }

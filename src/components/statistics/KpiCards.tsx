@@ -25,6 +25,15 @@ interface KpiCardsProps {
 export const KpiCards: React.FC<KpiCardsProps> = ({ data }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+        <KpiCard
+            title="모니터링 카메라"
+            value={data.monitoringCameras}
+            unit={data.monitoringCamerasUnit}
+            trend={data.monitoringCamerasTrend}
+            trendUp={data.monitoringCamerasTrendUp}
+            icon={<Camera size={20} className="text-purple-500" />}
+            color="bg-purple-50"
+        />
       <KpiCard
         title="총 발생 이벤트"
         value={data.totalEvents}
@@ -52,15 +61,6 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ data }) => {
         trendUp={data.analysisCompletionRateTrendUp}
         icon={<ShieldCheck size={20} className="text-emerald-500" />}
         color="bg-emerald-50"
-      />
-      <KpiCard
-        title="모니터링 카메라"
-        value={data.monitoringCameras}
-        unit={data.monitoringCamerasUnit}
-        trend={data.monitoringCamerasTrend}
-        trendUp={data.monitoringCamerasTrendUp}
-        icon={<Camera size={20} className="text-purple-500" />}
-        color="bg-purple-50"
       />
     </div>
   );

@@ -2,20 +2,21 @@
 
 import { formatDistanceToNow, format } from "date-fns";
 import { ko } from "date-fns/locale";
-import type { Event } from "@/types";
-import { useState } from "react";
+import type { Event as AegisEvent } from "@/types";
+import { useState, useEffect } from "react";
 import { EventDetailModal } from "./EventDetailModal";
 import { EventTypeBadge, EventStatusBadge, EventIcon, CameraBadge } from "@/components/common/EventBadges";
 import { getEventTypeKorean } from "@/lib/utils";
 import { Clock } from "lucide-react";
+import { eventsApi } from "@/lib/api";
 
 interface EventLogProps {
-  events: Event[];
+  events: AegisEvent[];
 }
 
 
 // risk에 따른 왼쪽 라인 색상
-const getRiskBorderStyle = (risk: Event['risk']) => {
+const getRiskBorderStyle = (risk: AegisEvent['risk']) => {
   switch (risk) {
     case 'abnormal':
       return 'border-l-4 border-l-destructive';
@@ -27,13 +28,42 @@ const getRiskBorderStyle = (risk: Event['risk']) => {
 };
 
 export function EventLog({ events }: EventLogProps) {
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<AegisEvent | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const handleEventClick = (event: Event) => {
+  const handleEventClick = (event: AegisEvent) => {
     setSelectedEvent(event);
     setModalOpen(true);
   };
+
+  // 토스트 클릭 시 이벤트 모달 열기
+  useEffect(() => {
+    const handleOpenModal = (e: globalThis.Event) => {
+      const customEvent = e as CustomEvent<{ eventId: string }>;
+      const { eventId } = customEvent.detail;
+      // 현재 목록에서 먼저 찾기
+      const foundEvent = events.find(ev => ev.id === eventId);
+      if (foundEvent) {
+        setSelectedEvent(foundEvent);
+        setModalOpen(true);
+      } else {
+        // 목록에 없으면 API로 조회
+        eventsApi.getById(eventId)
+          .then(event => {
+            setSelectedEvent(event);
+            setModalOpen(true);
+          })
+          .catch(() => {
+            // 이벤트를 찾을 수 없음
+          });
+      }
+    };
+
+    window.addEventListener('aegis:open-event-modal', handleOpenModal);
+    return () => {
+      window.removeEventListener('aegis:open-event-modal', handleOpenModal);
+    };
+  }, [events]);
 
   return (
     <>

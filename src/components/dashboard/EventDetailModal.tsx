@@ -280,10 +280,10 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
         </DialogHeader>
 
         {/* 좌측: 영상 (고정) / 우측: 요약 (스크롤) */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex overflow-hidden">
           {/* 좌측: 영상 영역 */}
-          <div className="w-1/2 p-6 border-r flex flex-col">
-            <div className="relative aspect-video bg-muted rounded-lg overflow-hidden flex-shrink-0">
+          <div className="w-1/2 p-6 border-r">
+            <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
               {/* 로딩 오버레이 */}
               {clipLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50 z-10">
@@ -323,10 +323,10 @@ export function EventDetailModal({ event, open, onOpenChange }: EventDetailModal
             </div>
           </div>
 
-          {/* 우측: 요약 영역 (스크롤) */}
-          <div className="w-1/2 flex flex-col">
-            <ScrollArea className="flex-1 h-[450px]">
-              <div className="p-6 space-y-4">
+          {/* 우측: 요약 영역 (스크롤) - 클립과 동일 높이 */}
+          <div className="w-1/2 p-6">
+            <ScrollArea className="aspect-video">
+              <div className="space-y-4 pr-4">
                 {/* Pending 액션 (승인 대기 중) - 요약 위에 표시 */}
                 {pendingAction && (
                   <Card className="border-warning bg-warning/5">

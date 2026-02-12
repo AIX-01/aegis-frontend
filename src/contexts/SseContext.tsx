@@ -47,11 +47,12 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // 알림 목록 갱신 (fire-and-forget)
       void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
 
-      // 토스트 표시
+      // 토스트 표시 (eventId 포함 - 클릭 시 모달 열기)
       toastRef.current({
         title: notification.title,
         description: notification.message,
         variant: notification.type === 'alert' ? 'destructive' : 'default',
+        eventId: notification.eventId,
       });
     } catch (error) {
       if (isDev) console.error('[SSE] 알림 파싱 오류:', error);
@@ -107,7 +108,23 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [queryClient]);
 
-  // 액션 승인 대기 처리 (Human-in-the-Loop)
+  // 액션 업데이트 처리 (생성/수정 - 토스트 없이 모달만 업데이트)
+  const handleActionUpdate = useCallback((data: string) => {
+    try {
+      const parsed = JSON.parse(data);
+      if (isDev) console.log('[SSE] 액션 업데이트:', parsed);
+
+      // 이벤트 목록 갱신
+      void queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+
+      // 모달 실시간 업데이트용 커스텀 이벤트
+      window.dispatchEvent(new CustomEvent('aegis:action-update', { detail: parsed }));
+    } catch (error) {
+      if (isDev) console.error('[SSE] 액션 업데이트 처리 오류:', error);
+    }
+  }, [queryClient]);
+
+  // 액션 승인 대기 처리 (Human-in-the-Loop) - 알림으로 토스트 발생하므로 별도 토스트 없음
   const handleActionPending = useCallback((data: string) => {
     try {
       const parsed = JSON.parse(data);
@@ -119,12 +136,8 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // 모달 실시간 업데이트용 커스텀 이벤트
       window.dispatchEvent(new CustomEvent('aegis:action-update', { detail: parsed }));
 
-      // 토스트 표시
-      toastRef.current({
-        title: '승인 요청',
-        description: `${parsed.action}: ${parsed.description}`,
-        variant: 'default',
-      });
+      // 알림 목록 갱신 (토스트는 notification 이벤트에서 발생)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
     } catch (error) {
       if (isDev) console.error('[SSE] 액션 승인 대기 처리 오류:', error);
     }
@@ -212,6 +225,10 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             handleMemberUpdate(data);
             break;
 
+          case 'action-update':
+            handleActionUpdate(data);
+            break;
+
           case 'action-pending':
             handleActionPending(data);
             break;
@@ -245,7 +262,7 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }).catch(() => {
       // fetchEventSource 종료됨
     });
-  }, [handleNotification, handleCameraUpdate, handleEventUpdate, handleEventDeleted, handleMemberUpdate, handleActionPending, handleActionResolved]);
+  }, [handleNotification, handleCameraUpdate, handleEventUpdate, handleEventDeleted, handleMemberUpdate, handleActionUpdate, handleActionPending, handleActionResolved]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

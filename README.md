@@ -210,6 +210,8 @@ interface AuthContextType {
 - **이벤트 핸들링**: 5가지 이벤트 타입별 React Query 캐시 무효화
 - **재연결**: 연결 오류 시 5초 후 자동 재연결
 - **토스트**: notification 이벤트 수신 시 자동 표시
+  - eventId 포함 시 토스트 클릭으로 이벤트 모달 열기 가능
+  - 커스텀 이벤트 `aegis:open-event-modal` 발생
 
 ### WebRTCContext
 
@@ -283,6 +285,7 @@ interface StreamInfo {
 - 배지 순서: 타입 → 분석상태 → 카메라
 - 우측에 발생 시각 및 경과 시간 표시
 - `getEventTypeKorean` 유틸리티 사용
+- 토스트 클릭 시 이벤트 모달 열기: `aegis:open-event-modal` 이벤트 수신
 
 ### EventsPageContent
 

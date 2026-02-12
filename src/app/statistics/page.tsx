@@ -1,15 +1,7 @@
-'use client';
+import { StatisticsDashboard } from '@/components/statistics/StatisticsDashboard';
 
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import ProtectedRoute from "@/components/layout/ProtectedRoute";
-import { StatsContainer } from "@/components/statistics/StatsContainer";
+const StatisticsPage = () => {
+  return <StatisticsDashboard />;
+};
 
-export default function StatisticsPage() {
-  return (
-    <ProtectedRoute>
-      <DashboardLayout title="통계">
-        <StatsContainer />
-      </DashboardLayout>
-    </ProtectedRoute>
-  );
-}
+export default StatisticsPage;

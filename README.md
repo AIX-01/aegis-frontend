@@ -211,10 +211,10 @@ interface AuthContextType {
 ### SseContext
 
 - **연결 관리**: 로그인 시 자동 연결, 로그아웃 시 자동 해제
-- **이벤트 핸들링**: 5가지 이벤트 타입별 React Query 캐시 무효화
+- **이벤트 핸들링**: 9가지 이벤트 타입별 React Query 캐시 무효화
 - **재연결**: 연결 오류 시 5초 후 자동 재연결
 - **토스트**: notification 이벤트 수신 시 자동 표시
-  - eventId 포함 시 토스트 클릭으로 이벤트 모달 열기 가능
+  - eventId 포함 시 토스트 클릭으로 이벤트 모달 열기 가능 (X 버튼은 제외)
   - 커스텀 이벤트 `aegis:open-event-modal` 발생 → GlobalEventModal 처리
 
 ### GlobalEventModal

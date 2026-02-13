@@ -25,9 +25,9 @@ const COLORS: { [key: string]: string } = {
 };
 
 const TimeRangeInDays = {
-  day: 1,
-  week: 7,
-  month: 30,
+    day: 1,
+    week: 7,
+    month: 30,
 };
 
 // Helper to format date to YYYY-MM-DDTHH:mm:ss
@@ -108,8 +108,8 @@ const EventList = ({ eventType, timeRange, onBack }: { eventType: string; timeRa
                     )}
                     <ul className="space-y-3">
                         {events.map((event) => (
-                            <li 
-                                key={event.id} 
+                            <li
+                                key={event.id}
                                 className="p-3 bg-slate-50 rounded-md border border-slate-200 text-sm cursor-pointer hover:bg-slate-100 transition-colors"
                                 onClick={() => setSelectedEvent(event)}
                             >
@@ -125,7 +125,7 @@ const EventList = ({ eventType, timeRange, onBack }: { eventType: string; timeRa
                     </ul>
                 </div>
             </div>
-            
+
             {selectedEvent && (
                 <EventDetailModal
                     event={selectedEvent}
@@ -150,9 +150,7 @@ export const EventTypeDonutChart: React.FC<EventTypeDonutChartProps> = ({ items 
         );
     }
 
-    const emergencyCount = items
-        .filter(i => ['ASSAULT', 'BURGLARY', 'SWOON'].includes(i.type))
-        .reduce((acc, i) => acc + i.count, 0);
+    const totalCount = items.reduce((acc, i) => acc + i.count, 0);
 
     const size = 160;
     const strokeWidth = 30;
@@ -206,8 +204,8 @@ export const EventTypeDonutChart: React.FC<EventTypeDonutChartProps> = ({ items 
                                 </>
                             ) : (
                                 <>
-                                    <span className="text-2xl font-bold text-slate-800">{emergencyCount}</span>
-                                    <span className="text-xs text-slate-500">긴급 건수</span>
+                                    <span className="text-2xl font-bold text-slate-800">{totalCount}</span>
+                                    <span className="text-xs text-slate-500">전체 건수</span>
                                 </>
                             )}
                         </div>

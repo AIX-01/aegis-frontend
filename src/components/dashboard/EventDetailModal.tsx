@@ -450,7 +450,16 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
               <ExternalLink className="h-4 w-4 mr-2" />
               보고서 보기
             </Button>
-            <DropdownMenu>
+            {/* DOCX 미구현으로 드롭다운 대신 단일 버튼으로 대체 (PDF만 지원) */}
+            <Button
+              variant="outline"
+              onClick={() => handleDownloadReport('pdf')}
+              disabled={!displayEvent.report}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              보고서 다운로드
+            </Button>
+            {/* <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" disabled={!displayEvent.report}>
                   <Download className="h-4 w-4 mr-2" />
@@ -463,12 +472,12 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
                   <FileText className="h-4 w-4 mr-2" />
                   PDF 형식
                 </DropdownMenuItem>
-                {/* <DropdownMenuItem onClick={() => handleDownloadReport('docx')}>
+                <DropdownMenuItem onClick={() => handleDownloadReport('docx')}>
                   <FileText className="h-4 w-4 mr-2" />
                   DOCX 형식 (Word/한글 호환)
-                </DropdownMenuItem> */}
+                </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
           </div>
         </div>
       </DialogContent>

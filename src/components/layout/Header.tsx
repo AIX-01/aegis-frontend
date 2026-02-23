@@ -41,11 +41,14 @@ export function Header(_props: HeaderProps) {
   }, [router]);
 
   // React Query로 알림 목록 조회 (SSE에서 자동 갱신)
-  const { data: notifications = [] } = useQuery({
+  const { data: rawNotifications = [] } = useQuery({
     queryKey: queryKeys.notifications.all,
     queryFn: () => notificationsApi.getAll(),
     enabled: !!user,
   });
+
+  // suspicious 알림 필터링 - 백엔드에서 SUSPICIOUS risk는 type="warning"으로 전송됨
+  const notifications = rawNotifications.filter((n: any) => n.type !== 'warning');
 
   // 승인 대기 사용자 수 조회 (관리자만)
   const { data: pendingCount = 0 } = useQuery({

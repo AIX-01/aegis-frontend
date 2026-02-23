@@ -103,7 +103,8 @@ export function EventsPageContent() {
     queryFn: () => eventsApi.getAll(page, pageSize, appliedFilters),
   });
 
-  const events = eventsPage?.content ?? [];
+  // suspicious 이벤트는 목록에서 제외
+  const events = (eventsPage?.content ?? []).filter((event: any) => event.risk !== 'suspicious');
   const totalPages = eventsPage?.totalPages ?? 0;
 
   // 페이지 범위 보정

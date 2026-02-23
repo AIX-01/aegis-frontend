@@ -41,8 +41,15 @@ export const SseProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // 알림 처리
   const handleNotification = useCallback((data: string) => {
     try {
-      const notification: Notification = JSON.parse(data);
+      const notification = JSON.parse(data) as Notification & { risk?: string };
       if (isDev) console.log('[SSE] 알림:', notification);
+
+      // suspicious(의심) 알림 차단
+      // 백엔드에서 SUSPICIOUS risk는 type="warning"으로 전송됨
+      if (notification.type === 'warning') {
+        if (isDev) console.log('[SSE] suspicious 알림 차단 (type=warning):', notification);
+        return;
+      }
 
       // 알림 목록 갱신 (fire-and-forget)
       void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });

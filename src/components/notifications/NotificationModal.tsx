@@ -96,13 +96,13 @@ export function NotificationModal({
                     className="p-3 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5">
+                      {/* <div className="mt-0.5">
                         <NotificationIcon type={notification.type} />
-                      </div>
+                      </div> */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        {/* <div className="flex items-center gap-2">
                           <NotificationTypeBadge type={notification.type} size="sm" />
-                        </div>
+                        </div> */}
                         <p className="text-sm font-medium mt-1">{notification.title}</p>
                         <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                           {notification.message}

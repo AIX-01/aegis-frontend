@@ -463,10 +463,10 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
                   <FileText className="h-4 w-4 mr-2" />
                   PDF 형식
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleDownloadReport('docx')}>
+                {/* <DropdownMenuItem onClick={() => handleDownloadReport('docx')}>
                   <FileText className="h-4 w-4 mr-2" />
                   DOCX 형식 (Word/한글 호환)
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

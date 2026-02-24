@@ -11,18 +11,31 @@ interface DashboardHeaderProps {
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ timeRange, setTimeRange }) => {
   const getDateRangeText = (range: TimeRange) => {
     const today = new Date();
-    const startDate = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1;
 
     if (range === 'day') {
-      return `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일 (오늘)`;
+      return `${year}년 ${month}월 ${today.getDate()}일`;
     } else if (range === 'week') {
-      startDate.setDate(today.getDate() - 7);
-    } else if (range === 'month') {
-      startDate.setDate(today.getDate() - 30);
-    }
+      // 해당 월의 몇 주차인지 계산 (월요일 기준, 백엔드와 동일)
+      const firstDayOfMonth = new Date(year, today.getMonth(), 1);
+      const firstMonday = new Date(firstDayOfMonth);
+      const dayOfWeek = firstDayOfMonth.getDay();
+      const daysUntilMonday = dayOfWeek === 0 ? 1 : (dayOfWeek === 1 ? 0 : 8 - dayOfWeek);
+      firstMonday.setDate(firstDayOfMonth.getDate() + daysUntilMonday);
 
-    const formatDate = (date: Date) => `${date.getMonth() + 1}월 ${date.getDate()}일`;
-    return `${formatDate(startDate)} ~ ${formatDate(today)}`;
+      let weekOfMonth: number;
+      if (today < firstMonday) {
+        weekOfMonth = 1;
+      } else {
+        const diffDays = Math.floor((today.getTime() - firstMonday.getTime()) / (1000 * 60 * 60 * 24));
+        weekOfMonth = Math.floor(diffDays / 7) + (daysUntilMonday > 0 ? 2 : 1);
+      }
+      return `${year}년 ${month}월 ${weekOfMonth}주차`;
+    } else if (range === 'month') {
+      return `${year}년 ${month}월`;
+    }
+    return '';
   };
 
   return (
